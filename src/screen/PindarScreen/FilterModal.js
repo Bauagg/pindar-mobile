@@ -48,6 +48,17 @@ const FilterModal = ({ visible, onClose }) => {
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={{
+              backgroundColor: '#E0DDDD',
+              height: 5,
+              width: 50,
+              alignItems: 'center',
+              alignSelf: 'center',
+              borderRadius: 10,
+            }}
+          />
           <View style={styles.header}>
             <Text style={styles.headerText}>Filter</Text>
             <TouchableOpacity
@@ -140,6 +151,7 @@ const styles = {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+    paddingHorizontal: 10,
   },
   modalContainer: {
     backgroundColor: 'white',

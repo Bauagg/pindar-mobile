@@ -1,5 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Animated, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  Animated,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
 const RedirectScreen = ({ navigation }) => {
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -10,7 +20,6 @@ const RedirectScreen = ({ navigation }) => {
       duration: 5000, // 5 detik
       useNativeDriver: false,
     }).start(() => {
-      // Simulasi navigasi setelah progress selesai
       console.log('Redirecting...');
     });
   }, []);
@@ -28,25 +37,27 @@ const RedirectScreen = ({ navigation }) => {
         alignItems: 'center',
         backgroundColor: '#fff',
       }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>
-        Pinjaman
-      </Text>
-
       <Image
-        source={{
-          uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Akulaku_logo.svg/1200px-Akulaku_logo.svg.png',
-        }}
+        source={require('../../assets/akulaku.png')}
         style={{ width: 80, height: 80, marginBottom: 10 }}
       />
 
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+      <Text
+        style={{
+          fontSize: 18,
+          fontWeight: 'bold',
+          marginBottom: 10,
+          fontFamily: 'Poppins-Bold',
+        }}>
         Akulaku
       </Text>
-      <Text style={{ textAlign: 'center', marginBottom: 20 }}>
-        Anda akan dialihkan ke halaman aplikasi Akulaku
-      </Text>
+      <View style={{ width: Dimensions.get('window').width - 200 }}>
+        <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+          Anda akan dialihkan ke halaman aplikasi Akulaku
+        </Text>
+      </View>
 
-      {/* Progress Bar */}
+      {/* Progress Bar dengan Linear Gradient */}
       <View
         style={{
           width: '80%',
@@ -55,19 +66,24 @@ const RedirectScreen = ({ navigation }) => {
           borderRadius: 5,
           overflow: 'hidden',
         }}>
-        <Animated.View
+        <AnimatedGradient
+          colors={['#CC1C22', '#F86469']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
           style={{
             width: progressWidth,
             height: '100%',
-            backgroundColor: 'red',
+            borderRadius: 5,
           }}
         />
       </View>
 
-      <Text style={{ marginTop: 10 }}>
-        Jika anda tidak dialihkan dalam waktu 5 detik, klik{' '}
-        <Text style={{ color: 'blue' }}>di sini</Text> untuk melanjutkan
-      </Text>
+      <View style={{ width: Dimensions.get('window').width - 120 }}>
+        <Text style={{ marginTop: 10, textAlign: 'center' }}>
+          Jika anda tidak dialihkan dalam waktu 5 detik, klik{' '}
+          <Text style={{ color: 'blue' }}>di sini</Text> untuk melanjutkan
+        </Text>
+      </View>
     </View>
   );
 };

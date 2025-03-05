@@ -7,7 +7,7 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import FilterModal from './FilterModal';
 
@@ -137,15 +137,12 @@ const PindarScreen = (props) => {
             props.navigation.navigate('Compare', { selectedItems })
           }>
           <View style={styles.overlayContent}>
-            <Image
-              source={require('../../assets/menu2.png')}
-              style={styles.icon}
-            />
+            <View style={{ alignItems: 'center', marginRight: 10 }}>
+              <Text style={styles.number}>{selectedItems.length}</Text>
+              <Image source={require('../../assets/menu2.png')} />
+            </View>
             <View style={styles.textContainer}>
-              <Text style={styles.title}>
-                <Text style={styles.number}>{selectedItems.length}</Text>{' '}
-                Pinjaman yang anda bandingkan
-              </Text>
+              <Text style={styles.title}> Pinjaman yang anda bandingkan</Text>
               <Text style={styles.subtitle}>
                 Anda dapat membandingkan Max 3 Pinjaman
               </Text>
@@ -160,6 +157,12 @@ const PindarScreen = (props) => {
         <LinearGradient
           colors={['#CC1C22', '#F86469']}
           style={styles.filterFloating}>
+          <FontAwesome5
+            name="filter"
+            size={14}
+            color="white"
+            style={{ marginRight: 10 }}
+          />
           <Text style={styles.filterFloatingText}>FILTER</Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -270,11 +273,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: '50%',
-    marginLeft: -40,
+    marginLeft: -75,
+    width: 150,
     backgroundColor: 'red',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    flexDirection: 'row',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     elevation: 5,
   },
   filterFloatingText: { color: 'white', fontWeight: 'bold' },
@@ -294,7 +301,7 @@ const styles = StyleSheet.create({
   overlayContent: { flexDirection: 'row', alignItems: 'center' },
   textContainer: { flex: 1 },
   title: { fontSize: 16, fontWeight: 'bold', color: '#CC1C22' },
-  number: { fontSize: 20, fontWeight: 'bold' },
+  number: { fontSize: 22, fontWeight: 'bold', color: '#CC1C22' },
   subtitle: { fontSize: 12, color: '#666' },
   arrow: { fontSize: 20, color: '#CC1C22', fontWeight: 'bold' },
 });
