@@ -7,10 +7,29 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
+  FlatList,
+  Alert,
 } from 'react-native';
-import { Entypo, Ionicons, Feather, MaterialIcons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+
+// Data input field
+const formFields = [
+  { icon: 'mail', value: 'putriamalia@gmail.com', editable: false },
+  { icon: 'person', value: 'Putri Amalia', editable: true },
+  { icon: 'person-outline', value: 'putri17', editable: true },
+  { icon: 'call', value: '+62 8527654654', editable: true },
+  { icon: 'location', value: 'Menteng, Jakarta Pusat', editable: true },
+];
 
 const AccountInformation = () => {
+  // Fungsi untuk copy ID Member
+  const copyToClipboard = async (text) => {
+    await Clipboard.setStringAsync(text);
+    Alert.alert('Copied', 'Id Member copied to clipboard!');
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -18,17 +37,6 @@ const AccountInformation = () => {
         backgroundColor={'transparent'}
         barStyle="dark-content"
       />
-
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Account Information</Text>
-        <TouchableOpacity>
-          <Entypo name="dots-three-vertical" size={20} color="black" />
-        </TouchableOpacity>
-      </View> */}
 
       {/* Profile Section */}
       <View style={styles.profileContainer}>
@@ -45,67 +53,65 @@ const AccountInformation = () => {
         <Text style={styles.profileEmail}>putriamalia@gmail.com</Text>
       </View>
 
-      {/* Form Section */}
-      <View style={styles.formContainer}>
-        {formFields.map((item, index) => (
-          <View key={index} style={styles.inputWrapper}>
-            <Ionicons
-              name={item.icon}
-              size={20}
-              color="#D43F3A"
-              style={styles.icon}
-            />
-            <TextInput
-              style={styles.input}
-              value={item.value}
-              editable={item.editable}
-            />
-            {item.label && (
-              <View style={styles.labelBadge}>
-                <Text style={styles.labelText}>{item.label}</Text>
-              </View>
-            )}
+      {/* FlatList untuk Input */}
+      <FlatList
+        data={formFields}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.inputContainer}>
+            <View style={styles.iconWrapper}>
+              <Ionicons name={item.icon} size={20} color="#F86469" />
+            </View>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={item.value}
+                editable={item.editable}
+              />
+            </View>
           </View>
-        ))}
-      </View>
-
-      {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
+        )}
+        ListFooterComponent={() => (
+          <>
+            {/* Member ID Section - FIXED (Moved Outside FlatList) */}
+            <View style={styles.inputContainer2}>
+              <View style={styles.iconWrapper2}>
+                <Ionicons name="document-text" size={20} color="#F86469" />
+              </View>
+              <View style={styles.inputWrapper2}>
+                <TextInput
+                  style={styles.input}
+                  value="id364284946"
+                  editable={false}
+                />
+              </View>
+              <TouchableOpacity
+                style={styles.labelBadge}
+                onPress={() => copyToClipboard('id364284946')}>
+                <Ionicons name="attach" size={20} color="#D43F3A" />
+                <Text style={styles.labelText}>Id Member</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity>
+              <LinearGradient
+                colors={['#CC1C22', '#F86469']}
+                style={styles.applyGradient}>
+                <Text style={styles.applyText}>Save</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </>
+        )}
+      />
     </View>
   );
 };
-
-const formFields = [
-  { icon: 'mail', value: 'putriamalia@gmail.com', editable: false },
-  { icon: 'person', value: 'Putri Amalia', editable: true },
-  { icon: 'key', value: 'putri17', editable: true },
-  { icon: 'call', value: '+62 8527654654', editable: true },
-  { icon: 'location', value: 'Menteng, Jakarta Pusat', editable: true },
-  {
-    icon: 'document',
-    value: 'id364284946',
-    editable: false,
-    label: 'Id Member',
-  },
-];
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    paddingHorizontal: 30,
+    paddingTop: 40,
   },
   profileContainer: {
     alignItems: 'center',
@@ -118,6 +124,8 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#F8D7DA',
   },
   editIcon: {
     position: 'absolute',
@@ -136,49 +144,117 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'gray',
   },
-  formContainer: {
-    marginBottom: 20,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    width: '80%',
+  },
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDF2F2',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    position: 'relative',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fff',
+    shadowColor: '#F8BBD0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  icon: {
+  inputContainer2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 50,
+    width: '80%',
+  },
+  iconWrapper2: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 10,
+  },
+  inputWrapper2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+    justifyContent: 'space-evenly',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fff',
+    shadowColor: '#F8BBD0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    marginRight: 50,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     color: '#333',
   },
   labelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'white',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 5,
-    position: 'absolute',
     right: 10,
+    elevation: 4,
+    width: 100,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   labelText: {
     fontSize: 12,
     color: '#D43F3A',
     fontWeight: 'bold',
+    marginLeft: 5,
   },
   saveButton: {
     backgroundColor: '#D43F3A',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginTop: 20,
   },
   saveButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
+  },
+  applyGradient: {
+    // backgroundColor: 'red',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: 'Lexend-Regular',
   },
 });
 

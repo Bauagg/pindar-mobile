@@ -6,61 +6,79 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const PasswordSecurity = ({ navigation }) => {
-  const [secureTextEntry, setSecureTextEntry] = useState(true);
+const PasswordSecurity = () => {
+  const [passwords, setPasswords] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [secureTextEntry, setSecureTextEntry] = useState({
+    old: true,
+    new: true,
+    confirm: true,
+  });
+
+  const toggleSecureEntry = (field) => {
+    setSecureTextEntry((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Password & Security</Text>
-        <TouchableOpacity>
-          <Feather name="more-vertical" size={24} color="black" />
-        </TouchableOpacity>
-      </View> */}
 
-      {/* Title */}
+      {/* Title Section */}
       <Text style={styles.title}>Change Password</Text>
       <Text style={styles.subtitle}>Please enter your password</Text>
 
       {/* Password Fields */}
-      {['Old Password', 'New Password', 'Confirm Password'].map(
-        (label, index) => (
-          <View key={index} style={styles.inputContainer}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="red"
-              style={styles.icon}
-            />
+      {[
+        { label: 'Old Password', key: 'oldPassword', stateKey: 'old' },
+        { label: 'New Password', key: 'newPassword', stateKey: 'new' },
+        {
+          label: 'Confirm Password',
+          key: 'confirmPassword',
+          stateKey: 'confirm',
+        },
+      ].map(({ label, key, stateKey }) => (
+        <View key={key} style={styles.inputWrapper}>
+          <Text style={styles.label}>{label}</Text>
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color="red" />
             <TextInput
               style={styles.input}
               placeholder={label}
-              secureTextEntry={secureTextEntry}
+              placeholderTextColor="#999"
+              secureTextEntry={secureTextEntry[stateKey]}
+              value={passwords[key]}
+              onChangeText={(text) =>
+                setPasswords((prev) => ({ ...prev, [key]: text }))
+              }
             />
-            <TouchableOpacity
-              onPress={() => setSecureTextEntry(!secureTextEntry)}>
+            <TouchableOpacity onPress={() => toggleSecureEntry(stateKey)}>
               <Feather
-                name={secureTextEntry ? 'eye-off' : 'eye'}
+                name={secureTextEntry[stateKey] ? 'eye-off' : 'eye'}
                 size={20}
                 color="gray"
               />
             </TouchableOpacity>
           </View>
-        )
-      )}
-
-      {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
+        </View>
+      ))}
+      <View style={{ marginTop: Dimensions.get('window').height - 600 }}>
+        <TouchableOpacity>
+          <LinearGradient
+            colors={['#CC1C22', '#F86469']}
+            style={styles.applyGradient}>
+            <Text style={styles.applyText}>Save</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -68,30 +86,28 @@ const PasswordSecurity = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
-    padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 50,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 5,
   },
   subtitle: {
     fontSize: 14,
     color: 'gray',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+  },
+  inputWrapper: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 5,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -99,26 +115,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     padding: 15,
     borderRadius: 10,
-    marginBottom: 15,
-  },
-  icon: {
-    marginRight: 10,
+    justifyContent: 'space-between',
   },
   input: {
     flex: 1,
     fontSize: 16,
+    marginHorizontal: 10,
+    color: '#000',
   },
-  saveButton: {
-    backgroundColor: 'red',
-    padding: 15,
+  applyGradient: {
+    // backgroundColor: 'red',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderRadius: 10,
+    height: 50,
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
   },
-  saveButtonText: {
+  applyText: {
     color: 'white',
-    fontSize: 16,
     fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: 'Lexend-Regular',
   },
 });
 

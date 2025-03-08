@@ -60,8 +60,10 @@ const PindarScreen = (props) => {
         <View style={styles.divider} />
 
         {/* Content */}
-        <Text style={styles.cardSubtitle}>Maksimal Pinjaman</Text>
-        <Text style={styles.cardAmount}>{item.amount}</Text>
+        <View style={{ alignSelf: 'center' }}>
+          <Text style={styles.cardSubtitle}>Maksimal Pinjaman</Text>
+          <Text style={styles.cardAmount}>{item.amount}</Text>
+        </View>
 
         <View style={styles.row}>
           <Text style={styles.cardSubtitle}>Maksimal Lama Pinjam</Text>
@@ -197,8 +199,16 @@ const styles = StyleSheet.create({
     width: 120,
     alignItems: 'center',
   },
-  filterText: { color: 'gray', fontWeight: 'bold' },
-  filterTextActive: { color: 'white', fontWeight: 'bold' },
+  filterText: {
+    color: 'gray',
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
+  },
+  filterTextActive: {
+    color: 'white',
+    fontFamily: 'Lexend-Regular',
+    fontWeight: 'bold',
+  },
   flatListContainer: { paddingHorizontal: 16, paddingBottom: 100 },
   card: {
     backgroundColor: 'white',
@@ -223,11 +233,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     marginVertical: 10,
   },
-  cardSubtitle: { color: 'gray', fontSize: 12 },
+  cardSubtitle: {
+    textAlign: 'center',
+    color: '#474864',
+    fontSize: 12,
+    fontFamily: 'Lexend-Regular',
+    fontWeight: 'bold',
+  },
   cardAmount: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: 'red',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
+    color: '#474864',
     marginBottom: 10,
   },
   row: {
@@ -245,7 +262,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  detailText: { color: 'red', marginRight: 5 },
+  detailText: {
+    color: '#474864',
+    marginRight: 5,
+    fontFamily: 'Lexend-Regular',
+    fontWeight: 'bold',
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -258,16 +280,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   compareButton: { flexDirection: 'row', alignItems: 'center' },
-  compareText: { color: 'black', marginLeft: 5 },
+  compareText: { color: 'black', marginLeft: 5, fontFamily: 'Lexend-Regular' },
   applyGradient: {
     // backgroundColor: 'red',
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius: 10,
   },
-  applyText: { color: 'white', fontWeight: 'bold' },
+  applyText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
+  },
 
-  bottomText: { color: 'gray' },
+  bottomText: { color: 'gray', fontFamily: 'Lexend-Regular' },
   bottomAmount: { fontSize: 18, fontWeight: 'bold' },
   filterFloating: {
     position: 'absolute',
@@ -284,7 +310,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 5,
   },
-  filterFloatingText: { color: 'white', fontWeight: 'bold' },
+  filterFloatingText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
+  },
   overlay: {
     position: 'absolute',
     bottom: 70,

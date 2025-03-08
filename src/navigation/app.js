@@ -24,6 +24,10 @@ import EducationComments from '../screen/EducationComments';
 import Notifikasi from '../screen/Notifikasi';
 import InformasiDetail from '../screen/IndormasiDetail';
 import RedirectScreen from '../screen/RedirectScreen';
+import CompareScreenKartu from '../screen/CompareScreenKartu';
+import RedirectScreenKartu from '../screen/RedirectScreenKartu';
+import EducationAllTerbaru from '../screen/EducationAllTerbaru';
+import EducationAllTreding from '../screen/EducationAllTreding';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -128,7 +132,9 @@ export default function AppStackNavigator() {
       <Stack.Screen
         name="Pindar"
         component={PindarScreen}
-        options={{ header: (props) => <HeaderName {...props} name="Pindar" /> }}
+        options={{
+          header: (props) => <HeaderName {...props} name="Pinjaman" />,
+        }}
       />
       <Stack.Screen
         name="Kartu Kredit"
@@ -221,6 +227,34 @@ export default function AppStackNavigator() {
         component={RedirectScreen}
         options={{
           header: (props) => <HeaderName {...props} name="Pinjaman" />,
+        }}
+      />
+      <Stack.Screen
+        name="Compare Kartu"
+        component={CompareScreenKartu}
+        options={{
+          header: (props) => <HeaderName {...props} name="Kartu Kredit" />,
+        }}
+      />
+      <Stack.Screen
+        name="Redirect Kartu"
+        component={RedirectScreenKartu}
+        options={{
+          header: (props) => <HeaderName {...props} name="Kartu Kredit" />,
+        }}
+      />
+      <Stack.Screen
+        name="Education All Terbaru"
+        component={EducationAllTerbaru}
+        options={{
+          header: (props) => <HeaderName {...props} name="Education" />,
+        }}
+      />
+      <Stack.Screen
+        name="Education All Treding"
+        component={EducationAllTreding}
+        options={{
+          header: (props) => <HeaderName {...props} name="Education" />,
         }}
       />
     </Stack.Navigator>

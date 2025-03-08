@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { Entypo } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const TermsCondition = () => {
   return (
@@ -65,12 +66,19 @@ const TermsCondition = () => {
       </ScrollView>
 
       {/* Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button}>
-          <Entypo name="check" size={20} color="white" />
-          <Text style={styles.buttonText}>Selengkapnya</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <LinearGradient
+          colors={['#CC1C22', '#F86469']}
+          style={styles.filterFloating}>
+          <Feather
+            name="arrow-down"
+            size={14}
+            color="white"
+            style={{ marginRight: 10 }}
+          />
+          <Text style={styles.filterFloatingText}>Selengkapnya</Text>
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -136,6 +144,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 8,
+  },
+  filterFloating: {
+    position: 'absolute',
+    bottom: 20,
+    left: '50%',
+    marginLeft: -75,
+    width: 150,
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  filterFloatingText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
   },
 });
 

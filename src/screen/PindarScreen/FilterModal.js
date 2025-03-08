@@ -165,18 +165,34 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    fontFamily: 'Lexend-Regular',
+  },
   selectAllButton: { flexDirection: 'row', alignItems: 'center' },
-  selectAllText: { color: '#CC1C22', marginLeft: 5, fontWeight: 'bold' },
+  selectAllText: {
+    color: '#CC1C22',
+    marginLeft: 5,
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
+  },
   content: { marginTop: 10 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginTop: 15,
+    fontFamily: 'Lexend-Regular',
   },
   option: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  optionText: { fontSize: 14, marginLeft: 10, color: '#333' },
+  optionText: {
+    fontSize: 14,
+    marginLeft: 10,
+    color: '#333',
+    fontFamily: 'Lexend-Regular',
+  },
   closeButton: {
     backgroundColor: '#CC1C22',
     borderRadius: 10,
@@ -184,7 +200,12 @@ const styles = {
     alignItems: 'center',
     marginTop: 20,
   },
-  closeButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
+  },
 };
 
 export default FilterModal;

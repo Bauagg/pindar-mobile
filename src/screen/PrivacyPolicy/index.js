@@ -7,7 +7,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PrivacyPolicy = () => {
   const navigation = useNavigation();
@@ -71,8 +72,18 @@ const PrivacyPolicy = () => {
         </Text>
       </ScrollView>
 
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Selengkapnya</Text>
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <LinearGradient
+          colors={['#CC1C22', '#F86469']}
+          style={styles.filterFloating}>
+          <Feather
+            name="arrow-down"
+            size={14}
+            color="white"
+            style={{ marginRight: 10 }}
+          />
+          <Text style={styles.filterFloatingText}>Selengkapnya</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -132,6 +143,26 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  filterFloating: {
+    position: 'absolute',
+    bottom: 20,
+    left: '50%',
+    marginLeft: -75,
+    width: 150,
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  filterFloatingText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontFamily: 'Lexend-Regular',
   },
 });
 

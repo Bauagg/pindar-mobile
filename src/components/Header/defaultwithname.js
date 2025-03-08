@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -10,6 +16,11 @@ export default function HeaderName(props) {
 
   return (
     <View style={styles.header}>
+      <StatusBar
+        translucent={true}
+        backgroundColor="transparent"
+        barStyle="dark-content"
+      />
       <TouchableOpacity onPress={backScreen} style={styles.section}>
         <Feather name="arrow-left" size={24} color="black" />
       </TouchableOpacity>
@@ -42,6 +53,7 @@ const styles = StyleSheet.create({
   titleText: {
     color: 'black',
     fontSize: 18,
+    fontFamily: 'Lexend-Regular',
     fontWeight: 'bold',
   },
 });
