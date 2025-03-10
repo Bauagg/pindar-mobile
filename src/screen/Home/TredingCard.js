@@ -1,8 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Entypo } from '@expo/vector-icons'; // Untuk ikon kalender dan panah
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const TrendingCard = () => {
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
@@ -38,7 +53,8 @@ const styles = StyleSheet.create({
   title: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
   },
   dateContainer: {
     flexDirection: 'row',
@@ -49,6 +65,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     marginLeft: 5,
+    fontFamily: 'Lexend_400Regular',
   },
   button: {
     flexDirection: 'row',
@@ -63,6 +80,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+    fontFamily: 'Lexend_400Regular',
   },
 });
 

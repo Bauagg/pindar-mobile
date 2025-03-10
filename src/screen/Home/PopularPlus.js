@@ -7,6 +7,14 @@ import {
   Dimensions,
   StyleSheet,
 } from 'react-native';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const { width } = Dimensions.get('window'); // Mendapatkan lebar layar
 
@@ -26,6 +34,13 @@ const data = [
 const PopularPlus = () => {
   const flatListRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
 
   const handleScroll = (event) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -73,7 +88,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     color: '#333',
     marginLeft: 20,
     marginBottom: 10,
@@ -104,10 +120,12 @@ const styles = StyleSheet.create({
   smallText: {
     fontSize: 14,
     color: 'white',
+    fontFamily: 'Lexend_400Regular',
   },
   bigText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     color: 'white',
   },
   pagination: {

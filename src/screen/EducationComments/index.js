@@ -3,14 +3,22 @@ import {
   View,
   FlatList,
   TextInput,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
   Text,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { Avatar, IconButton } from 'react-native-paper';
-import { Feather } from '@expo/vector-icons';
+import { Avatar } from 'react-native-paper';
+import { Feather, AntDesign } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const commentsData = [
   {
@@ -26,7 +34,7 @@ const commentsData = [
     name: 'Sellina Kayle',
     avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
     comment:
-      'Tergantung penyedia layanan, tapi di Pindar kamu bisa bandingin yang paling rendah!',
+      'Tergantung penyedia layanan, tapi di Pinjaman kamu bisa bandingin yang paling rendah!',
     likes: 12,
     time: '4w',
   },
@@ -42,55 +50,92 @@ const commentsData = [
 
 const EducationComments = () => {
   const [comment, setComment] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
 
-  const renderItem = ({ item }) => (
-    <View
-      style={{ flexDirection: 'row', padding: 10, alignItems: 'flex-start' }}>
-      <Avatar.Image size={40} source={{ uri: item.avatar }} />
-      <View style={{ marginLeft: 10, flex: 1 }}>
-        <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{item.name}</Text>
-        <Text style={{ fontSize: 13, color: '#555' }}>{item.comment}</Text>
-        <View
-          style={{ flexDirection: 'row', marginTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: '#888' }}>{item.time} •</Text>
-          <Text style={{ fontSize: 12, color: '#888', marginLeft: 5 }}>
-            ❤️ {item.likes} likes
+  const renderItem = ({ item, index }) => {
+    if (!showAll && index > 1) return null;
+
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          paddingVertical: 10,
+          alignItems: 'flex-start',
+          paddingHorizontal: 30,
+        }}>
+        {/* Avatar */}
+        <Avatar.Image size={40} source={{ uri: item.avatar }} />
+        <View style={{ marginLeft: 10, flex: 1 }}>
+          {/* Nama */}
+          <Text
+            style={{
+              fontWeight: 'bold',
+              fontSize: 14,
+              color: '#333',
+              fontFamily: 'Lexend_700Bold',
+            }}>
+            {item.name}
           </Text>
-          <Text style={{ fontSize: 12, color: '#888', marginLeft: 10 }}>
-            ↩️ reply
+          {/* Komentar */}
+          <Text
+            style={{
+              fontSize: 13,
+              color: '#555',
+              marginTop: 2,
+              lineHeight: 18,
+              fontFamily: 'Lexend_400Regular',
+            }}>
+            {item.comment}
           </Text>
+          {/* Waktu, Likes, dan Reply */}
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 5,
+              alignItems: 'center',
+            }}>
+            <Text style={{ fontSize: 12, color: '#888' }}>{item.time} •</Text>
+            <AntDesign
+              name="hearto"
+              size={12}
+              color="#888"
+              style={{ marginLeft: 5 }}
+            />
+            <Text style={{ fontSize: 12, color: '#888', marginLeft: 3 }}>
+              {item.likes} likes
+            </Text>
+            <Text style={{ fontSize: 12, color: '#888', marginLeft: 10 }}>
+              ↩️ reply
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'android' ? 'padding' : 'height'}
       style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
-      {/* <View
+      <Text
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
           padding: 15,
-          borderBottomWidth: 1,
-          borderColor: '#ddd',
+          fontSize: 16,
+          // fontWeight: 'bold',
+          fontFamily: 'Lexend_700Bold',
         }}>
-        <IconButton icon="arrow-left" size={24} onPress={() => {}} />
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            flex: 1,
-            textAlign: 'center',
-          }}>
-          Education
-        </Text>
-        <IconButton icon="dots-vertical" size={24} />
-      </View> */}
+        Comments
+      </Text>
 
-      {/* Comments List */}
+      {/* Comments List menggunakan FlatList */}
       <FlatList
         data={commentsData}
         keyExtractor={(item) => item.id}
@@ -106,27 +151,36 @@ const EducationComments = () => {
           padding: 10,
           borderTopWidth: 1,
           borderColor: '#ddd',
+          backgroundColor: '#fff',
         }}>
         <TextInput
           style={{
             flex: 1,
-            backgroundColor: '#f0f0f0',
-            paddingHorizontal: 10,
-            paddingVertical: 8,
-            borderRadius: 20,
+            backgroundColor: '#fff',
+            paddingHorizontal: 15,
+            paddingVertical: 10,
+            borderRadius: 10,
+            fontSize: 14,
+            borderWidth: 1,
+            borderColor: '#ddd',
           }}
           placeholder="Type your comment"
           value={comment}
           onChangeText={setComment}
         />
-        <TouchableOpacity
-          style={{
-            marginLeft: 10,
-            backgroundColor: '#4A90E2',
-            padding: 10,
-            borderRadius: 20,
-          }}>
-          <Feather name="send" size={18} color="white" />
+        <TouchableOpacity style={{ marginLeft: 10 }}>
+          <LinearGradient
+            colors={['#95D5FF', '#2493D5']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              padding: 12,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Feather name="send" size={18} color="white" />
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

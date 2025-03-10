@@ -8,8 +8,20 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
+import * as Font from 'expo-font';
+// import AppLoading from 'expo-app-loading';
 
 export default function Notifikasi({ navigation }) {
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+
   const [notifications, setNotifications] = useState([
     {
       id: '1',
@@ -24,38 +36,6 @@ export default function Notifikasi({ navigation }) {
       title: 'Pendaftaran Berhasil',
       message:
         'Pendaftaran kartu kredit Anda telah diterima. Kami akan segera memproses pengajuan Anda.',
-      date: 'Sat, 12 Nov 2024',
-      daysAgo: '2 Day Ago',
-    },
-    {
-      id: '3',
-      title: 'Penawaran Pinjaman Baru',
-      message:
-        'Butuh dana cepat? Ajukan pinjaman hingga Rp10.000.000 dengan bunga rendah hanya di sini!',
-      date: 'Sat, 12 Nov 2024',
-      daysAgo: '2 Day Ago',
-    },
-    {
-      id: '4',
-      title: 'Verifikasi Dokumen',
-      message:
-        'Dokumen pendaftaran kartu kredit Anda sedang dalam tahap verifikasi. Mohon tunggu update selanjutnya.',
-      date: 'Sat, 12 Nov 2024',
-      daysAgo: '2 Day Ago',
-    },
-    {
-      id: '5',
-      title: 'Limit Pinjaman Naik',
-      message:
-        'Kabar baik! Limit pinjaman Anda naik menjadi Rp15.000.000. Ajukan sekarang dan dapatkan dana instan!',
-      date: 'Sat, 12 Nov 2024',
-      daysAgo: '2 Day Ago',
-    },
-    {
-      id: '6',
-      title: 'Persetujuan Kartu Kredit',
-      message:
-        'Selamat! Pengajuan kartu kredit Anda telah disetujui. Kartu akan segera dikirim ke alamat Anda.',
       date: 'Sat, 12 Nov 2024',
       daysAgo: '2 Day Ago',
     },
@@ -87,9 +67,6 @@ export default function Notifikasi({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar translucent={true} backgroundColor={'transparent'} />
-      {/* Header */}
-
-      {/* Daftar Notifikasi */}
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id}
@@ -105,19 +82,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     paddingTop: StatusBar.currentHeight || 10,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   notificationCard: {
     flexDirection: 'row',
@@ -146,20 +110,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     color: '#2C2C2C',
   },
   message: {
     fontSize: 14,
+    fontFamily: 'Lexend_400Regular',
     color: '#616161',
     marginTop: 3,
   },
   date: {
     fontSize: 12,
+    fontFamily: 'Lexend_400Regular',
     color: '#9E9E9E',
     marginTop: 5,
   },
   daysAgo: {
     fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
   },
   separator: {
     height: 1,

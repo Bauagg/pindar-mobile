@@ -48,7 +48,7 @@ const articles = [
 ];
 
 export default function EducationAllTerbaru() {
-  let [fontsLoaded] = useFonts({
+  const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });

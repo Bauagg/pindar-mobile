@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dimensions,
   StatusBar,
@@ -19,10 +19,28 @@ import { LinearGradient } from 'expo-linear-gradient';
 import TrendingCard from './TredingCard';
 import PopularPlus from './PopularPlus';
 import PopularDeal from './PopularDeal';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const { width } = Dimensions.get('window');
 
 export default function Home(props) {
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
+
   const navPindarScreen = () => {
     props.navigation.navigate('Pindar');
   };
@@ -37,6 +55,24 @@ export default function Home(props) {
   };
   const navNotifikasi = () => {
     props.navigation.navigate('Notifikasi');
+  };
+
+  const dataList = [
+    { id: '1', name: 'Kartu Kredit' },
+    { id: '2', name: 'Pindar' },
+    { id: '3', name: 'Promo Bank' },
+    { id: '4', name: 'Asuransi' },
+  ];
+  const handleSearch = (text) => {
+    setSearchText(text);
+    if (text) {
+      const filtered = dataList.filter((item) =>
+        item.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredData(filtered);
+    } else {
+      setFilteredData([]);
+    }
   };
   return (
     <>
@@ -104,8 +140,26 @@ export default function Home(props) {
             placeholder="Search here..."
             style={styles.input}
             placeholderTextColor="#aaa"
+            value={searchText}
+            onChangeText={handleSearch}
           />
         </View>
+        {searchText.length > 0 && (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.searchResult}
+                onPress={() => {
+                  setSearchText(item.name); // Set teks sesuai yang dipilih
+                  setFilteredData([]); // Hilangkan hasil setelah memilih
+                }}>
+                <Text style={styles.searchResultText}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
       </View>
       <>
         <FlatList
@@ -206,7 +260,8 @@ const styles = StyleSheet.create({
   greeting: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
   },
   location: {
     color: 'white',
@@ -254,7 +309,8 @@ const styles = StyleSheet.create({
   text: {
     marginTop: 10, // Jarak antara gambar dan teks
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     textAlign: 'center',
     color: '#333', // Warna teks
   },
@@ -264,5 +320,15 @@ const styles = StyleSheet.create({
   containerTopButtonRight: {
     alignItems: 'center',
     paddingTop: 20,
+  },
+  searchResult: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    backgroundColor: '#fff',
+  },
+  searchResultText: {
+    fontSize: 16,
+    color: '#333',
   },
 });

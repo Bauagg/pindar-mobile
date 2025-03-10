@@ -15,6 +15,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAlertModal } from '../../contexts/AlertModalContext';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 export default function Signin(props) {
   const { showAlert } = useAlertModal();
@@ -44,6 +52,13 @@ export default function Signin(props) {
       showAlert('Username atau password salah.', 'error');
     }
   };
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
   return (
     <>
       <StatusBar
@@ -111,13 +126,13 @@ export default function Signin(props) {
                 onValueChange={toggleSwitch}
                 value={isEnabled}
               />
-              <Text style={{ fontFamily: 'Poppins-Regular', fontSize: 12 }}>
+              <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 12 }}>
                 Remember Me
               </Text>
             </View>
             <View>
               <TouchableOpacity onPress={navForgot}>
-                <Text style={{ fontFamily: 'Poppins-Regular', fontSize: 12 }}>
+                <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 12 }}>
                   Forgot Password?
                 </Text>
               </TouchableOpacity>
@@ -141,7 +156,7 @@ export default function Signin(props) {
             </Text>
           </View>
           <View style={styles.signupContainer}>
-            <Text style={{ fontFamily: 'Poppins-Regular', fontSize: 15 }}>
+            <Text style={{ fontFamily: 'Lexend_500Medium', fontSize: 15 }}>
               Don't have an account?
             </Text>
             <TouchableOpacity onPress={navSignup}>
@@ -184,7 +199,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'lexend',
+    fontFamily: 'Lexend_500Medium',
     fontWeight: 500,
     marginBottom: 20,
   },
@@ -223,7 +238,8 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
+    // fontWeight: 'bold',
   },
   forgotContainer: {
     flexDirection: 'row',
@@ -244,7 +260,11 @@ const styles = StyleSheet.create({
   },
   signupText: {
     color: 'red',
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Lexend_500Medium',
+    fontSize: 15,
+  },
+  shareText: {
+    fontFamily: 'Lexend_500Medium',
     fontSize: 15,
   },
 });

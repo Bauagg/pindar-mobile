@@ -7,11 +7,27 @@ import {
   Modal,
   Image,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const EducationDetail = (props) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
   const navEducationComments = () => {
     props.navigation.navigate('EducationComments');
   };
@@ -33,7 +49,7 @@ const EducationDetail = (props) => {
 
       {/* Article */}
       <Image
-        source={{ uri: 'https://via.placeholder.com/300' }}
+        source={require('../../assets/education1.png')}
         style={styles.articleImage}
       />
       <View style={styles.articleContent}>
@@ -70,31 +86,31 @@ const EducationDetail = (props) => {
             <View style={styles.shareOptions}>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="copy-outline" size={24} color="black" />
-                <Text>Copy Link</Text>
+                <Text style={styles.shareText}>Copy Link</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="logo-whatsapp" size={24} color="green" />
-                <Text>WhatsApp</Text>
+                <Text style={styles.shareText}>WhatsApp</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="logo-facebook" size={24} color="blue" />
-                <Text>Facebook</Text>
+                <Text style={styles.shareText}>Facebook</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="logo-messenger" size={24} color="blue" />
-                <Text>Messenger</Text>
+                <Text style={styles.shareText}>Messenger</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="logo-twitter" size={24} color="skyblue" />
-                <Text>Twitter</Text>
+                <Text style={styles.shareText}>Twitter</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="logo-instagram" size={24} color="purple" />
-                <Text>Instagram</Text>
+                <Text style={styles.shareText}>Instagram</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons name="logo-skype" size={24} color="blue" />
-                <Text>Skype</Text>
+                <Text style={styles.shareText}>Skype</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.shareButton}>
                 <Ionicons
@@ -102,7 +118,7 @@ const EducationDetail = (props) => {
                   size={24}
                   color="green"
                 />
-                <Text>Message</Text>
+                <Text style={styles.shareText}>Message</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -152,6 +168,7 @@ const styles = StyleSheet.create({
   articleImage: {
     width: '100%',
     height: 200,
+    resizeMode: 'cover',
   },
   articleContent: {
     padding: 15,
@@ -159,42 +176,50 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 12,
     color: '#888',
+    fontFamily: 'Lexend_400Regular',
   },
   articleTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     marginVertical: 10,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+    paddingRight: 100,
   },
   stat: {
     fontSize: 14,
     color: '#444',
+    fontFamily: 'Lexend_400Regular',
   },
   articleText: {
     fontSize: 14,
     color: '#333',
+    fontFamily: 'Lexend_400Regular',
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
-    width: '80%',
+    width: Dimensions.get('window').width,
+    // height: '60%',
     alignItems: 'center',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     marginBottom: 15,
+    fontFamily: 'Lexend_700Bold',
   },
   shareOptions: {
     flexDirection: 'row',

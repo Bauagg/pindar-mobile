@@ -8,6 +8,14 @@ import {
   Dimensions,
   StyleSheet,
 } from 'react-native';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +41,13 @@ const deals = [
 ];
 
 const PopularDeal = () => {
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
   const renderItem = ({ item }) => (
     <View style={[styles.card, { backgroundColor: item.bgColor }]}>
       <View style={styles.textContainer}>
@@ -79,7 +94,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     color: '#333',
   },
   viewAll: {
@@ -104,15 +120,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     color: '#fff',
+    fontFamily: 'Lexend_400Regular',
   },
   discount: {
     fontSize: 24,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     color: '#fff',
   },
   description: {
     fontSize: 14,
     color: '#fff',
+    fontFamily: 'Lexend_400Regular',
     marginBottom: 10,
   },
   button: {
@@ -124,7 +143,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'Lexend_700Bold',
     color: '#333',
   },
   image: {
