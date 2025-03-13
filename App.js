@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'react-native';
 import MainStackNavigator from './src/navigation';
 import SplashScreen from './src/screen/SplashScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const App = () => {
+const App = (props) => {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {

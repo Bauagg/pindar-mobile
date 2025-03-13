@@ -11,6 +11,14 @@ import {
 } from 'react-native';
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
 import { Row } from 'react-native-table-component';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_900Black,
+} from '@expo-google-fonts/lexend';
 
 const categories = ['All', 'Keuangan', 'Regulasi', 'Keamanan', 'Investasi'];
 
@@ -31,6 +39,13 @@ const articles = [
 
 export default function Education(props) {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_700Bold,
+  });
+  if (!fontsLoaded) {
+    return null;
+  }
 
   const navEducationDetail = () => {
     props.navigation.navigate('EducationDetail');
@@ -71,7 +86,7 @@ export default function Education(props) {
         <TouchableOpacity
           style={{ marginTop: 13 }}
           onPress={navEducationAllTreding}>
-          <Text>Lihat Semua</Text>
+          <Text style={{ fontFamily: 'Lexend_400Regular' }}>Lihat Semua</Text>
         </TouchableOpacity>
       </View>
       <TouchableOpacity
@@ -110,7 +125,7 @@ export default function Education(props) {
         <TouchableOpacity
           style={{ marginTop: 13 }}
           onPress={navEducationAllTerbaru}>
-          <Text>Lihat Semua</Text>
+          <Text style={{ fontFamily: 'Lexend_400Regular' }}>Lihat Semua</Text>
         </TouchableOpacity>
       </View>
 
@@ -179,6 +194,7 @@ const styles = StyleSheet.create({
   trendingImage: { width: '100%', height: 150, borderRadius: 10 },
   trendingTitle: {
     fontSize: 16,
+    lineHeight: 24,
     fontWeight: 'bold',
     marginTop: 5,
     fontFamily: 'Lexend-Regular',
@@ -199,6 +215,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     fontFamily: 'Lexend-Regular',
+    lineHeight: 20,
   },
   underline: {
     height: 2,

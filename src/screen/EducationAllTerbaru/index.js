@@ -4,6 +4,7 @@ import {
   Text,
   FlatList,
   Image,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
@@ -12,7 +13,7 @@ import {
   Lexend_400Regular,
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
-import { Ionicons } from '@expo/vector-icons';
+import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
 
 const articles = [
   {
@@ -48,6 +49,7 @@ const articles = [
 ];
 
 export default function EducationAllTerbaru() {
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
@@ -56,6 +58,7 @@ export default function EducationAllTerbaru() {
   if (!fontsLoaded) {
     return null;
   }
+  const categories = ['All', 'Keuangan', 'Regulasi', 'Keamanan', 'Investasi'];
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer}>
@@ -76,7 +79,47 @@ export default function EducationAllTerbaru() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Terbaru</Text>
+      <View style={{ flexDirection: 'row' }}>
+        <Image
+          source={require('../../assets/loginlogo.png')}
+          style={{
+            width: 50,
+            height: 50,
+            marginRight: 10,
+            resizeMode: 'contain',
+          }}
+        />
+        <View style={styles.searchContainer}>
+          <Entypo
+            name="magnifying-glass"
+            size={20}
+            color="#999"
+            style={styles.searchIcon}
+          />
+          <TextInput placeholder="Search here.." style={styles.searchInput} />
+        </View>
+      </View>
+      <View style={{ paddingHorizontal: 10, paddingTop: 20 }}>
+        <Text style={styles.header}>Terbaru</Text>
+        <View style={styles.categoryContainer}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => setSelectedCategory(category)}>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.activeCategory,
+                ]}>
+                {category}
+              </Text>
+              {selectedCategory === category && (
+                <View style={styles.underline} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
       <FlatList
         data={articles}
         renderItem={renderItem}
@@ -93,6 +136,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingTop: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '85%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  categoryContainer: { flexDirection: 'row', marginVertical: 10 },
+  categoryText: {
+    marginRight: 15,
+    fontSize: 14,
+    color: '#777',
+    fontFamily: 'Lexend-Regular',
+  },
+  activeCategory: { fontWeight: 'bold', color: '#000' },
+  underline: {
+    height: 2,
+    width: 20,
+    backgroundColor: '#1877F2',
+    marginTop: 5,
   },
   header: {
     fontFamily: 'Lexend_700Bold',

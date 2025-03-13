@@ -1,8 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Animated, Image } from 'react-native';
 import Logo from '../../assets/logo_pindar_2.png';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SplashScreen({ navigation }) {
+  useEffect(() => {
+    const checkLogin = async () => {
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log('token', token);
+      if (token) {
+        props.navigation.replace('Home'); // Redirect ke halaman utama jika token ada
+      }
+    };
+
+    checkLogin();
+  }, []);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

@@ -199,7 +199,7 @@ export default function Home(props) {
                   {/* Image */}
                   <Image
                     source={require('../../assets/menu2.png')}
-                    style={styles.image}
+                    style={styles.imageTopRight}
                   />
                   <Text style={styles.text}>Kartu Kredit</Text>
                 </TouchableOpacity>
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     position: 'absolute', // Agar gambar ada di atas gradient
-    top: 30, // Posisikan gambar agar sesuai dengan desain
+    top: 10, // Posisikan gambar agar sesuai dengan desain
     left: 30,
   },
   text: {
@@ -319,7 +319,6 @@ const styles = StyleSheet.create({
   },
   containerTopButtonRight: {
     alignItems: 'center',
-    paddingTop: 20,
   },
   searchResult: {
     padding: 10,

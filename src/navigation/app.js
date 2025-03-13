@@ -263,13 +263,17 @@ export default function AppStackNavigator() {
 
 // Styles
 const styles = StyleSheet.create({
-  shadow: {
+  shadowStyle: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
+    shadowOffset: { width: 0, height: -1000 }, // Bayangan naik ke atas
+    shadowOpacity: 0.5, // Sesuaikan transparansi
+    shadowRadius: 100, // Lebarkan efek bayangan
+    elevation: 20, // Untuk Android
+    backgroundColor: 'white', // Pastikan warna latar belakang sesuai
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
+
   labelContainer: {
     alignItems: 'center',
   },

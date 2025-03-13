@@ -9,9 +9,13 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { Entypo, Ionicons, Feather } from '@expo/vector-icons';
+import { Entypo, Ionicons, Feather, Octicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = (props) => {
+  const { showAlert } = useAlertModal();
   const profile = {
     name: 'Putri Amalia',
     email: 'putriamalia@gmail.com',
@@ -38,13 +42,86 @@ const ProfileScreen = ({ navigation }) => {
     { id: '6', title: 'About Us', screen: 'AboutUs' },
   ];
 
-  const handleLogout = () => {
+  // const handleLogout = () => {
+  //   Alert.alert(
+  //     'Log Out',
+  //     'Are you sure you want to log out?',
+  //     [
+  //       { text: 'Cancel', style: 'cancel' },
+  //       { text: 'Yes', onPress: () => console.log('User logged out') },
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
+
+  const handleLogout = async () => {
+    const username = await AsyncStorage.getItem('username');
+    const password = await AsyncStorage.getItem('password');
+    const token = await AsyncStorage.getItem('accessToken');
+
     Alert.alert(
       'Log Out',
       'Are you sure you want to log out?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Yes', onPress: () => console.log('User logged out') },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              if (!token) {
+                console.warn(
+                  'Token tidak ditemukan, logout tetap dilanjutkan.'
+                );
+              }
+
+              // Panggil API logout dengan email, password, dan token
+              const response = await api.post(
+                '/auth/logout',
+                { email: username, password }, // Body raw JSON
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`, // Kirim token di headers
+                  },
+                }
+              );
+
+              if (response.status === 200) {
+                // Hapus semua data sesi dari AsyncStorage
+                await AsyncStorage.removeItem('accessToken');
+                await AsyncStorage.removeItem('refreshToken');
+                await AsyncStorage.removeItem('username');
+                await AsyncStorage.removeItem('password');
+
+                showAlert('Logout berhasil!', 'success');
+
+                // Redirect ke halaman login
+                props.navigation.replace('AuthScreen');
+              } else {
+                console.error('Logout failed:', response.data);
+                showAlert(response.data.message || 'Logout gagal.', 'error');
+              }
+            } catch (error) {
+              if (error.response) {
+                console.error('Logout failed:', error.response.data);
+                showAlert(
+                  error.response.data.message ||
+                    'Terjadi kesalahan saat logout.',
+                  'error'
+                );
+
+                // Jika token expired (401), langsung hapus token dan logout paksa
+                if (error.response.status === 401) {
+                  await AsyncStorage.removeItem('accessToken');
+                  await AsyncStorage.removeItem('refreshToken');
+                  props.navigation.replace('AuthScreen');
+                }
+              } else {
+                console.error('Logout error:', error);
+                showAlert('Terjadi kesalahan saat logout.', 'error');
+              }
+            }
+          },
+        },
       ],
       { cancelable: false }
     );

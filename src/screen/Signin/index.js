@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -23,14 +23,24 @@ import {
   Lexend_600SemiBold,
   Lexend_900Black,
 } from '@expo-google-fonts/lexend';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Signin(props) {
   const { showAlert } = useAlertModal();
   const [username, setUsername] = useState('');
+  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [isEnabled, setIsEnabled] = useState(false);
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+
+  const toggleSwitch = async () => {
+    setIsEnabled((prev) => {
+      const newState = !prev;
+      AsyncStorage.setItem('rememberMe', JSON.stringify(newState));
+      return newState;
+    });
+  };
 
   const navSignin = () => {
     props.navigation.navigate('Verification');
@@ -41,17 +51,99 @@ export default function Signin(props) {
   const navForgot = () => {
     props.navigation.navigate('ForgotPass');
   };
-  const handleLogin = () => {
-    // Simulasi autentikasi (gantilah dengan API login sesungguhnya)
-    if (username === 'admin' && password === '1234') {
-      showAlert('Login berhasil! Selamat datang.', 'success');
-      setTimeout(() => {
+  useEffect(() => {
+    const checkLogin = async () => {
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log('token', token);
+      if (token) {
+        props.navigation.replace('AppScreen'); // Redirect ke halaman utama jika token ada
+      }
+    };
+
+    checkLogin();
+  }, []);
+  const handleLogin = async () => {
+    setLoading(true); // Aktifkan loading state jika ada
+
+    try {
+      const response = await api.post('/user/sign-in', {
+        email: username, // Gunakan username sebagai email
+        password,
+      });
+
+      if (response.status === 200 && response.data.code === 200) {
+        const { accessToken, refreshToken } = response.data.data;
+
+        if (!accessToken || !refreshToken) {
+          throw new Error('Token tidak ditemukan dalam response.'); // Cegah token kosong
+        }
+
+        try {
+          // Simpan token ke AsyncStorage
+          await AsyncStorage.setItem('accessToken', accessToken);
+          await AsyncStorage.setItem('refreshToken', refreshToken);
+
+          // Jika "Remember Me" aktif, simpan email dan password
+          if (isEnabled) {
+            await AsyncStorage.setItem('rememberedEmail', username);
+            await AsyncStorage.setItem('rememberedPassword', password);
+          } else {
+            await AsyncStorage.removeItem('rememberedEmail');
+            await AsyncStorage.removeItem('rememberedPassword');
+          }
+        } catch (storageError) {
+          console.error('Gagal menyimpan data ke AsyncStorage:', storageError);
+          showAlert('Terjadi kesalahan saat menyimpan data.', 'error');
+          return;
+        }
+
+        showAlert('Login berhasil! Selamat datang.', 'success');
+
+        // Tunggu sebentar agar token benar-benar tersimpan sebelum navigasi
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Navigasi ke halaman berikutnya
         props.navigation.replace('Verification');
-      }, 2000); // Delay untuk transisi
-    } else {
-      showAlert('Username atau password salah.', 'error');
+      } else {
+        showAlert(response.data.message || 'Login gagal.', 'error');
+      }
+    } catch (error) {
+      console.error('Login error:', error.response?.data || error.message);
+      showAlert(
+        error.response?.data?.message || 'Terjadi kesalahan saat login.',
+        'error'
+      );
+    } finally {
+      setLoading(false); // Matikan loading state setelah selesai
     }
   };
+
+  useEffect(() => {
+    const loadRememberedLogin = async () => {
+      const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+      const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+
+      if (savedEmail && savedPassword) {
+        setUsername(savedEmail);
+        setPassword(savedPassword);
+        setIsEnabled(true); // Aktifkan "Remember Me" secara otomatis
+      }
+    };
+
+    loadRememberedLogin();
+  }, []);
+
+  useEffect(() => {
+    const loadRememberMeStatus = async () => {
+      const savedRememberMe = await AsyncStorage.getItem('rememberMe');
+      if (savedRememberMe !== null) {
+        setIsEnabled(JSON.parse(savedRememberMe));
+      }
+    };
+
+    loadRememberMeStatus();
+  }, []);
+
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,

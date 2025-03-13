@@ -9,7 +9,7 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
 import {
   useFonts,
   Lexend_400Regular,
@@ -35,16 +35,25 @@ const EducationDetail = (props) => {
   return (
     <View style={styles.container}>
       {/* Header */}
-
-      {/* Search Bar */}
-      <View style={styles.searchBar}>
-        <Ionicons
-          name="search"
-          size={20}
-          color="#A3A3A3"
-          style={styles.searchIcon}
+      <View style={{ flexDirection: 'row' }}>
+        <Image
+          source={require('../../assets/loginlogo.png')}
+          style={{
+            width: 50,
+            height: 50,
+            marginRight: 10,
+            resizeMode: 'contain',
+          }}
         />
-        <TextInput placeholder="Search here.." style={styles.searchInput} />
+        <View style={styles.searchContainer}>
+          <Entypo
+            name="magnifying-glass"
+            size={20}
+            color="#999"
+            style={styles.searchIcon}
+          />
+          <TextInput placeholder="Search here.." style={styles.searchInput} />
+        </View>
       </View>
 
       {/* Article */}
@@ -137,6 +146,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9F9F9',
+    padding: 15,
   },
   header: {
     flexDirection: 'row',
@@ -150,14 +160,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  searchBar: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFEFEF',
-    borderRadius: 20,
-    margin: 10,
+    width: '85%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
     paddingHorizontal: 10,
-    height: 40,
+    paddingVertical: 8,
   },
   searchIcon: {
     marginRight: 5,
@@ -173,6 +183,7 @@ const styles = StyleSheet.create({
   articleContent: {
     padding: 15,
   },
+
   timestamp: {
     fontSize: 12,
     color: '#888',
