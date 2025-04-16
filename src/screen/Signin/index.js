@@ -73,6 +73,7 @@ export default function Signin(props) {
 
       if (response.status === 200 && response.data.code === 200) {
         const { accessToken, refreshToken } = response.data.data;
+        console.log('INI RESPON LOGIN', response.data.data);
 
         if (!accessToken || !refreshToken) {
           throw new Error('Token tidak ditemukan dalam response.'); // Cegah token kosong
@@ -82,6 +83,8 @@ export default function Signin(props) {
           // Simpan token ke AsyncStorage
           await AsyncStorage.setItem('accessToken', accessToken);
           await AsyncStorage.setItem('refreshToken', refreshToken);
+          await AsyncStorage.setItem('fullName', response.data.data.fullName);
+          await AsyncStorage.setItem('imageLink', response.data.data.imageLink);
 
           // Jika "Remember Me" aktif, simpan email dan password
           if (isEnabled) {
