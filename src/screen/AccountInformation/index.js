@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,22 +13,54 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons, MaterialIcons, Octicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Data input field
-const formFields = [
-  { icon: 'mail', value: 'putriamalia@gmail.com', editable: false },
-  { icon: 'person', value: 'Putri Amalia', editable: true },
-  { icon: 'person-outline', value: 'putri17', editable: true },
-  { icon: 'call', value: '+62 8527654654', editable: true },
-  { icon: 'location', value: 'Menteng, Jakarta Pusat', editable: true },
-];
 
 const AccountInformation = () => {
+  const [dataUser, setDataUser] = useState({});
+  const formFields = dataUser
+    ? [
+        { icon: 'mail', value: dataUser.email, editable: false },
+        { icon: 'person', value: dataUser.fullName, editable: true },
+        { icon: 'person-outline', value: dataUser.userName, editable: true },
+        { icon: 'call', value: dataUser.phoneNumber, editable: true },
+        { icon: 'location', value: dataUser.address, editable: true },
+      ]
+    : [];
+
+  console.log(formFields);
+
+  const [loading, setLoading] = useState(false);
+
   // Fungsi untuk copy ID Member
   const copyToClipboard = async (text) => {
     await Clipboard.setStringAsync(text);
     Alert.alert('Copied', 'Id Member copied to clipboard!');
   };
+
+  useEffect(() => {
+    const getDataUser = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        const response = await api.get(`/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+        setDataUser(response.data.data);
+      } catch (error) {
+        console.error('Gagal mengambil data lenders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDataUser();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -42,7 +74,7 @@ const AccountInformation = () => {
       <View style={styles.profileContainer}>
         <View style={styles.profileImageWrapper}>
           <Image
-            source={require('../../assets/avatar.png')}
+            source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
             style={styles.profileImage}
           />
           <TouchableOpacity style={styles.editIcon}>

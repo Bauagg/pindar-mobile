@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import {
   Lexend_600SemiBold,
   Lexend_900Black,
 } from '@expo-google-fonts/lexend';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window'); // Mendapatkan lebar layar
 
@@ -34,13 +36,12 @@ const data = [
 const PopularPlus = () => {
   const flatListRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [dataBanner, setDataBanner] = useState([]);
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
-  if (!fontsLoaded) {
-    return null;
-  }
 
   const handleScroll = (event) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -49,7 +50,10 @@ const PopularPlus = () => {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={item.image} style={styles.image} />
+      <Image
+        source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
+        style={styles.image}
+      />
       <View style={styles.textContainer}>
         <Text style={styles.smallText}>{item.title}</Text>
         <Text style={styles.bigText}>{item.subtitle}</Text>
@@ -57,12 +61,34 @@ const PopularPlus = () => {
     </View>
   );
 
+  useEffect(() => {
+    const getDataCC = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        const response = await api.get(`/announcement/active`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+        setDataBanner(response.data.data);
+      } catch (error) {
+        console.error('Gagal mengambil data lenders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDataCC();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Popular Plus</Text>
       <FlatList
         ref={flatListRef}
-        data={data}
+        data={dataBanner}
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         horizontal

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dimensions,
   StatusBar,
@@ -29,6 +29,7 @@ import {
 } from '@expo-google-fonts/lexend';
 
 const { width } = Dimensions.get('window');
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Home(props) {
   const [searchText, setSearchText] = useState('');
@@ -37,9 +38,9 @@ export default function Home(props) {
     Lexend_400Regular,
     Lexend_700Bold,
   });
-  if (!fontsLoaded) {
-    return null;
-  }
+  const [imageLink, setImageLink] = useState(null);
+  const [fullName, setFullName] = useState(null);
+  console.log(imageLink);
 
   const navPindarScreen = () => {
     props.navigation.navigate('Pindar');
@@ -74,6 +75,28 @@ export default function Home(props) {
       setFilteredData([]);
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Mengambil imageLink dan menambahkan prefix
+        const link = await AsyncStorage.getItem('imageLink');
+        if (link) {
+          setImageLink(`https://be.pindar.id${link}`);
+        }
+
+        // Mengambil fullName
+        const name = await AsyncStorage.getItem('fullName');
+        if (name) {
+          setFullName(name);
+        }
+      } catch (error) {
+        console.log('Gagal mengambil data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
   return (
     <>
       <StatusBar
@@ -110,11 +133,18 @@ export default function Home(props) {
           {/* Informasi User */}
           <View style={styles.userInfo}>
             <Image
-              source={require('../../assets/avatar.png')}
+              source={
+                imageLink
+                  ? { uri: imageLink }
+                  : require('../../assets/avatar.png')
+              }
               style={styles.avatar}
             />
+
             <View>
-              <Text style={styles.greeting}>Hi Putri!</Text>
+              <Text style={styles.greeting}>
+                Hi {fullName ? fullName : 'Putri'}!
+              </Text>
               <Text style={styles.location}>Jakarta, Indonesia</Text>
             </View>
           </View>

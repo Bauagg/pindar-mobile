@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,30 @@ import { useAlertModal } from '../../contexts/AlertModalContext';
 
 const ProfileScreen = (props) => {
   const { showAlert } = useAlertModal();
+  const [dataUser, setDataUser] = useState({});
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const getDataUser = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        const response = await api.get(`/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+        setDataUser(response.data.data);
+      } catch (error) {
+        console.error('Gagal mengambil data lenders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDataUser();
+  }, []);
+
   const profile = {
     name: 'Putri Amalia',
     email: 'putriamalia@gmail.com',
@@ -95,7 +119,7 @@ const ProfileScreen = (props) => {
                 showAlert('Logout berhasil!', 'success');
 
                 // Redirect ke halaman login
-                props.navigation.replace('AuthScreen');
+                props?.navigation.replace('AuthScreen');
               } else {
                 console.error('Logout failed:', response.data);
                 showAlert(response.data.message || 'Logout gagal.', 'error');
@@ -113,7 +137,7 @@ const ProfileScreen = (props) => {
                 if (error.response.status === 401) {
                   await AsyncStorage.removeItem('accessToken');
                   await AsyncStorage.removeItem('refreshToken');
-                  props.navigation.replace('AuthScreen');
+                  props?.navigation?.replace('AuthScreen');
                 }
               } else {
                 console.error('Logout error:', error);
@@ -156,7 +180,7 @@ const ProfileScreen = (props) => {
           borderRadius: 12,
           marginBottom: 10,
         }}
-        onPress={() => item.screen && navigation.navigate(item.screen)}>
+        onPress={() => item.screen && props?.navigation.navigate(item.screen)}>
         {item.icon && <View style={{ marginRight: 12 }}>{item.icon}</View>}
         <Text style={{ fontSize: 16, color: '#333', flex: 1 }}>
           {item.title}
@@ -195,15 +219,15 @@ const ProfileScreen = (props) => {
                   padding: 4,
                 }}>
                 <Image
-                  source={profile.avatar}
+                  source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
                   style={{ width: 100, height: 100, borderRadius: 50 }}
                 />
               </View>
               <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 10 }}>
-                {profile.name}
+                {dataUser.fullName}
               </Text>
               <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                {profile.email}
+                {dataUser.email}
               </Text>
               <Text
                 style={{

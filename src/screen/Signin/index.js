@@ -63,49 +63,61 @@ export default function Signin(props) {
     checkLogin();
   }, []);
   const handleLogin = async () => {
-    setLoading(true); // Aktifkan loading state jika ada
-
+    setLoading(true);
     try {
       const response = await api.post('/user/sign-in', {
-        email: username, // Gunakan username sebagai email
+        email: username,
         password,
       });
 
       if (response.status === 200 && response.data.code === 200) {
-        const { accessToken, refreshToken } = response.data.data;
-        console.log('INI RESPON LOGIN', response.data.data);
+        const {
+          accessToken,
+          refreshToken,
+          fullName,
+          imageLink,
+          accessTokenExpiryTime,
+          refreshTokenExpiryTime,
+          ...rest
+        } = response.data.data;
 
         if (!accessToken || !refreshToken) {
-          throw new Error('Token tidak ditemukan dalam response.'); // Cegah token kosong
+          throw new Error('Token tidak ditemukan dalam response.');
         }
 
-        try {
-          // Simpan token ke AsyncStorage
-          await AsyncStorage.setItem('accessToken', accessToken);
-          await AsyncStorage.setItem('refreshToken', refreshToken);
-          await AsyncStorage.setItem('fullName', response.data.data.fullName);
-          await AsyncStorage.setItem('imageLink', response.data.data.imageLink);
+        // Simpan data ke AsyncStorage
+        await AsyncStorage.setItem('accessToken', accessToken);
+        await AsyncStorage.setItem('refreshToken', refreshToken);
+        await AsyncStorage.setItem('fullName', fullName || '');
+        await AsyncStorage.setItem('imageLink', imageLink || '');
+        await AsyncStorage.setItem(
+          'accessTokenExpiryTime',
+          accessTokenExpiryTime?.toString() || ''
+        );
+        await AsyncStorage.setItem(
+          'refreshTokenExpiryTime',
+          refreshTokenExpiryTime?.toString() || ''
+        );
 
-          // Jika "Remember Me" aktif, simpan email dan password
-          if (isEnabled) {
-            await AsyncStorage.setItem('rememberedEmail', username);
-            await AsyncStorage.setItem('rememberedPassword', password);
+        // Simpan data tambahan jika ada
+        for (const key in rest) {
+          if (typeof rest[key] === 'string') {
+            await AsyncStorage.setItem(key, rest[key]);
           } else {
-            await AsyncStorage.removeItem('rememberedEmail');
-            await AsyncStorage.removeItem('rememberedPassword');
+            await AsyncStorage.setItem(key, JSON.stringify(rest[key]));
           }
-        } catch (storageError) {
-          console.error('Gagal menyimpan data ke AsyncStorage:', storageError);
-          showAlert('Terjadi kesalahan saat menyimpan data.', 'error');
-          return;
+        }
+
+        if (isEnabled) {
+          await AsyncStorage.setItem('rememberedEmail', username);
+          await AsyncStorage.setItem('rememberedPassword', password);
+        } else {
+          await AsyncStorage.removeItem('rememberedEmail');
+          await AsyncStorage.removeItem('rememberedPassword');
         }
 
         showAlert('Login berhasil! Selamat datang.', 'success');
-
-        // Tunggu sebentar agar token benar-benar tersimpan sebelum navigasi
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        // Navigasi ke halaman berikutnya
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         props.navigation.replace('Verification');
       } else {
         showAlert(response.data.message || 'Login gagal.', 'error');
@@ -117,7 +129,7 @@ export default function Signin(props) {
         'error'
       );
     } finally {
-      setLoading(false); // Matikan loading state setelah selesai
+      setLoading(false);
     }
   };
 

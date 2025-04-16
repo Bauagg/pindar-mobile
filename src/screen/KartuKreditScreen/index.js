@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,16 @@ import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Picker } from '@react-native-picker/picker';
 import FilterModalKartu from './FilterModalKartu';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KartuKreditScreen = (props) => {
   const [activeTab, setActiveTab] = useState('Semua');
   const [selectedIssuer, setSelectedIssuer] = useState('Semua');
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [dataCC, setDataCC] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const tabs = ['Semua', 'Premium', 'First Card'];
   const issuers = ['Semua', 'BCA', 'BNI', 'Mandiri'];
@@ -63,23 +67,23 @@ const KartuKreditScreen = (props) => {
 
   const renderItem = ({ item }) => {
     const isChecked = selectedItems.some((selected) => selected.id === item.id);
-
+    console.log('Image link:', item);
     return (
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.cardHeader}>
           <View>
             <Image
-              source={item.logo}
+              source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
               style={styles.logo}
               resizeMode="contain"
             />
           </View>
           <View>
-            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardTitle}>{item.title}</Text>
             {/* Biaya dan Benefit */}
             <Text style={styles.cardFee}>
-              Rp {item.fee.toLocaleString('id-ID')}
+              Rp {item.yearlyFee.toLocaleString('id-ID')}
             </Text>
             <Text style={styles.cardBenefit}>{item.benefit}</Text>
           </View>
@@ -89,12 +93,12 @@ const KartuKreditScreen = (props) => {
 
         {/* Fitur */}
         <Text style={styles.featureTitle}>Fitur</Text>
-        {item.features.map((feature, index) => (
+        {/* {item.features.map((feature, index) => (
           <View key={index} style={styles.featureItem}>
             <FontAwesome name="check-circle" size={16} color="#34C759" />
             <Text style={styles.featureText}>{feature}</Text>
           </View>
-        ))}
+        ))} */}
 
         {/* Tombol Lihat Detail */}
         <TouchableOpacity style={styles.detailButton}>
@@ -126,6 +130,30 @@ const KartuKreditScreen = (props) => {
       </View>
     );
   };
+  useEffect(() => {
+    const getDataCC = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        const response = await api.get(
+          `/credit-card/search?featureId=7113c3c7-d046-4824-82e9-d5bcf261495c,f64d11a9-ec99-43a6-a27c-9ab6ef4d73b9&minYearlyFee=0&maxYearlyFee=10000000&sortBy=yearly_fee&sortDirection=asc`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(response.data.data.creditCards); // bisa disimpan ke state juga kalau mau
+        setDataCC(response.data.data.creditCards);
+      } catch (error) {
+        console.error('Gagal mengambil data lenders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDataCC();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -163,7 +191,7 @@ const KartuKreditScreen = (props) => {
         ))}
       </View>
       <FlatList
-        data={data}
+        data={dataCC}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.flatListContainer}

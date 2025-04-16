@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,14 @@ import {
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import FilterModal from './FilterModal';
-
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const PindarScreen = (props) => {
   const [activeTab, setActiveTab] = useState('Semua');
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
-  console.log(isModalVisible);
-
+  const [dataLenders, setDataLenders] = useState([]);
+  console.log('INI DATA LENDERS LURR', dataLenders);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
   const data = [
     {
@@ -48,13 +49,17 @@ const PindarScreen = (props) => {
   };
   const renderItem = ({ item }) => {
     const isChecked = selectedItems.some((selected) => selected.id === item.id);
-
+    console.log('Image link:', item);
     return (
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.cardHeader}>
-          <Image source={item.logo} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.cardTitle}>{item.name}</Text>
+          <Image
+            source={{ uri: `https://be.pindar.id${item.imagelink}` }}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.cardTitle}>{item.lendername}</Text>
         </View>
 
         <View style={styles.divider} />
@@ -62,12 +67,12 @@ const PindarScreen = (props) => {
         {/* Content */}
         <View style={{ alignSelf: 'center' }}>
           <Text style={styles.cardSubtitle}>Maksimal Pinjaman</Text>
-          <Text style={styles.cardAmount}>{item.amount}</Text>
+          <Text style={styles.cardAmount}>{item.maxloan}</Text>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.cardSubtitle}>Maksimal Lama Pinjam</Text>
-          <Text style={styles.cardDuration}>{item.duration}</Text>
+          <Text style={styles.cardDuration}>{item.maxtenor}</Text>
         </View>
 
         {/* Detail Button */}
@@ -99,7 +104,31 @@ const PindarScreen = (props) => {
       </View>
     );
   };
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const getDataLenders = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        const response = await api.get(
+          `/lender/list?limit=5&offset=0&search=fin&sortBy=maxloan&sortDirection=desc&loanType=LOAN_TYPE_1&paymentType=PAYMENT_TYPE_1`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(response.data); // bisa disimpan ke state juga kalau mau
+        setDataLenders(response.data.data.lenders);
+      } catch (error) {
+        console.error('Gagal mengambil data lenders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    getDataLenders();
+  }, []);
   return (
     <View style={styles.container}>
       {/* Tab Filter */}
@@ -126,7 +155,7 @@ const PindarScreen = (props) => {
 
       {/* FlatList untuk daftar kartu */}
       <FlatList
-        data={data}
+        data={dataLenders}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.flatListContainer}
