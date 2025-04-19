@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import {
@@ -13,10 +14,15 @@ import {
   Lexend_400Regular,
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Font from 'expo-font';
 // import AppLoading from 'expo-app-loading';
 
-export default function Notifikasi({ navigation }) {
+export default function Notifikasi(props) {
+  const [loading, setLoading] = useState(false);
+  const [dataNotif, setDataNotif] = useState([]);
+  console.log(dataNotif)
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
@@ -41,9 +47,30 @@ export default function Notifikasi({ navigation }) {
     },
   ]);
 
-  const deleteNotification = (id) => {
-    setNotifications(notifications.filter((item) => item.id !== id));
+  const deleteNotification = async (id) => {
+    try {
+      console.log("INI ID DELETE", id);
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+  
+      const response = await api.delete(`/notification/delete/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      Alert.alert('Sukses', 'Notifikasi berhasil dihapus');
+      getnotification();
+      // (Opsional) refresh data notifikasi setelah delete
+      // await fetchNotifications(); 
+    } catch (error) {
+      console.log('Delete error:', error);
+      Alert.alert('Gagal', 'Terjadi kesalahan saat menghapus notifikasi');
+    } finally {
+      setLoading(false);
+    }
   };
+  
 
   const renderItem = ({ item }) => (
     <View style={styles.notificationCard}>
@@ -53,7 +80,7 @@ export default function Notifikasi({ navigation }) {
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.message}>{item.message}</Text>
+        <Text style={styles.message}>{item.detail}</Text>
         <Text style={styles.date}>
           {item.date}, <Text style={styles.daysAgo}>{item.daysAgo}</Text>
         </Text>
@@ -63,12 +90,35 @@ export default function Notifikasi({ navigation }) {
       </TouchableOpacity>
     </View>
   );
+  const getnotification = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const response = await api.get(
+        `/notification/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response.data.data.notifications); // bisa disimpan ke state juga kalau mau
+      await setDataNotif(response.data.data.notifications);
+    } catch (error) {
+      console.error('Gagal mengambil data lenders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    getnotification();
+  }, []);
 
   return (
     <View style={styles.container}>
       <StatusBar translucent={true} backgroundColor={'transparent'} />
       <FlatList
-        data={notifications}
+        data={dataNotif}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ItemSeparatorComponent={() => <View style={styles.separator} />}

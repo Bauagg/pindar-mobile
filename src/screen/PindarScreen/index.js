@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
@@ -13,12 +14,51 @@ import FilterModal from './FilterModal';
 import api from '../../utils/axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const PindarScreen = (props) => {
-  const [activeTab, setActiveTab] = useState('Semua');
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataLenders, setDataLenders] = useState([]);
-  console.log('INI DATA LENDERS LURR', dataLenders);
+  console.log("ini data lende", dataLenders);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
+const [activeTab, setActiveTab] = useState('Semua');
+const [paymentType, setPaymentType] = useState('');
+const getDataLenders = async (paymtype) => {
+  try {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('token');
+    const response = await api.get(
+      `/lender/list?limit=5&offset=0&search=fin&sortBy=maxloan&sortDirection=desc&loanType=LOAN_TYPE_1&paymentType=${paymtype}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log(response.data); // bisa disimpan ke state juga kalau mau
+    await setDataLenders(response.data.data.lenders);
+  } catch (error) {
+    console.error('Gagal mengambil data lenders:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+useEffect(() => {
+  getDataLenders();
+}, []);
+
+const handleTabPress = (tab) => {
+  setActiveTab(tab);
+
+  let paymtype = '';
+
+  if (tab === 'Sekali bayar') {
+    paymtype = 'PAYMENT_TYPE_1';
+  } else if (tab === 'Cicilan') {
+    paymtype = 'PAYMENT_TYPE_2';
+  }
+
+  setPaymentType(paymtype);
+  getDataLenders(paymtype); // panggil fungsi setelah menentukan tipe
+};
   const data = [
     {
       id: '1',
@@ -67,12 +107,15 @@ const PindarScreen = (props) => {
         {/* Content */}
         <View style={{ alignSelf: 'center' }}>
           <Text style={styles.cardSubtitle}>Maksimal Pinjaman</Text>
-          <Text style={styles.cardAmount}>{item.maxloan}</Text>
+          <Text style={styles.cardAmount}>
+  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.maxloan)}
+</Text>
+
         </View>
 
         <View style={styles.row}>
           <Text style={styles.cardSubtitle}>Maksimal Lama Pinjam</Text>
-          <Text style={styles.cardDuration}>{item.maxtenor}</Text>
+          <Text style={styles.cardDuration}>{item.maxtenor} {""} Bulan</Text>
         </View>
 
         {/* Detail Button */}
@@ -105,61 +148,46 @@ const PindarScreen = (props) => {
     );
   };
   const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const getDataLenders = async () => {
-      try {
-        setLoading(true);
-        const token = await AsyncStorage.getItem('token');
-        const response = await api.get(
-          `/lender/list?limit=5&offset=0&search=fin&sortBy=maxloan&sortDirection=desc&loanType=LOAN_TYPE_1&paymentType=PAYMENT_TYPE_1`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log(response.data); // bisa disimpan ke state juga kalau mau
-        setDataLenders(response.data.data.lenders);
-      } catch (error) {
-        console.error('Gagal mengambil data lenders:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getDataLenders();
-  }, []);
+ 
   return (
     <View style={styles.container}>
       {/* Tab Filter */}
       <View style={styles.filterContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={styles.filterWrapper}>
-            {activeTab === tab ? (
-              <LinearGradient
-                colors={['#CC1C22', '#F86469']}
-                style={styles.activeFilter}>
-                <Text style={styles.filterTextActive}>{tab}</Text>
-              </LinearGradient>
-            ) : (
-              <View style={styles.filterButton}>
-                <Text style={styles.filterText}>{tab}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
+  {tabs.map((tab) => (
+    <TouchableOpacity
+      key={tab}
+      onPress={() => handleTabPress(tab)}
+      style={styles.filterWrapper}>
+      {activeTab === tab ? (
+        <LinearGradient
+          colors={['#CC1C22', '#F86469']}
+          style={styles.activeFilter}>
+          <Text style={styles.filterTextActive}>{tab}</Text>
+        </LinearGradient>
+      ) : (
+        <View style={styles.filterButton}>
+          <Text style={styles.filterText}>{tab}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  ))}
+</View>
+
 
       {/* FlatList untuk daftar kartu */}
-      <FlatList
-        data={dataLenders}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.flatListContainer}
-      />
+      {loading ? (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color="#CC1C22" />
+  </View>
+) : (
+  <FlatList
+    data={dataLenders}
+    renderItem={renderItem}
+    keyExtractor={(item) => item.id}
+    contentContainerStyle={styles.flatListContainer}
+  />
+)}
+
 
       {selectedItems.length > 0 && (
         <TouchableOpacity
@@ -184,6 +212,7 @@ const PindarScreen = (props) => {
       )}
 
       {/* Floating Button */}
+      {!loading &&(
       <TouchableOpacity onPress={() => setModalVisible(true)}>
         <LinearGradient
           colors={['#CC1C22', '#F86469']}
@@ -197,6 +226,7 @@ const PindarScreen = (props) => {
           <Text style={styles.filterFloatingText}>FILTER</Text>
         </LinearGradient>
       </TouchableOpacity>
+      )}
       <FilterModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
