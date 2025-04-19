@@ -25,6 +25,7 @@ import {
 } from '@expo-google-fonts/lexend';
 import api from '../../utils/axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import forge from 'node-forge';
 
 export default function Signin(props) {
   const { showAlert } = useAlertModal();
@@ -33,6 +34,15 @@ export default function Signin(props) {
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [isEnabled, setIsEnabled] = useState(false);
+  const publicKeyPem = `-----BEGIN PUBLIC KEY-----
+  MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBwrdNYWYfiIIKi4l/H3LUQ
+  c+JJ7MUVyXNu+apYt5v+CzAwNw7rdJoCUqhE/eeHOOHfx7flu1UTa0fH8xNG2MVY
+  pCkz8RqaTgGURj61VoTdBmR0BeBZHYP2dXa7lNV2CC9VlBMuR6pbZ3o6d9Pcieip
+  jUZUPAX6xbZxhFbOivKlt3YNBg+h28TpzOwHbOoUmooS6QYqEt11/+HQbjgRg9r3
+  6vhoYfVoax70u/YV1fjcQsp4UHJ4GXMoX+XXF21CxmbPtmxBs0UUHvrqRyYzPRit
+  6IOPSL2y7UScc4M3Ob0uNLEDS+BwS5MO0r1fazLQZ6w/+H8GEdK1JJ/TO1OCX08Z
+  AgMBAAE=
+  -----END PUBLIC KEY-----`;
 
   const toggleSwitch = async () => {
     setIsEnabled((prev) => {
@@ -40,6 +50,13 @@ export default function Signin(props) {
       AsyncStorage.setItem('rememberMe', JSON.stringify(newState));
       return newState;
     });
+  };
+  const encryptPassword = (password) => {
+    const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
+    const encrypted = publicKey.encrypt(password, 'RSA-OAEP', {
+      md: forge.md.sha1.create(), // OAEP pakai SHA-1, sesuai default di Node.js
+    });
+    return forge.util.encode64(encrypted); // base64
   };
 
   const navSignin = () => {
@@ -64,10 +81,12 @@ export default function Signin(props) {
   }, []);
   const handleLogin = async () => {
     setLoading(true);
+    const encryptedPassword = encryptPassword(password); // 🔐 Enkripsi pakai node-forge
+      console.log('Encrypted Password:', encryptedPassword);
     try {
       const response = await api.post('/user/sign-in', {
         email: username,
-        password,
+        password: encryptedPassword,
       });
 
       if (response.status === 200 && response.data.code === 200) {

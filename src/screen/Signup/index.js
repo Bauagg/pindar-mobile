@@ -6,85 +6,169 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Entypo, Ionicons, Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
+import forge from 'node-forge';
 
 export default function Signup(props) {
+  const { showAlert } = useAlertModal();
   const [fullname, setFullname] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const publicKeyPem = `-----BEGIN PUBLIC KEY-----
+MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBwrdNYWYfiIIKi4l/H3LUQ
+c+JJ7MUVyXNu+apYt5v+CzAwNw7rdJoCUqhE/eeHOOHfx7flu1UTa0fH8xNG2MVY
+pCkz8RqaTgGURj61VoTdBmR0BeBZHYP2dXa7lNV2CC9VlBMuR6pbZ3o6d9Pcieip
+jUZUPAX6xbZxhFbOivKlt3YNBg+h28TpzOwHbOoUmooS6QYqEt11/+HQbjgRg9r3
+6vhoYfVoax70u/YV1fjcQsp4UHJ4GXMoX+XXF21CxmbPtmxBs0UUHvrqRyYzPRit
+6IOPSL2y7UScc4M3Ob0uNLEDS+BwS5MO0r1fazLQZ6w/+H8GEdK1JJ/TO1OCX08Z
+AgMBAAE=
+-----END PUBLIC KEY-----`;
+const encryptPassword = (password) => {
+  const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
+  const encrypted = publicKey.encrypt(password, 'RSA-OAEP', {
+    md: forge.md.sha1.create(), // OAEP pakai SHA-1, sesuai default di Node.js
+  });
+  return forge.util.encode64(encrypted); // base64
+};
+  
 
   const toggleSecureText = () => setSecureText(!secureText);
   const navigateSignin = () => props.navigation.navigate('Signin');
-  const navigateHome = () => props.navigation.replace('AppScreen');
+  
+  const navigateVerif = () => props.navigation.navigate('Verification', {
+  fullName: fullname,
+  email: email,
+  phoneNumber: phone,
+  password: password,
+});
+
+
+
+  const handleSignup = async () => {
+    if (!fullname || !email || !phone || !password || !confirmPassword) {
+      showAlert('Semua field harus diisi.', 'error');
+      return;
+    }
+  
+    if (password !== confirmPassword) {
+      showAlert('Password dan Konfirmasi Password tidak sama.', 'error');
+      return;
+    }
+  
+    try {
+      setLoading(true);
+  
+      const encryptedPassword = encryptPassword(password); // 🔐 Enkripsi pakai node-forge
+      console.log('Encrypted Password:', encryptedPassword);
+  
+      const response = await api.post('/user/sign-up', {
+        fullName: fullname,
+        email: email,
+        phoneNumber: phone,
+        password: encryptedPassword,
+      });
+  
+      showAlert(response?.data?.message, 'success');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      navigateVerif();
+    } catch (error) {
+      console.log(error.response?.data);
+      showAlert(
+        error.response?.data?.message || 'Terjadi kesalahan saat signup.',
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   return (
     <>
       <StatusBar translucent backgroundColor="transparent" />
-      <View style={styles.container}>
-        <View style={styles.headerSection}>
-          <Text style={styles.title}>Sign up</Text>
-          <View style={styles.inputColumn}>
-            <InputField
-              icon="person-outline"
-              placeholder="Fullname"
-              value={fullname}
-              onChangeText={setFullname}
-            />
-            <InputField
-              icon="mail-outline"
-              placeholder="Email Address"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <InputField
-              icon="call-outline"
-              placeholder="Phone Number"
-              value={phone}
-              onChangeText={setPhone}
-            />
-            <PasswordField
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureText={secureText}
-              toggleSecureText={toggleSecureText}
-            />
-            <PasswordField
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureText={secureText}
-              toggleSecureText={toggleSecureText}
-            />
-          </View>
-        </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <View style={styles.container}>
+              <View style={styles.headerSection}>
+                <Text style={styles.title}>Sign up</Text>
+                <View style={styles.inputColumn}>
+                  <InputField
+                    icon="person-outline"
+                    placeholder="Fullname"
+                    value={fullname}
+                    onChangeText={setFullname}
+                  />
+                  <InputField
+                    icon="mail-outline"
+                    placeholder="Email Address"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                  <InputField
+                    icon="call-outline"
+                    placeholder="Phone Number"
+                    value={phone}
+                    onChangeText={setPhone}
+                  />
+                  <PasswordField
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureText={secureText}
+                    toggleSecureText={toggleSecureText}
+                  />
+                  <PasswordField
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureText={secureText}
+                    toggleSecureText={toggleSecureText}
+                  />
+                </View>
+              </View>
 
-        <View style={styles.footerSection}>
-          <TouchableOpacity
-            onPress={navigateHome}
-            style={styles.buttonContainer}>
-            <LinearGradient
-              colors={['#CC1C22', '#F86469']}
-              start={{ x: 0.5, y: 1 }} // Mulai dari atas
-              end={{ x: 0.5, y: 0 }} // Berakhir di bawah
-              style={styles.button}>
-              <Text style={styles.buttonText}>CONTINUE</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <View style={styles.signupContainer}>
-            <Text>Already have an account? </Text>
-            <TouchableOpacity onPress={navigateSignin}>
-              <Text style={styles.signupText}> Signin</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+              <View style={styles.footerSection}>
+                <TouchableOpacity
+                  onPress={handleSignup}
+                  style={styles.buttonContainer}
+                  disabled={loading}>
+                  <LinearGradient
+                    colors={['#CC1C22', '#F86469']}
+                    start={{ x: 0.5, y: 1 }}
+                    end={{ x: 0.5, y: 0 }}
+                    style={styles.button}>
+                    <Text style={styles.buttonText}>
+                      {loading ? 'LOADING...' : 'CONTINUE'}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                <View style={styles.signupContainer}>
+                  <Text>Already have an account? </Text>
+                  <TouchableOpacity onPress={navigateSignin}>
+                    <Text style={styles.signupText}>Signin</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </>
   );
 }
@@ -129,11 +213,11 @@ const PasswordField = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: 'white',
+    justifyContent: 'space-between',
   },
   headerSection: {
-    flex: 1,
     backgroundColor: 'white',
     paddingVertical: 20,
     paddingHorizontal: 35,
@@ -164,9 +248,8 @@ const styles = StyleSheet.create({
     height: 40,
   },
   footerSection: {
-    flex: 2,
-    paddingTop: 180,
     paddingHorizontal: 50,
+    paddingBottom: 40,
     alignItems: 'center',
   },
   button: {

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -9,10 +9,50 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
 
 export default function Verification(props) {
+  const { showAlert } = useAlertModal();
   const [otp, setOtp] = useState(['', '', '', '']);
+   const [loading, setLoading] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(30);
+const [isResendDisabled, setIsResendDisabled] = useState(true);
   const inputRefs = [useRef(), useRef(), useRef(), useRef()];
+  const { fullName, email, phoneNumber, password } = props.route.params;
+
+  const maskEmail = (email) => {
+    const [name, domain] = email.split('@');
+    const maskedName =
+      name.length <= 2
+        ? name[0] + '*'.repeat(name.length - 1)
+        : name[0] + '*'.repeat(name.length - 2) + name.slice(-1);
+  
+    return `${maskedName}@${domain}`;
+  };
+  
+  const handleResendCode = async () => {
+    try {
+      setLoading(true);
+      const response = await api.post('/user/sign-up', {
+        fullName,
+        email,
+        phoneNumber,
+        password,
+      });
+      showAlert(response?.data?.message || 'Kode OTP dikirim ulang.', 'success');
+      setSecondsLeft(30); // 🔁 Reset timer setelah resend
+    } catch (error) {
+      console.log(error.response?.data);
+      showAlert(
+        error.response?.data?.message || 'Gagal mengirim ulang kode OTP.',
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   const handleChange = (text, index) => {
     if (text.length > 1) {
@@ -36,6 +76,56 @@ export default function Verification(props) {
   const navHome = () => {
     props.navigation.replace('AppScreen');
   };
+  useEffect(() => {
+    let interval = null;
+  
+    if (secondsLeft > 0) {
+      setIsResendDisabled(true);
+      interval = setInterval(() => {
+        setSecondsLeft((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setIsResendDisabled(false);
+      clearInterval(interval);
+    }
+  
+    return () => clearInterval(interval);
+  }, [secondsLeft]);
+
+
+  const handleVerifyOtp = async () => {
+    const fullOtp = otp.join('');
+  console.log("JALNNNN")
+    if (fullOtp.length < 4) {
+      showAlert('Kode OTP belum lengkap.', 'error');
+      return;
+    }
+  
+    try {
+      setLoading(true);
+  
+      const response = await api.post('/user/confirm-otp', {
+        email: email, // ← nanti ini ambil dari props kalau bisa
+        otpCode: fullOtp,
+      });
+  
+      if (response?.data?.success) {
+        showAlert('Verifikasi berhasil!', 'success');
+        props.navigation.navigate('Signin')
+      } else {
+        showAlert('Kode OTP salah. Coba lagi.', 'error');
+      }
+    } catch (error) {
+      console.log(error);
+      showAlert(
+        error.response?.data?.message || 'Terjadi kesalahan saat verifikasi OTP.',
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   return (
     <>
@@ -46,7 +136,7 @@ export default function Verification(props) {
             <Text style={{ fontFamily: 'Manrope', color: '#8F959E' }}>
               We've Sent a Verification Code to
             </Text>
-            <Text>p*******a@gmail.com</Text>
+            <Text>{maskEmail(email)}</Text>
           </View>
         </View>
         <View style={styles.whiteSection}>
@@ -65,7 +155,7 @@ export default function Verification(props) {
               />
             ))}
           </View>
-          <TouchableOpacity onPress={navHome} style={styles.buttonContainer}>
+          <TouchableOpacity onPress={handleVerifyOtp} style={styles.buttonContainer}>
             <LinearGradient
               colors={['#CC1C22', '#F86469']}
               start={{ x: 0.5, y: 1 }} // Mulai dari atas
@@ -75,19 +165,32 @@ export default function Verification(props) {
             </LinearGradient>
           </TouchableOpacity>
           <View style={styles.orContainer}>
-            <View style={{ marginRight: 10 }}>
-              <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 15 }}>
-                Re-send code in
-              </Text>
-            </View>
-            <Text
-              style={{
-                fontFamily: 'Poppins-Medium',
-                fontSize: 15,
-                color: '#CC1C22',
-              }}>
-              0:20
-            </Text>
+            {isResendDisabled ? (
+              <>
+                <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 15 }}>
+                  Kirim ulang dalam{' '}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Poppins-Medium',
+                    fontSize: 15,
+                    color: '#CC1C22',
+                  }}>
+                  0:{secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft}
+                </Text>
+              </>
+            ) : (
+              <TouchableOpacity onPress={handleResendCode}>
+                <Text
+                  style={{
+                    fontFamily: 'Poppins-Medium',
+                    fontSize: 15,
+                    color: '#CC1C22',
+                  }}>
+                  Kirim Ulang Kode
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
