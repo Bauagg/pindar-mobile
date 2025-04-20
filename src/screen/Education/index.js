@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
+import api from '../../utils/axios';
 import { Row } from 'react-native-table-component';
 import {
   useFonts,
@@ -19,8 +21,9 @@ import {
   Lexend_600SemiBold,
   Lexend_900Black,
 } from '@expo-google-fonts/lexend';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const categories = ['All', 'Keuangan', 'Regulasi', 'Keamanan', 'Investasi'];
+
 
 const articles = [
   {
@@ -38,14 +41,15 @@ const articles = [
 ];
 
 export default function Education(props) {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryData, setCategoryData] = useState([]);
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
-  if (!fontsLoaded) {
-    return null;
-  }
+ const [dataContent, setDataContent] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const navEducationDetail = () => {
     props.navigation.navigate('EducationDetail');
@@ -56,6 +60,53 @@ export default function Education(props) {
   const navEducationAllTreding = () => {
     props.navigation.navigate('Education All Treding');
   };
+  const getCategories = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await api.get('/content/content-category', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = response.data.data;
+      setCategories([{ id: null, name: 'All' }, ...result]); // tambahkan 'All'
+      setSelectedCategory(null); // default All
+      getDataEducation(); // ambil semua data
+    } catch (error) {
+      console.log('Error ambil kategori:', error);
+    }
+  };
+  
+  useEffect(() => {
+    getCategories();
+  }, []);
+  
+  
+  const getDataEducation = async (categoryId = null) => {
+    try {
+      console.log('Ambil data konten untuk kategoriId:', categoryId);
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const endpoint = categoryId
+        ? `/content/list?categoryId=${categoryId}`
+        : `/content/list`;
+  
+      const response = await api.get(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("INI data", response.data.data.contents);
+      setDataContent(response.data.data.contents);
+    } catch (error) {
+      console.log("Error ambil konten:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  
+  useEffect(() => {
+    getDataEducation();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -130,43 +181,57 @@ export default function Education(props) {
       </View>
 
       <View style={styles.categoryContainer}>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category}
-            onPress={() => setSelectedCategory(category)}>
-            <Text
-              style={[
-                styles.categoryText,
-                selectedCategory === category && styles.activeCategory,
-              ]}>
-              {category}
-            </Text>
-            {selectedCategory === category && <View style={styles.underline} />}
-          </TouchableOpacity>
-        ))}
-      </View>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id ?? 'all'}
+              onPress={() => {
+                console.log('Klik kategori:', category.name, category.id);
+                setSelectedCategory(category.id);
+                getDataEducation(category.id);
+              }}>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category.id && styles.activeCategory,
+                ]}>
+                {category.name}
+              </Text>
+              {selectedCategory === category.id && <View style={styles.underline} />}
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <FlatList
-        data={articles}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.articleContainer}>
-            <Image source={item.image} style={styles.articleImage} />
-            <View style={styles.articleTextContainer}>
-              <Text style={styles.articleTitle}>{item.title}</Text>
-              <View style={{ flexDirection: 'row', marginTop: 5 }}>
-                <Ionicons
-                  name="time-outline"
-                  size={10}
-                  color="black"
-                  style={{ marginTop: 3, marginRight: 5 }}
-                />
-                <Text style={styles.time}>{item.time}</Text>
-              </View>
-            </View>
+
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4CAF50" />
           </View>
+        ) : (
+          <FlatList
+            data={dataContent}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.articleContainer}>
+                <Image source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}style={styles.articleImage} resizeMode='contain' />
+                <View style={styles.articleTextContainer}>
+                  <Text style={styles.articleTitle}>{item.title}</Text>
+                  <View style={{ flexDirection: 'row', marginTop: 5 }}>
+                    <Ionicons
+                      name="time-outline"
+                      size={10}
+                      color="black"
+                      style={{ marginTop: 3, marginRight: 5 }}
+                    />
+                    <Text style={styles.time}>{item.time}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+            ListFooterComponent={<View style={{marginBottom: 50}}/>}
+          />
         )}
-      />
+
     </View>
   );
 }

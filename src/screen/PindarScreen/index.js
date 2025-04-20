@@ -19,7 +19,7 @@ const PindarScreen = (props) => {
   const [dataLenders, setDataLenders] = useState([]);
   console.log("ini data lende", dataLenders);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
-const [activeTab, setActiveTab] = useState('Semua');
+const [activeTab, setActiveTab] = useState('');
 const [paymentType, setPaymentType] = useState('');
 const getDataLenders = async (paymtype) => {
   try {
@@ -42,8 +42,9 @@ const getDataLenders = async (paymtype) => {
   }
 };
 useEffect(() => {
-  getDataLenders();
-}, []);
+  getDataLenders(paymentType);
+}, [paymentType]);
+
 
 const handleTabPress = (tab) => {
   setActiveTab(tab);
