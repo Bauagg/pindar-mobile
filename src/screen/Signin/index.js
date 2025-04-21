@@ -137,7 +137,7 @@ export default function Signin(props) {
 
         showAlert('Login berhasil! Selamat datang.', 'success');
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        props.navigation.replace('Verification');
+        props.navigation.replace('AppScreen'); 
       } else {
         showAlert(response.data.message || 'Login gagal.', 'error');
       }

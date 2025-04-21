@@ -9,28 +9,45 @@ import {
   StatusBar,
   FlatList,
   Alert,
+  Modal,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons, MaterialIcons, Octicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+
 
 // Data input field
 
 const AccountInformation = () => {
+  const { showAlert } = useAlertModal();
+  const [showPickerModal, setShowPickerModal] = useState(false);
   const [dataUser, setDataUser] = useState({});
-  const formFields = dataUser
-    ? [
-        { icon: 'mail', value: dataUser.email, editable: false },
-        { icon: 'person', value: dataUser.fullName, editable: true },
-        { icon: 'person-outline', value: dataUser.userName, editable: true },
-        { icon: 'call', value: dataUser.phoneNumber, editable: true },
-        { icon: 'location', value: dataUser.address, editable: true },
-      ]
-    : [];
+  console.log("INI DATA USER", dataUser);
+  const [formFields, setFormFields] = useState([]);
 
-  console.log(formFields);
+  useEffect(() => {
+    if (dataUser) {
+      setFormFields([
+        { key: 'email', icon: 'mail', value: dataUser.email, editable: false },
+        { key: 'fullName', icon: 'person', value: dataUser.fullName, editable: true },
+        { key: 'userName', icon: 'person-outline', value: dataUser.userName, editable: true },
+        { key: 'phoneNumber', icon: 'call', value: dataUser.phoneNumber, editable: true },
+        { key: 'address', icon: 'location', value: dataUser.address, editable: true },
+      ]);
+    }
+  }, [dataUser]);
+  
+  const handleInputChange = (text, index) => {
+    const newFields = [...formFields];
+    newFields[index].value = text;
+    setFormFields(newFields);
+  };
+  
+  
 
   const [loading, setLoading] = useState(false);
 
@@ -40,27 +57,152 @@ const AccountInformation = () => {
     Alert.alert('Copied', 'Id Member copied to clipboard!');
   };
 
+  const pickFromGallery = async () => {
+    setShowPickerModal(false);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Izinkan akses galeri terlebih dahulu.');
+      return;
+    }
+  
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+  
+    if (!result.canceled) {
+      const image = result.assets[0];
+      console.log("Dari galeri:", image.uri);
+      await uploadProfile(image); // langsung upload
+    }
+  };
+  
+  const pickFromCamera = async () => {
+    setShowPickerModal(false);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Izinkan akses kamera terlebih dahulu.');
+      return;
+    }
+  
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+  
+    if (!result.canceled) {
+      const image = result.assets[0];
+      console.log("Dari kamera:", image.uri);
+      await uploadProfile(image); // langsung upload
+    }
+  };
+  
+  const getMimeType = (uri) => {
+    if (uri.endsWith('.png')) return 'image/png';
+    if (uri.endsWith('.jpg') || uri.endsWith('.jpeg')) return 'image/jpeg';
+    return 'image/jpeg'; // default
+  };
+
+  const getDataUser = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const response = await api.get(`/user/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+      setDataUser(response.data.data);
+    } catch (error) {
+      console.error('Gagal mengambil data lenders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const getDataUser = async () => {
-      try {
-        setLoading(true);
-        const token = await AsyncStorage.getItem('token');
-        const response = await api.get(`/user/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
-        setDataUser(response.data.data);
-      } catch (error) {
-        console.error('Gagal mengambil data lenders:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     getDataUser();
   }, []);
+
+  const updateProfile = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+  
+      // Buat object payload dari formFields
+      const data = {};
+      formFields.forEach(field => {
+        data[field.key] = field.value;
+      });
+  
+      const response = await api.put('/user/update', data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      showAlert(response.data.message, 'success');
+      getDataUser();
+    } catch (error) {
+      console.log("GAGAL UPDATE", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadProfile = async (image) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+  
+      // Deteksi mime type dari URI (kalau image.mimeType gak ada)
+      const getMimeType = (uri) => {
+        if (uri.endsWith('.png')) return 'image/png';
+        if (uri.endsWith('.jpg') || uri.endsWith('.jpeg')) return 'image/jpeg';
+        return 'image/jpeg'; // default aman
+      };
+  
+      const formData = new FormData();
+      formData.append('file', {
+        uri: image.uri,
+        type: image.mimeType || getMimeType(image.uri), // 👈 ini penting!
+        name: image.fileName || image.name || 'profile.jpg',
+      });
+      formData.append('moduleName', 'user_profile');
+  
+      console.log("KIRIM GABAR GAS", formData._parts); // optional log
+  
+      const response = await api.post('/file/image', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data', // wajib untuk FormData
+        },
+      });
+  
+      console.log('Upload berhasil:', response.data);
+      showAlert(response.data.message, 'success');
+  
+      // Kalau dapet imageId dari server, update profil kamu
+      const imageId = response.data.imageId;
+      if (imageId) {
+        await updateProfile(imageId); // misal kamu mau update user pake imageId
+      }
+  
+    } catch (error) {
+      console.log("GAGAL UPDATE", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  
+  
+  
+  
 
   return (
     <View style={styles.container}>
@@ -77,19 +219,19 @@ const AccountInformation = () => {
             source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
             style={styles.profileImage}
           />
-          <TouchableOpacity style={styles.editIcon}>
+          <TouchableOpacity style={styles.editIcon} onPress={() => setShowPickerModal(true)}>
             <MaterialIcons name="camera-alt" size={18} color="white" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.profileName}>Putri Amalia</Text>
-        <Text style={styles.profileEmail}>putriamalia@gmail.com</Text>
+        <Text style={styles.profileName}>{dataUser?.fullName || ""}</Text>
+        <Text style={styles.profileEmail}>{dataUser?.email || ""}</Text>
       </View>
 
       {/* FlatList untuk Input */}
       <FlatList
         data={formFields}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.inputContainer}>
             <View style={styles.iconWrapper}>
               <Ionicons name={item.icon} size={20} color="#F86469" />
@@ -99,10 +241,12 @@ const AccountInformation = () => {
                 style={styles.input}
                 value={item.value}
                 editable={item.editable}
+                onChangeText={(text) => handleInputChange(text, index)}
               />
             </View>
           </View>
         )}
+        
         ListFooterComponent={() => (
           <>
             {/* Member ID Section - FIXED (Moved Outside FlatList) */}
@@ -124,7 +268,7 @@ const AccountInformation = () => {
                 <Text style={styles.labelText}>Id Member</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={updateProfile}>
               <LinearGradient
                 colors={['#CC1C22', '#F86469']}
                 style={styles.applyGradient}>
@@ -134,6 +278,36 @@ const AccountInformation = () => {
           </>
         )}
       />
+      <Modal
+  visible={showPickerModal}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setShowPickerModal(false)}>
+  <View style={{
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end'
+  }}>
+    <View style={{
+      backgroundColor: 'white',
+      padding: 20,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+    }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Pilih Gambar Dari:</Text>
+      <TouchableOpacity onPress={pickFromCamera} style={{ paddingVertical: 10 }}>
+        <Text style={{ fontSize: 16 }}>📷 Kamera</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={pickFromGallery} style={{ paddingVertical: 10 }}>
+        <Text style={{ fontSize: 16 }}>🖼️ Galeri</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => setShowPickerModal(false)} style={{ paddingVertical: 10 }}>
+        <Text style={{ fontSize: 16, color: 'red' }}>Batal</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
     </View>
   );
 };

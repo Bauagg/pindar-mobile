@@ -18,6 +18,7 @@ const ProfileScreen = (props) => {
   const { showAlert } = useAlertModal();
   const [dataUser, setDataUser] = useState({});
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const getDataUser = async () => {
       try {
@@ -31,7 +32,7 @@ const ProfileScreen = (props) => {
         console.log(response.data.data); // bisa disimpan ke state juga kalau mau
         setDataUser(response.data.data);
       } catch (error) {
-        console.error('Gagal mengambil data lenders:', error);
+        console.error('Gagal mengambil data Profile:', error);
       } finally {
         setLoading(false);
       }

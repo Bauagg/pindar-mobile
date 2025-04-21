@@ -14,13 +14,37 @@ import { Entypo } from '@expo/vector-icons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
 export default function ForgotPass(props) {
   const [username, setUsername] = useState('');
+  const { showAlert } = useAlertModal();
+  const [loading, setLoading] = useState(false);
+
 
   const navSend = () => {
-    props.navigation.replace('SendForgot');
+    props.navigation.replace('Signin');
   };
+
+  const handleForgotPass = async () => {
+    try {
+      setLoading(true);
+      const response = await api.post('/user/forgot-password', {
+        email: username,
+      });
+      showAlert(response.data.message, 'success');
+      props.navigation.navigate('Signin');
+    } catch (error) {
+      setLoading(false);
+      if (error.response?.data?.message) {
+        showAlert(error.response.data.message, 'error');
+      } else {
+        showAlert('Terjadi kesalahan saat mengirim permintaan. Coba lagi nanti.', 'error');
+      }
+      console.log(error);
+    }
+    
+  }
 
   return (
     <>
@@ -49,7 +73,7 @@ export default function ForgotPass(props) {
               onChangeText={setUsername}
             />
           </View>
-          <TouchableOpacity onPress={navSend} style={styles.buttonContainer}>
+          <TouchableOpacity onPress={handleForgotPass} style={styles.buttonContainer}>
             <LinearGradient
               colors={['#CC1C22', '#F86469']}
               start={{ x: 0.5, y: 1 }} // Mulai dari atas
