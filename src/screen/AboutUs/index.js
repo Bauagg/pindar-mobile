@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,39 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Entypo } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const AboutUs = () => {
+  const [loading, setLoading] = useState(false);
+  const [dataAbout, setDataAbout] = useState(false);
   const navigation = useNavigation();
+
+  const getAbout = async () => {
+    try {
+      console.log("JALANNNN")
+      setLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log(token);
+      const response = await api.get(`/parameter/ABOUT_US`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("INI RESPON",response.data.data);
+      setDataAbout(response.data.data);
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setLoading(false);
+    }
+
+  }
+  useEffect(()=> {
+    getAbout();
+  },[]);
 
   return (
     <View style={styles.container}>
@@ -30,11 +60,12 @@ const AboutUs = () => {
           style={styles.logo}
         />
         <Text style={styles.description}>
-          Pindar adalah aplikasi agregasi yang membantu Anda menemukan dan
+          {dataAbout.param_value}
+          {/* Pindar adalah aplikasi agregasi yang membantu Anda menemukan dan
           mengelola pinjaman online serta kartu kredit dalam satu platform.
           Dengan teknologi cerdas, kami menyediakan rekomendasi terbaik sesuai
           kebutuhan finansial Anda, memastikan kemudahan, transparansi, dan
-          keamanan dalam setiap transaksi.
+          keamanan dalam setiap transaksi. */}
         </Text>
         <Text style={styles.version}>Version 1.0</Text>
         <Text style={styles.copyright}>© 2025 - 2026 Pindar</Text>

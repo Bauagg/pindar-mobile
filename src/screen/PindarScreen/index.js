@@ -13,11 +13,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import FilterModal from './FilterModal';
 import api from '../../utils/axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const PindarScreen = (props) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataLenders, setDataLenders] = useState([]);
-  console.log("ini data lende", dataLenders);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
 const [activeTab, setActiveTab] = useState('');
 const [paymentType, setPaymentType] = useState('');
@@ -81,13 +81,20 @@ const handleTabPress = (tab) => {
       const isSelected = prevSelected.some(
         (selected) => selected.id === item.id
       );
+  
+      let newSelected;
       if (isSelected) {
-        return prevSelected.filter((selected) => selected.id !== item.id);
+        newSelected = prevSelected.filter((selected) => selected.id !== item.id);
       } else {
-        return [...prevSelected, item];
+        newSelected = [...prevSelected, item];
       }
+  
+      console.log('Selected IDs:', newSelected.map(i => i.id));
+      return newSelected;
     });
   };
+  
+  
   const renderItem = ({ item }) => {
     const isChecked = selectedItems.some((selected) => selected.id === item.id);
     console.log('Image link:', item);
@@ -193,9 +200,12 @@ const handleTabPress = (tab) => {
       {selectedItems.length > 0 && (
         <TouchableOpacity
           style={styles.overlay}
-          onPress={() =>
-            props.navigation.navigate('Compare', { selectedItems })
-          }>
+          onPress={() => {
+            const selectedIds = selectedItems.map(item => item.id);
+            props.navigation.navigate('Compare', { selectedItems: selectedItems }); // ini benar
+
+          }}
+          >
           <View style={styles.overlayContent}>
             <View style={{ alignItems: 'center', marginRight: 10 }}>
               <Text style={styles.number}>{selectedItems.length}</Text>

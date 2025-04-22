@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,38 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TermsCondition = () => {
+   const [loading, setLoading] = useState(false);
+   const [dataTerms, setDataTerms] = useState({});
+   console.log("INI DATA TERMS", dataTerms);
+   
+   const getDataTerms = async () => {
+    try {
+      console.log("JALANNNN")
+      setLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log(token);
+      const response = await api.get(`/parameter/TERMS_CONDITION`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("INI RESPON",response.data.data);
+      setDataTerms(response.data.data);
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setLoading(false);
+    }
+
+  }
+  useEffect(()=> {
+    getDataTerms();
+  },[]);
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -30,12 +60,13 @@ const TermsCondition = () => {
 
         <Text style={styles.sectionTitle}>1. Pendahuluan</Text>
         <Text style={styles.sectionContent}>
-          Selamat datang di Pindar, aplikasi agregasi pinjaman online dan kartu
+          {dataTerms.param_value}
+          {/* Selamat datang di Pindar, aplikasi agregasi pinjaman online dan kartu
           kredit. Dengan menggunakan aplikasi ini, Anda menyetujui syarat dan
-          ketentuan yang berlaku.
+          ketentuan yang berlaku. */}
         </Text>
 
-        <Text style={styles.sectionTitle}>2. Definisi</Text>
+        {/* <Text style={styles.sectionTitle}>2. Definisi</Text>
         <Text style={styles.sectionContent}>
           • Pindar: Aplikasi yang menyediakan informasi dan perbandingan produk
           pinjaman online serta kartu kredit.
@@ -62,7 +93,7 @@ const TermsCondition = () => {
         <Text style={styles.sectionContent}>
           • Pindar mengutamakan perlindungan data pengguna.
           {'\n'}• Data pribadi digunakan sesuai kebijakan privasi Pindar.
-        </Text>
+        </Text> */}
       </ScrollView>
 
       {/* Button */}

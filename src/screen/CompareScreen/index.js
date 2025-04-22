@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,65 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CompareScreen = (props) => {
+  const selectedItemsid = props?.route?.params?.selectedItems || [];
+  const selectedIds = selectedItemsid.map(item => item.id);
+  console.log("INI ID", selectedIds)
+
+  const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState([]);
+  console.log("INI DATA Detail", details.data);
+
+  const fetchAllDetails = async () => {
+    setLoading(true);
+    console.log("JALANN");
+    try {
+      const token = await AsyncStorage.getItem('token');
+
+      const requests = selectedIds.map((id) =>
+        api.get(`/lender/detail/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      );
+
+      const responses = await Promise.all(requests);
+      const allData = responses.map((res) => res.data);
+
+      setDetails(allData);
+    } catch (error) {
+      console.error('Error fetching details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedIds.length > 0) {
+      fetchAllDetails();
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#00aaff" />
+      </View>
+    );
+  }
+
   const navDetails = () => {
     props.navigation.navigate('Informasi Detail');
   };
+
+
   const selectedItems = [
     {
       id: '1',
@@ -96,14 +148,14 @@ const CompareScreen = (props) => {
           width: Dimensions.get('window').width,
         }}>
         <FlatList
-          data={selectedItems}
+          data={details}
           horizontal
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id || index.toString()}
           contentContainerStyle={styles.logoList}
           renderItem={({ item }) => (
             <View style={styles.logoContainer}>
-              <Image source={item.logo} style={styles.logo} />
-              <Text style={styles.logoText}>{item.name}</Text>
+              <Image source={{ uri: `https://be.pindar.id/api${item.data.imageLink}`}} style={styles.logo} />
+              <Text style={styles.logoText}>{item.data.lenderName}</Text>
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}
                 onPress={navDetails}>

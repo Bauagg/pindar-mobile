@@ -18,6 +18,7 @@ import api from '../../utils/axios';
 import { useAlertModal } from '../../contexts/AlertModalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
 
 
 // Data input field
@@ -28,6 +29,30 @@ const AccountInformation = () => {
   const [dataUser, setDataUser] = useState({});
   console.log("INI DATA USER", dataUser);
   const [formFields, setFormFields] = useState([]);
+
+  const api = axios.create({
+    baseURL: 'https://be.pindar.id/api',
+  });
+  
+  // Tambahkan interceptor di awal
+  api.interceptors.request.use(async (config) => {
+    const { method, url, headers, data } = config;
+    let curl = `curl -X ${method?.toUpperCase()} "${config.baseURL}${url}"`;
+  
+    for (const key in headers) {
+      if (headers[key]) {
+        curl += ` -H "${key}: ${headers[key]}"`;
+      }
+    }
+  
+    if (data) {
+      const body = typeof data === 'object' ? JSON.stringify(data) : data;
+      curl += ` -d '${body}'`;
+    }
+  
+    console.log('\n[DEBUG cURL]:\n', curl, '\n');
+    return config;
+  });
 
   useEffect(() => {
     if (dataUser) {
@@ -109,7 +134,8 @@ const AccountInformation = () => {
   const getDataUser = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log(token)
       const response = await api.get(`/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,

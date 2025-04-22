@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,39 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import api from '../../utils/axios';
+import { useAlertModal } from '../../contexts/AlertModalContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const PrivacyPolicy = () => {
+ const [loading, setLoading] = useState(false);
+ const [dataPrivacy, setDataPrivacy] = useState({});
+ console.log("INI DATA PRIVACY",dataPrivacy);
   const navigation = useNavigation();
+  const getDataTerms = async () => {
+    try {
+      console.log("JALANNNN")
+      setLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log(token);
+      const response = await api.get(`/parameter/PRIVACY_POLICY`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("INI RESPON",response.data.data);
+      setDataPrivacy(response.data.data);
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setLoading(false);
+    }
 
+  }
+  useEffect(()=> {
+    getDataTerms();
+  },[]);
   return (
     <View style={styles.container}>
       {/* <View style={styles.header}>
@@ -28,14 +57,14 @@ const PrivacyPolicy = () => {
         </Text>
 
         <Text style={styles.sectionTitle}>1. Pendahuluan</Text>
-        <Text style={styles.contentText}>
-          Selamat datang di Pindar. Privasi Anda sangat penting bagi kami.
+        <Text style={styles.contentText}>{dataPrivacy.param_value}
+          {/* Selamat datang di Pindar. Privasi Anda sangat penting bagi kami.
           Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan,
           menggunakan, dan melindungi informasi Anda saat menggunakan aplikasi
-          Pindar.
+          Pindar. */}
         </Text>
 
-        <Text style={styles.sectionTitle}>
+        {/* <Text style={styles.sectionTitle}>
           2. Informasi yang Kami Kumpulkan
         </Text>
         <Text style={styles.contentText}>
@@ -69,7 +98,7 @@ const PrivacyPolicy = () => {
         </Text>
         <Text style={styles.listItem}>
           • Mengirimkan notifikasi terkait status pengajuan.
-        </Text>
+        </Text> */}
       </ScrollView>
 
       <TouchableOpacity onPress={() => setModalVisible(true)}>
