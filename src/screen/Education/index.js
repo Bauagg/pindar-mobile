@@ -60,13 +60,15 @@ export default function Education(props) {
   const navEducationAllTreding = () => {
     props.navigation.navigate('Education All Treding');
   };
+
   const getCategories = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
       const response = await api.get('/content/content-category', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const result = response.data.data;
+      const result = response.data.data.categories;
+      console.log("INI RESULT", result);
       setCategories([{ id: null, name: 'All' }, ...result]); // tambahkan 'All'
       setSelectedCategory(null); // default All
       getDataEducation(); // ambil semua data
@@ -212,24 +214,31 @@ export default function Education(props) {
             data={dataContent}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={styles.articleContainer}>
-                <Image source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}style={styles.articleImage} resizeMode='contain' />
-                <View style={styles.articleTextContainer}>
-                  <Text style={styles.articleTitle}>{item.title}</Text>
-                  <View style={{ flexDirection: 'row', marginTop: 5 }}>
-                    <Ionicons
-                      name="time-outline"
-                      size={10}
-                      color="black"
-                      style={{ marginTop: 3, marginRight: 5 }}
-                    />
-                    <Text style={styles.time}>{item.time}</Text>
+              <TouchableOpacity onPress={() => props.navigation.navigate('EducationDetail', { id: item.id })}>
+                <View style={styles.articleContainer}>
+                  <Image
+                    source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
+                    style={styles.articleImage}
+                    resizeMode='contain'
+                  />
+                  <View style={styles.articleTextContainer}>
+                    <Text style={styles.articleTitle}>{item.title}</Text>
+                    <View style={{ flexDirection: 'row', marginTop: 5 }}>
+                      <Ionicons
+                        name="time-outline"
+                        size={10}
+                        color="black"
+                        style={{ marginTop: 3, marginRight: 5 }}
+                      />
+                      <Text style={styles.time}>{item.time}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
-            ListFooterComponent={<View style={{marginBottom: 50}}/>}
+            ListFooterComponent={<View style={{ marginBottom: 50 }} />}
           />
+
         )}
 
     </View>

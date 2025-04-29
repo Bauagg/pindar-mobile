@@ -9,6 +9,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import api from '../../utils/axios';
@@ -21,7 +22,8 @@ const CompareScreen = (props) => {
 
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState([]);
-  console.log("INI DATA Detail", details.data);
+  console.log("INI DATA Detail", JSON.stringify(details, null, 2));
+
 
   const fetchAllDetails = async () => {
     setLoading(true);
@@ -38,7 +40,7 @@ const CompareScreen = (props) => {
       );
 
       const responses = await Promise.all(requests);
-      const allData = responses.map((res) => res.data);
+      const allData = responses.map((res) => res.data.data);
 
       setDetails(allData);
     } catch (error) {
@@ -125,17 +127,17 @@ const CompareScreen = (props) => {
   ];
 
   const tableData = [
-    { title: 'Provider Kartu', key: 'provider' },
-    { title: 'Iuran Tahunan', key: 'annualFee' },
-    { title: 'Biaya tahunan Kartu tambahan', key: 'extraCardFee' },
-    { title: 'Purchase Rate', key: 'purchaseRate' },
-    { title: 'Cashback Rate', key: 'cashbackRate' },
-    { title: 'Biaya penarikan tunai minimum', key: 'withdrawalFee' },
-    { title: 'Denda keterlambatan pembayaran', key: 'lateFee' },
-    { title: 'Penghasilan Minimal', key: 'minimumIncome' },
-    { title: 'Usia maks. pemegang kartu utama', key: 'maxAge' },
-    { title: 'Usia min. pemegang kartu utama', key: 'minAge' },
-    { title: 'Usia min. pemegang kartu tambahan', key: 'minExtraAge' },
+    { title: 'Nama Pinjaman', key: 'lenderName' },
+    { title: 'Plafond', key: 'maxLoan' },
+    { title: 'Maksimal Lama Pinjaman', key: 'maxTenor' },
+    // { title: 'Purchase Rate', key: 'purchaseRate' },
+    // { title: 'Cashback Rate', key: 'cashbackRate' },
+    // { title: 'Biaya penarikan tunai minimum', key: 'withdrawalFee' },
+    // { title: 'Denda keterlambatan pembayaran', key: 'lateFee' },
+    // { title: 'Penghasilan Minimal', key: 'minimumIncome' },
+    // { title: 'Usia maks. pemegang kartu utama', key: 'maxAge' },
+    // { title: 'Usia min. pemegang kartu utama', key: 'minAge' },
+    // { title: 'Usia min. pemegang kartu tambahan', key: 'minExtraAge' },
   ];
 
   return (
@@ -150,15 +152,24 @@ const CompareScreen = (props) => {
         <FlatList
           data={details}
           horizontal
-          keyExtractor={(item, index) => item.id || index.toString()}
+          keyExtractor={(item, index) => `item-${item.id || index}`}
           contentContainerStyle={styles.logoList}
           renderItem={({ item }) => (
             <View style={styles.logoContainer}>
-              <Image source={{ uri: `https://be.pindar.id/api${item.data.imageLink}`}} style={styles.logo} />
-              <Text style={styles.logoText}>{item.data.lenderName}</Text>
+              <Image source={{ uri: `https://be.pindar.id/api${item.imageLink}`}} style={styles.logo} />
+              <Text style={styles.logoText}>{item.lenderName}</Text>
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}
-                onPress={navDetails}>
+                onPress={() => {
+                  if (item.directLink) {
+                    Linking.openURL(item.directLink).catch(err =>
+                      console.error("Gagal membuka link:", err)
+                    );
+                  } else {
+                    console.warn("Link tidak tersedia.");
+                  }
+                }}
+                >
                 <Text style={{ color: 'red', marginRight: 5 }}>
                   Baca Selengkapnya
                 </Text>
@@ -179,10 +190,10 @@ const CompareScreen = (props) => {
 
       <ScrollView horizontal style={{ marginTop: -35 }}>
         <View style={styles.tableContent}>
-          {selectedItems.map((item) => (
-            <View key={item.id} style={styles.tableColumn}>
+          {details.map((item) => (
+            <View key={`column-${item.id || Math.random()}`} style={styles.tableColumn}>
               {tableData.map((row) => (
-                <View key={row.key} style={styles.cell}>
+                <View key={`${item.id}-${row.key}`} style={styles.cell}>
                   <Text style={styles.cellText}>{item[row.key] || '-'}</Text>
                 </View>
               ))}

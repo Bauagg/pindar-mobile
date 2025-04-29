@@ -11,15 +11,34 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../utils/axios';
 import { useAlertModal } from '../../contexts/AlertModalContext';
+import forge from 'node-forge';
 
 export default function Verification(props) {
   const { showAlert } = useAlertModal();
   const [otp, setOtp] = useState(['', '', '', '']);
    const [loading, setLoading] = useState(false);
+   const { fullName, email, phoneNumber, password } = props.route.params;
+
+
+   const publicKeyPem = `-----BEGIN PUBLIC KEY-----
+   MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBwrdNYWYfiIIKi4l/H3LUQ
+   c+JJ7MUVyXNu+apYt5v+CzAwNw7rdJoCUqhE/eeHOOHfx7flu1UTa0fH8xNG2MVY
+   pCkz8RqaTgGURj61VoTdBmR0BeBZHYP2dXa7lNV2CC9VlBMuR6pbZ3o6d9Pcieip
+   jUZUPAX6xbZxhFbOivKlt3YNBg+h28TpzOwHbOoUmooS6QYqEt11/+HQbjgRg9r3
+   6vhoYfVoax70u/YV1fjcQsp4UHJ4GXMoX+XXF21CxmbPtmxBs0UUHvrqRyYzPRit
+   6IOPSL2y7UScc4M3Ob0uNLEDS+BwS5MO0r1fazLQZ6w/+H8GEdK1JJ/TO1OCX08Z
+   AgMBAAE=
+   -----END PUBLIC KEY-----`;
+   const encryptPassword = (password) => {
+     const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
+     const encrypted = publicKey.encrypt(password, 'RSA-OAEP', {
+       md: forge.md.sha1.create(), // OAEP pakai SHA-1, sesuai default di Node.js
+     });
+     return forge.util.encode64(encrypted); // base64
+   };
   const [secondsLeft, setSecondsLeft] = useState(30);
 const [isResendDisabled, setIsResendDisabled] = useState(true);
   const inputRefs = [useRef(), useRef(), useRef(), useRef()];
-  const { fullName, email, phoneNumber, password } = props.route.params;
 
   const maskEmail = (email) => {
     const [name, domain] = email.split('@');
@@ -33,13 +52,18 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
   
   const handleResendCode = async () => {
     try {
+      console.log("JALAANNN")
       setLoading(true);
+      console.log("Password sebelum enkripsi:", password); // cek ini
+      const encryptedPassword = encryptPassword(password);
+      console.log("Encrypted password:", encryptedPassword);
       const response = await api.post('/user/sign-up', {
         fullName,
         email,
         phoneNumber,
-        password,
+        password: encryptedPassword,
       });
+      console.log("respon kirim ulang otp",response);
       showAlert(response?.data?.message || 'Kode OTP dikirim ulang.', 'success');
       setSecondsLeft(30); // 🔁 Reset timer setelah resend
     } catch (error) {

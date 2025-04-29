@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,20 +18,47 @@ import {
   Lexend_600SemiBold,
   Lexend_900Black,
 } from '@expo-google-fonts/lexend';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EducationDetail = (props) => {
+  const {id} = props.route.params;
+  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [dataEducation,setEducation] = useState([]);
+  console.log("INI DATA", dataEducation);
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
-  if (!fontsLoaded) {
-    return null;
-  }
+ 
   const navEducationComments = () => {
     props.navigation.navigate('EducationComments');
   };
 
+const getDataDetail = async () => {
+  try {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('accessToken');
+    console.log("INI TOKEN", token);
+    const response = await api.get(
+      `/content/detail/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log(response.data.data);
+    setEducation(response.data.data);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+  useEffect(() => {
+    getDataDetail();
+  }, []);
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -58,13 +85,13 @@ const EducationDetail = (props) => {
 
       {/* Article */}
       <Image
-        source={require('../../assets/education1.png')}
+        source={{ uri: `https://be.pindar.id/api${dataEducation.imageLink}` }}
         style={styles.articleImage}
       />
       <View style={styles.articleContent}>
         <Text style={styles.timestamp}>4h ago</Text>
         <Text style={styles.articleTitle}>
-          Strategi Cerdas Mengelola Pinjaman Online Agar Tak Merugikan
+          {dataEducation.title || ""}
         </Text>
         <View style={styles.statsContainer}>
           <TouchableOpacity onPress={navEducationComments}>
@@ -82,8 +109,7 @@ const EducationDetail = (props) => {
           </TouchableOpacity>
         </View>
         <Text style={styles.articleText}>
-          Pinjaman online (pinjol) semakin populer karena kemudahannya dalam
-          memberikan akses dana cepat... (selengkapnya)
+          {dataEducation.contentDetail}
         </Text>
       </View>
 

@@ -61,6 +61,30 @@ const PopularPlus = () => {
     </View>
   );
 
+  const refreshAccessToken = async () => {
+    const refreshToken = await AsyncStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      alert('Refresh token tidak ditemukan. Silakan login kembali.');
+      return null;
+    }
+  
+    try {
+      const response = await api.post('/auth/refresh', { refreshToken });
+      if (response.code === 200) {
+        const newAccessToken = response.data.accessToken;
+        await AsyncStorage.setItem('accessToken', newAccessToken); // Simpan access token baru
+        return newAccessToken;
+      } else {
+        alert('Gagal mendapatkan token baru. Silakan login kembali.');
+        return null;
+      }
+    } catch (error) {
+      console.error('Gagal refresh token:', error);
+      return null;
+    }
+  };
+  
+
   useEffect(() => {
     const getDataCC = async () => {
       try {
@@ -74,7 +98,7 @@ const PopularPlus = () => {
         console.log(response.data.data); // bisa disimpan ke state juga kalau mau
         setDataBanner(response.data.data);
       } catch (error) {
-        console.error('Gagal mengambil data lenders:', error);
+        console.error('Gagal mengambil data lenders:', error.message);
       } finally {
         setLoading(false);
       }

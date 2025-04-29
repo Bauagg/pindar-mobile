@@ -2,13 +2,24 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
-const FilterModal = ({ visible, onClose }) => {
+const FilterModal = ({ visible, onClose, onApply}) => {
   const [selectedFilters, setSelectedFilters] = useState([]);
 
+  const toggleFilter = (id) => {
+    const newFilters = selectedFilters.includes(id)
+      ? selectedFilters.filter((item) => item !== id)
+      : [...selectedFilters, id];
+
+    setSelectedFilters(newFilters);
+    if (onApply) {
+      onApply(newFilters); // otomatis kirim ke parent
+    }
+  };
+
   const filters = [
-    { id: 'all', label: 'Semua' },
-    { id: 'range_1', label: 'Rp 0 - 1,000,000' },
-    { id: 'range_2', label: 'Lebih dari Rp1,000,000' },
+    { id: '', label: 'Semua' },
+    { id: 'LOAN_TYPE_1', label: 'Kurang dari 1 Juta' },
+    { id: 'LOAN_TYPE_2', label: '0 - 1 Juta' },
   ];
 
   const loanTypes = [
@@ -23,11 +34,7 @@ const FilterModal = ({ visible, onClose }) => {
     { id: 'highest', label: 'Plafond Tertinggi' },
   ];
 
-  const toggleFilter = (id) => {
-    setSelectedFilters((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
+
 
   const selectAll = () => {
     if (

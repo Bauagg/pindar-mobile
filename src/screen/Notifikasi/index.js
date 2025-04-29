@@ -50,6 +50,7 @@ export default function Notifikasi(props) {
   const deleteNotification = async (id) => {
     try {
       console.log("INI ID DELETE", id);
+      console.log("FUNCTION DELETE JALAN");
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
   

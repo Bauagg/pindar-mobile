@@ -1,23 +1,28 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated, Image } from 'react-native';
+import { StyleSheet, View, Animated } from 'react-native';
 import Logo from '../../assets/logo_pindar_2.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SplashScreen({ navigation }) {
-  useEffect(() => {
-    const checkLogin = async () => {
-      const token = await AsyncStorage.getItem('accessToken');
-      console.log('token', token);
-      if (token) {
-        props.navigation.replace('Home'); // Redirect ke halaman utama jika token ada
-      }
-    };
-
-    checkLogin();
-  }, []);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const checkLogin = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        console.log('token', token);
+
+        if (token) {
+          navigation.replace('AppScreen'); // Redirect ke Home kalau token ada
+        } else {
+          navigation.replace('AuthScreen'); // Kalau token kosong, ke Auth
+        }
+      } catch (error) {
+        console.error('Gagal cek token:', error);
+        navigation.replace('AuthScreen'); // Error handling ke Auth juga
+      }
+    };
+
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1500,
@@ -25,7 +30,7 @@ export default function SplashScreen({ navigation }) {
     }).start();
 
     const timer = setTimeout(() => {
-      navigation.replace('AuthScreen');
+      checkLogin(); // Panggil cek login setelah splash selesai
     }, 2500);
 
     return () => clearTimeout(timer);
@@ -34,7 +39,7 @@ export default function SplashScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Animated.Image
-        source={Logo} // Ganti dengan path gambar yang sesuai
+        source={Logo}
         style={[styles.image, { opacity: fadeAnim }]}
       />
     </View>

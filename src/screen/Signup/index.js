@@ -37,12 +37,14 @@ jUZUPAX6xbZxhFbOivKlt3YNBg+h28TpzOwHbOoUmooS6QYqEt11/+HQbjgRg9r3
 AgMBAAE=
 -----END PUBLIC KEY-----`;
 const encryptPassword = (password) => {
+  console.log("Password masuk ke encryptPassword:", password);
   const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
   const encrypted = publicKey.encrypt(password, 'RSA-OAEP', {
-    md: forge.md.sha1.create(), // OAEP pakai SHA-1, sesuai default di Node.js
+    md: forge.md.sha1.create(),
   });
-  return forge.util.encode64(encrypted); // base64
+  return forge.util.encode64(encrypted);
 };
+
   
 
   const toggleSecureText = () => setSecureText(!secureText);

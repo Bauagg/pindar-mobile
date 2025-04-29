@@ -1,5 +1,13 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
+
+let navigationRef = null;
+
+// Supaya axios bisa akses navigation
+export const setNavigationRef = (navRef) => {
+  navigationRef = navRef;
+};
 
 const api = axios.create({
   baseURL: 'https://be.pindar.id/api',
@@ -21,7 +29,7 @@ const addRefreshSubscriber = (callback) => {
   refreshSubscribers.push(callback);
 };
 
-// Interceptor untuk menangani request
+// Interceptor untuk request
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -33,18 +41,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor untuk menangani response error
+// Interceptor untuk response
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Jika error 401 (Unauthorized), coba refresh token
-    if (
-      error.response &&
-      error.response.status === 401 &&
-      !originalRequest._retry
-    ) {
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
@@ -60,30 +63,41 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await AsyncStorage.getItem('refreshToken');
-        const res = await axios.post(
-          'https://be.pindar.id/api/auth/refresh-token',
-          {},
-          {
-            headers: { Authorization: `Bearer ${refreshToken}` },
-          }
-        );
 
-        if (res.data.success) {
-          const newAccessToken = res.data.accessToken;
+        const res = await api.post('/auth/refresh-token', {}, {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          },
+        });
 
+        const newAccessToken = res.data?.data?.accessToken;
+
+        if (newAccessToken) {
           await AsyncStorage.setItem('accessToken', newAccessToken);
           api.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
           onRefreshed(newAccessToken);
 
+          isRefreshing = false;
           return api(originalRequest);
+        } else {
+          throw new Error('Invalid refresh token response.');
         }
       } catch (refreshError) {
         console.error('Error refreshing token:', refreshError);
         await AsyncStorage.removeItem('accessToken');
         await AsyncStorage.removeItem('refreshToken');
-      }
 
-      isRefreshing = false;
+        if (navigationRef) {
+          navigationRef.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'AuthScreen' }],
+            })
+          );
+        }
+
+        isRefreshing = false;
+      }
     }
 
     return Promise.reject(error);

@@ -17,23 +17,36 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const PindarScreen = (props) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState([]);
+  console.log("DATA DARI FILTER", selectedFilters);
   const [dataLenders, setDataLenders] = useState([]);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
-const [activeTab, setActiveTab] = useState('');
-const [paymentType, setPaymentType] = useState('');
-const getDataLenders = async (paymtype) => {
+  const [activeTab, setActiveTab] = useState('');
+  const [paymentType, setPaymentType] = useState('');
+
+  const handleApplyFilter = (filters) => {
+    console.log('Filter diterapkan:', filters);
+    setSelectedFilters(filters);
+    getDataLenders(filters)
+    // kamu bisa panggil API atau filter data di sini
+  };
+
+
+  const getDataLenders = async (paymtype,filters) => {
   try {
     setLoading(true);
+    console.log("INI DATA DALAM", filters);
     const token = await AsyncStorage.getItem('token');
+    console.log("token", token)
     const response = await api.get(
-      `/lender/list?limit=5&offset=0&search=fin&sortBy=maxloan&sortDirection=desc&loanType=LOAN_TYPE_1&paymentType=${paymtype}`,
+      `/lender/list?limit=5&offset=0&search=fin&sortBy=maxloan&sortDirection=desc&loanType=${filters}&paymentType=${paymtype}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
     );
-    console.log(response.data); // bisa disimpan ke state juga kalau mau
+    console.log(response.data.data.lenders); // bisa disimpan ke state juga kalau mau
     await setDataLenders(response.data.data.lenders);
   } catch (error) {
     console.error('Gagal mengambil data lenders:', error);
@@ -58,8 +71,9 @@ const handleTabPress = (tab) => {
   }
 
   setPaymentType(paymtype);
-  getDataLenders(paymtype); // panggil fungsi setelah menentukan tipe
+  getDataLenders(paymtype, selectedFilters); // tambahkan selectedFilters di sini
 };
+
   const data = [
     {
       id: '1',
@@ -159,6 +173,12 @@ const handleTabPress = (tab) => {
  
   return (
     <View style={styles.container}>
+       {/* contoh tampilkan hasil filter */}
+       
+       <Text style={{ marginTop: 20 }}>Filter aktif:</Text>
+      {selectedFilters.map((f) => (
+        <Text key={f}>- {f}</Text>
+      ))}
       {/* Tab Filter */}
       <View style={styles.filterContainer}>
   {tabs.map((tab) => (
@@ -238,10 +258,13 @@ const handleTabPress = (tab) => {
         </LinearGradient>
       </TouchableOpacity>
       )}
-      <FilterModal
+         <FilterModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
+        onApply={handleApplyFilter}
       />
+
+     
     </View>
   );
 };
