@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'react-native';
 import MainStackNavigator from './src/navigation';
 import SplashScreen from './src/screen/SplashScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setNavigationRef } from './src/utils/axios'; // <- sesuaikan path jika perlu
 
-const App = (props) => {
+const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const navRef = useRef(null);
 
   useEffect(() => {
-    // Simulate an asynchronous operation (e.g., fetching data, checking user authentication)
+    setNavigationRef(navRef.current); // kirim ke axios
     const fetchData = async () => {
-      // Your asynchronous logic here...
-
-      // After completing the asynchronous operation, hide the splash screen
+      // bisa tambahkan logika cek login
       setShowSplash(false);
     };
-
-    fetchData(); // Call the asynchronous function
-  }, []); // Empty dependency array means this useEffect runs once on mount
+    fetchData();
+  }, []);
 
   return (
     <>
-      {/* <StatusBar hidden={false} backgroundColor="#A0C5E8" /> */}
-      {showSplash ? <SplashScreen /> : <MainStackNavigator />}
+      <StatusBar hidden={false} backgroundColor="#A0C5E8" />
+      {showSplash ? (
+        <SplashScreen />
+      ) : (
+        <MainStackNavigator navigationRef={navRef} />
+      )}
     </>
   );
 };

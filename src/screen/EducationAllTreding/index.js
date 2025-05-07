@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 import { Entypo, Feather } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const articles = [
   {
@@ -29,11 +32,37 @@ const articles = [
 ];
 
 const EducationAllTreding = () => {
+   const [dataTreding, setDataTreding] = useState([]);
+   console.log("INI TREDING SMUA", dataTreding);
+   const [loading, setLoading] = useState(false);
   const [fontsLoaded] = useFonts({
     Lexend: require('../../assets/fonts/Lexend-Regular.ttf'),
   });
 
   if (!fontsLoaded) return null;
+
+  const getTrendingEducation = async () => {
+    try {
+      
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const response = await api.get('/content/product/trending?productType=credit_card', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("INI data Trending", response.data.data.contents);
+      setDataTreding(response.data.data.products);
+    } catch (error) {
+      console.log("Error ambil konten:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {  
+    getTrendingEducation();
+  }, []);
 
   return (
     <View style={{ flex: 1, padding: 16, backgroundColor: '#fff' }}>
@@ -79,12 +108,12 @@ const EducationAllTreding = () => {
 
       {/* Articles */}
       <FlatList
-        data={articles}
+        data={dataTreding}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={{ marginBottom: 20 }}>
             <Image
-              source={require('../../assets/education1.png')}
+              source={{ uri: `https://be.pindar.id/api${item.imageLink}`}}
               style={{ width: '100%', height: 180, borderRadius: 10 }}
             />
             <Text style={{ color: '#666', marginTop: 8, fontFamily: 'Lexend' }}>
@@ -96,7 +125,7 @@ const EducationAllTreding = () => {
                 fontWeight: 'bold',
                 fontFamily: 'Lexend',
               }}>
-              {item.title}
+              {item.name}
             </Text>
             <View
               style={{
@@ -107,7 +136,7 @@ const EducationAllTreding = () => {
               <Feather name="clock" size={14} color="#888" />
               <Text
                 style={{ marginLeft: 5, color: '#888', fontFamily: 'Lexend' }}>
-                {item.time}
+                {item.view_count}
               </Text>
               <TouchableOpacity style={{ marginLeft: 'auto' }}>
                 <Entypo name="dots-three-horizontal" size={16} color="#888" />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,82 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import api from '../../utils/axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const CompareScreenKartu = (props) => {
+  const selectedItemsid = props?.route?.params?.selectedItems || [];
+  const selectedIds = selectedItemsid.map(item => item.id);
+  console.log("INI ID", selectedIds)
+  const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState([]);
+  console.log("INI DATA Detail", JSON.stringify(details, null, 2));
+
+
+  const fetchAllDetails = async () => {
+    setLoading(true);
+    console.log("JALANN");
+    try {
+      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJpemt5eXNhQGdtYWlsLmNvbSIsInJvbGVzIjpbIkNVU1RPTUVSIl0sImlkIjoiMDZkYmJhNWQtNzY2Ny00ODJiLThmNGYtMzA5NTZkYTcxZjkxIiwiaWF0IjoxNzQ1NTAwMzc4LCJleHAiOjE3NDkxMDAzNzh9.sQNiwifpxPd4sFhdnfXKT5sSyiIyBN33-qAKR4nbIXQ';
+
+      const requests = selectedIds.map((id) => {
+        const url = `https://be.pindar.id/api/credit-card/detail/${id}`;
+        console.log("Request URL:", url); // Log URL to verify
+        return axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      });
+
+      console.log("Headers:", {
+        Authorization: `Bearer ${token}`,
+      });
+
+      const responses = await Promise.all(requests);
+
+      // Logging status code and response for debugging
+      responses.forEach(response => {
+        console.log("Status Code:", response.status);
+        console.log("Response Data:", response.data);
+      });
+
+      const allData = responses.map((res) => res.data.data);
+      setDetails(allData);
+    } catch (error) {
+      console.error('Error fetching details:', error.response ? error.response.data : error.message);
+      if (error.response) {
+        console.log("Error Status:", error.response.status);
+        console.log("Error Headers:", error.response.headers);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedIds.length > 0) {
+      fetchAllDetails();
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#00aaff" />
+      </View>
+    );
+  }
+
+
   const navDetails = () => {
     props.navigation.navigate('Informasi Detail');
   };
-  const kartuDetails = () => {
-    props.navigation.navigate('Kartu Kredit Detail');
-  };
+
   const selectedItems = [
     {
       id: '1',
@@ -77,7 +143,7 @@ const CompareScreenKartu = (props) => {
 
   const tableData = [
     { title: 'Provider Kartu', key: 'provider' },
-    { title: 'Iuran Tahunan', key: 'annualFee' },
+    { title: 'Iuran Tahunan', key: 'yearlyFee' },
     { title: 'Biaya tahunan Kartu tambahan', key: 'extraCardFee' },
     { title: 'Purchase Rate', key: 'purchaseRate' },
     { title: 'Cashback Rate', key: 'cashbackRate' },
@@ -99,22 +165,22 @@ const CompareScreenKartu = (props) => {
           width: Dimensions.get('window').width,
         }}>
         <FlatList
-          data={selectedItems}
+          data={details}
           horizontal
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.logoList}
           renderItem={({ item }) => (
             <View style={styles.logoContainer}>
-              <Image source={item.logo} style={styles.logo} />
-              <Text style={styles.logoText}>{item.name}</Text>
+              <Image source={{ uri: `https://be.pindar.id/api${item.imageLink}`}} style={styles.logo} />
+              <Text style={styles.logoText}>{item.title}</Text>
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}
-                onPress={kartuDetails}>
-                <Text style={{ color: 'red', marginRight: 5 }}>
-                  Selengkapnya
-                </Text>
+                onPress={() => props.navigation.navigate('Kartu Kredit Detail', { idDetail: item.id })}
+              >
+                <Text style={{ color: 'red', marginRight: 5 }}>Selengkapnya</Text>
                 <MaterialIcons name="open-in-new" color={'red'} />
               </TouchableOpacity>
+
             </View>
           )}
         />
@@ -131,7 +197,7 @@ const CompareScreenKartu = (props) => {
 
       <ScrollView horizontal style={{ marginTop: -35 }}>
         <View style={styles.tableContent}>
-          {selectedItems.map((item) => (
+          {details.map((item) => (
             <View key={item.id} style={styles.tableColumn}>
               {tableData.map((row) => (
                 <View key={row.key} style={styles.cell}>

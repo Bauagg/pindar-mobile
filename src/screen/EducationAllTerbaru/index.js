@@ -14,6 +14,9 @@ import {
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../utils/axios';
+
 
 const articles = [
   {
@@ -49,21 +52,64 @@ const articles = [
 ];
 
 export default function EducationAllTerbaru() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return null;
-  }
-  const categories = ['All', 'Keuangan', 'Regulasi', 'Keamanan', 'Investasi'];
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [categoryData, setCategoryData] = useState([]);
+
+    const getCategories = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const response = await api.get('/content/content-category', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = response.data.data.categories;
+        console.log("INI RESULT", result);
+        setCategories([{ id: null, name: 'All' }, ...result]); // tambahkan 'All'
+        setSelectedCategory(null); // default All
+        getDataEducation(); // ambil semua data
+      } catch (error) {
+        console.log('Error ambil kategori:', error);
+      }
+    };
+    
+    useEffect(() => {
+      getCategories();
+      getDataEducation();
+    }, []);
+
+    const getDataEducation = async (categoryId = null) => {
+      try {
+        console.log('Ambil data konten untuk kategoriId:', categoryId);
+        setLoading(true);
+        const token = await AsyncStorage.getItem('token');
+        const endpoint = categoryId
+          ? `/content/list?categoryId=${categoryId}`
+          : `/content/list`;
+    
+        const response = await api.get(endpoint, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log("INI data", response.data.data.contents);
+        setDataContent(response.data.data.contents);
+      } catch (error) {
+        console.log("Error ambil konten:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer}>
       <Image
-        source={require('../../assets/education2.png')}
+        source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
         style={styles.image}
       />
       <View style={styles.textContainer}>

@@ -59,9 +59,6 @@ export default function Signin(props) {
     return forge.util.encode64(encrypted); // base64
   };
 
-  const navSignin = () => {
-    props.navigation.navigate('Verification');
-  };
   const navSignup = () => {
     props.navigation.navigate('Signup');
   };

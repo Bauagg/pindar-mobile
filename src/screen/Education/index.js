@@ -49,6 +49,8 @@ export default function Education(props) {
     Lexend_700Bold,
   });
  const [dataContent, setDataContent] = useState([]);
+ const [dataTreding, setDataTreding] = useState([]);
+ console.log("INI DATA TREDING BOSS", dataTreding[0]?.imageLink);
   const [loading, setLoading] = useState(false);
 
   const navEducationDetail = () => {
@@ -104,10 +106,30 @@ export default function Education(props) {
       setLoading(false);
     }
   };
+
+  const getTrendingEducation = async () => {
+    try {
+      
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const response = await api.get('/content/product/trending?productType=credit_card', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("INI data Trending", response.data.data.contents);
+      setDataTreding(response.data.data.products);
+    } catch (error) {
+      console.log("Error ambil konten:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   
   useEffect(() => {
     getDataEducation();
+    getTrendingEducation();
   }, []);
 
   return (
@@ -146,11 +168,11 @@ export default function Education(props) {
         style={styles.trendingContainer}
         onPress={navEducationDetail}>
         <Image
-          source={require('../../assets/education1.png')}
+          source={{ uri: `https://be.pindar.id/api${dataTreding[0]?.imageLink}`}}
           style={styles.trendingImage}
         />
         <Text style={styles.trendingTitle}>
-          Bunga Pinjaman Online: Cara Menghitung dan Menghindari Beban Berlebih
+          {dataTreding[0]?.name}
         </Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row' }}>

@@ -23,6 +23,7 @@ const PindarScreen = (props) => {
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
   const [activeTab, setActiveTab] = useState('');
   const [paymentType, setPaymentType] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleApplyFilter = (filters) => {
     console.log('Filter diterapkan:', filters);
@@ -169,7 +170,7 @@ const handleTabPress = (tab) => {
       </View>
     );
   };
-  const [loading, setLoading] = useState(false);
+  
  
   return (
     <View style={styles.container}>

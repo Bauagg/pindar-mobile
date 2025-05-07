@@ -85,24 +85,25 @@ const PopularPlus = () => {
   };
   
 
+  const getDataCC = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+      console.log(token);
+      const response = await api.get(`/announcement/active`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+      setDataBanner(response.data.data);
+    } catch (error) {
+      console.error('Gagal mengambil data lenders:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const getDataCC = async () => {
-      try {
-        setLoading(true);
-        const token = await AsyncStorage.getItem('token');
-        const response = await api.get(`/announcement/active`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
-        setDataBanner(response.data.data);
-      } catch (error) {
-        console.error('Gagal mengambil data lenders:', error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     getDataCC();
   }, []);

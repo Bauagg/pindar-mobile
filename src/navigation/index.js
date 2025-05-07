@@ -9,29 +9,14 @@ import SplashScreen from '../screen/SplashScreen';
 import AuthScreen from './auth';
 import AppScreen from './app';
 
-export default function MainStackNavigator() {
+export default function MainStackNavigator({ navigationRef }) {
   return (
     <AlertModalProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="SplashScreen"
-            component={SplashScreen}
-            options={{ headerShown: false }}
-            headerMode="none"
-          />
-          <Stack.Screen
-            name="AuthScreen"
-            component={AuthScreen}
-            options={{ headerShown: false }}
-            headerMode="none"
-          />
-          <Stack.Screen
-            name="AppScreen"
-            component={AppScreen}
-            options={{ headerShown: false }}
-            headerMode="none"
-          />
+      <NavigationContainer ref={navigationRef}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="SplashScreen" component={SplashScreen} />
+          <Stack.Screen name="AuthScreen" component={AuthScreen} />
+          <Stack.Screen name="AppScreen" component={AppScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AlertModalProvider>

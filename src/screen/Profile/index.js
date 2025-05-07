@@ -23,7 +23,7 @@ const ProfileScreen = (props) => {
     const getDataUser = async () => {
       try {
         setLoading(true);
-        const token = await AsyncStorage.getItem('token');
+        const token = await AsyncStorage.getItem('accessToken');
         const response = await api.get(`/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,

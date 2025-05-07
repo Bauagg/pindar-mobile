@@ -4,7 +4,6 @@ import { CommonActions } from '@react-navigation/native';
 
 let navigationRef = null;
 
-// Supaya axios bisa akses navigation
 export const setNavigationRef = (navRef) => {
   navigationRef = navRef;
 };
@@ -16,7 +15,6 @@ const api = axios.create({
   },
 });
 
-// State untuk menangani refresh token
 let isRefreshing = false;
 let refreshSubscribers = [];
 
@@ -29,7 +27,6 @@ const addRefreshSubscriber = (callback) => {
   refreshSubscribers.push(callback);
 };
 
-// Interceptor untuk request
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -41,13 +38,16 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor untuk response
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
@@ -64,11 +64,15 @@ api.interceptors.response.use(
       try {
         const refreshToken = await AsyncStorage.getItem('refreshToken');
 
-        const res = await api.post('/auth/refresh-token', {}, {
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        });
+        const res = await api.post(
+          '/auth/refresh-token',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${refreshToken}`,
+            },
+          }
+        );
 
         const newAccessToken = res.data?.data?.accessToken;
 

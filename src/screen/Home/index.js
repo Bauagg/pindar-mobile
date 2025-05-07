@@ -29,11 +29,13 @@ import {
 } from '@expo-google-fonts/lexend';
 
 const { width } = Dimensions.get('window');
+import api from '../../utils/axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Home(props) {
   const [searchText, setSearchText] = useState('');
   const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
@@ -41,6 +43,7 @@ export default function Home(props) {
   const [imageLink, setImageLink] = useState(null);
   const [fullName, setFullName] = useState(null);
   console.log(imageLink);
+  const [dataUser, setDataUser] = useState({});
 
   const navPindarScreen = () => {
     props.navigation.navigate('Pindar');
@@ -75,6 +78,27 @@ export default function Home(props) {
       setFilteredData([]);
     }
   };
+  useEffect(() => {
+    const getDataUser = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem('accessToken');
+        const response = await api.get(`/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+        setDataUser(response.data.data);
+      } catch (error) {
+        console.error('Gagal mengambil data Profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDataUser();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,11 +157,7 @@ export default function Home(props) {
           {/* Informasi User */}
           <View style={styles.userInfo}>
             <Image
-              source={
-                imageLink
-                  ? { uri: imageLink }
-                  : require('../../assets/avatar.png')
-              }
+              source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
               style={styles.avatar}
             />
 

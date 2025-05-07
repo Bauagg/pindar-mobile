@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,39 @@ import { List } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
+import axios from 'axios';
 
 const KartuKreditDetail = (props) => {
+  const idDetail = props?.route?.params?.idDetail;
+  const [detail, setDetail] = useState(null);
+  
+  const [loading, setLoading] = useState(false);
+
+  console.log("ID DARI SCRENN SEBELUMNYA", detail);
   const [expandedItems, setExpandedItems] = useState([]);
+
+  const fetchDetails = async () => {
+    setLoading(true);
+    try {
+      console.log(idDetail)
+      const token = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJpemt5eXNhQGdtYWlsLmNvbSIsInJvbGVzIjpbIkNVU1RPTUVSIl0sImlkIjoiMDZkYmJhNWQtNzY2Ny00ODJiLThmNGYtMzA5NTZkYTcxZjkxIiwiaWF0IjoxNzQ1NTAwMzc4LCJleHAiOjE3NDkxMDAzNzh9.sQNiwifpxPd4sFhdnfXKT5sSyiIyBN33-qAKR4nbIXQ'; // ← Token kamu di sini
+      const response = await axios.get(`https://be.pindar.id/api/credit-card/detail/${idDetail}`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      setDetail(response.data.data);
+      
+    } catch (error) {
+      console.error('Gagal ambil detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDetails();
+  }, []);
 
   const navAjukan = () => {
     props.navigation.navigate('Redirect Kartu');
@@ -134,7 +164,7 @@ const KartuKreditDetail = (props) => {
             borderRadius: 10,
           }}>
           <Image
-            source={require('../../assets/bca.png')}
+            source={{ uri: `https://be.pindar.id/api${detail.imageLink}`}}
             style={{ width: 280, height: 180, borderRadius: 10, marginTop: 20 }}
           />
         </View>
@@ -148,7 +178,7 @@ const KartuKreditDetail = (props) => {
             fontFamily: 'Lexend-Regular',
             fontWeight: 'semi-bold',
           }}>
-          BCA Black Visa
+          {detail.title}
         </Text>
         <View
           style={{

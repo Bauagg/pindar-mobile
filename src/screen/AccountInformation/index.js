@@ -154,16 +154,20 @@ const AccountInformation = () => {
     getDataUser();
   }, []);
 
-  const updateProfile = async () => {
+  const updateProfile = async (fileId = null) => {
     try {
+      console.log("INI FILE ID", fileId);
       setLoading(true);
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('accessToken');
   
-      // Buat object payload dari formFields
       const data = {};
       formFields.forEach(field => {
         data[field.key] = field.value;
       });
+  
+      if (fileId) {
+        data.imageId = fileId; // <-- mapping fileId ke imageId
+      }
   
       const response = await api.put('/user/update', data, {
         headers: {
@@ -179,49 +183,58 @@ const AccountInformation = () => {
       setLoading(false);
     }
   };
+  
+  
+  
 
   const uploadProfile = async (image) => {
     try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('accessToken');
+      if (!token) {
+        console.log('Token tidak ditemukan');
+        return Alert.alert('Gagal', 'Token tidak ditemukan.');
+      }
   
-      // Deteksi mime type dari URI (kalau image.mimeType gak ada)
+      // Deteksi mime type dari URI
       const getMimeType = (uri) => {
         if (uri.endsWith('.png')) return 'image/png';
         if (uri.endsWith('.jpg') || uri.endsWith('.jpeg')) return 'image/jpeg';
-        return 'image/jpeg'; // default aman
+        return 'image/jpeg'; // default
       };
   
       const formData = new FormData();
       formData.append('file', {
         uri: image.uri,
-        type: image.mimeType || getMimeType(image.uri), // 👈 ini penting!
+        type: image.mimeType || getMimeType(image.uri),
         name: image.fileName || image.name || 'profile.jpg',
       });
       formData.append('moduleName', 'user_profile');
   
-      console.log("KIRIM GABAR GAS", formData._parts); // optional log
+      // Debug isi formData
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}:`, pair[1]);
+      }
   
       const response = await api.post('/file/image', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data', // wajib untuk FormData
+          'Content-Type': 'multipart/form-data',
         },
       });
   
       console.log('Upload berhasil:', response.data);
-      showAlert(response.data.message, 'success');
-  
-      // Kalau dapet imageId dari server, update profil kamu
+      Alert.alert('Sukses', response.data.message || 'Foto berhasil diunggah!');
+      
       const imageId = response.data.imageId;
-      if (imageId) {
-        await updateProfile(imageId); // misal kamu mau update user pake imageId
+      const fileId = response.data.data?.fileId;
+      if (fileId) {
+        await updateProfile(fileId);
       }
+      
   
     } catch (error) {
-      console.log("GAGAL UPDATE", error.response?.data || error.message);
-    } finally {
-      setLoading(false);
+      console.log('Gagal upload:', error.response?.data || error.message);
+      Alert.alert('Gagal', error.response?.data?.message || 'Upload gagal.');
     }
   };
   
