@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,40 +22,64 @@ const PindarScreen = (props) => {
   console.log("DATA DARI FILTER", selectedFilters);
   const [dataLenders, setDataLenders] = useState([]);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
-  const [activeTab, setActiveTab] = useState('');
+  const [activeTab, setActiveTab] = useState('Semua');
   const [paymentType, setPaymentType] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleApplyFilter = (filters) => {
-    console.log('Filter diterapkan:', filters);
-    setSelectedFilters(filters);
-    getDataLenders(filters)
-    // kamu bisa panggil API atau filter data di sini
+  const handleApplyFilter = (selectedFilters) => {
+    const loanTypeOptions = ['LOAN_TYPE_1', 'LOAN_TYPE_2'];
+    const paymentTypeOptions = ['PAYMENT_TYPE_1', 'PAYMENT_TYPE_2'];
+    const sortOptions = ['recommended', 'lowest', 'highest'];
+
+    const loanType = selectedFilters.find((f) => loanTypeOptions.includes(f));
+    const paymentType = selectedFilters.find((f) => paymentTypeOptions.includes(f));
+    const sortBy = selectedFilters.find((f) => sortOptions.includes(f));
+
+    // panggil fungsi yang benar
+    getDataLenders(paymentType, loanType, sortBy);
   };
 
 
-  const getDataLenders = async (paymtype,filters) => {
-  try {
-    setLoading(true);
-    console.log("INI DATA DALAM", filters);
-    const token = await AsyncStorage.getItem('token');
-    console.log("token", token)
-    const response = await api.get(
-      `/lender/list?limit=5&offset=0&search=fin&sortBy=maxloan&sortDirection=desc&loanType=${filters}&paymentType=${paymtype}`,
-      {
+
+  const getDataLenders = async (paymtype, loanType, sortBy) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+
+      let url = `/lender/list?limit=5&offset=0&search=`;
+
+      if (sortBy === 'lowest') {
+        url += `&sortBy=maxloan&sortDirection=asc`;
+      } else if (sortBy === 'highest') {
+        url += `&sortBy=maxloan&sortDirection=desc`;
+      }
+
+      if (paymtype) {
+        url += `&paymentType=${paymtype}`;
+      }
+
+      if (loanType) {
+        url += `&loanType=${loanType}`;
+      }
+
+      console.log("URL:", url);
+
+      const response = await api.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
-    console.log(response.data.data.lenders); // bisa disimpan ke state juga kalau mau
-    await setDataLenders(response.data.data.lenders);
-  } catch (error) {
-    console.error('Gagal mengambil data lenders:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+      });
+
+      console.log(response.data.data.lenders);
+      setDataLenders(response.data.data.lenders);
+    } catch (error) {
+      console.error('Gagal mengambil data lenders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
 useEffect(() => {
   getDataLenders(paymentType);
 }, [paymentType]);
@@ -63,7 +88,7 @@ useEffect(() => {
 const handleTabPress = (tab) => {
   setActiveTab(tab);
 
-  let paymtype = '';
+  let paymtype = null;
 
   if (tab === 'Sekali bayar') {
     paymtype = 'PAYMENT_TYPE_1';
@@ -75,22 +100,7 @@ const handleTabPress = (tab) => {
   getDataLenders(paymtype, selectedFilters); // tambahkan selectedFilters di sini
 };
 
-  const data = [
-    {
-      id: '1',
-      name: 'Akulaku',
-      amount: 'Rp 50.000.000',
-      duration: '24 Bulan',
-      logo: require('../../assets/akulaku.png'),
-    },
-    {
-      id: '2',
-      name: 'Indodana',
-      amount: 'Rp 50.000.000',
-      duration: '24 Bulan',
-      logo: require('../../assets/indodana.png'),
-    },
-  ];
+
   const toggleSelection = (item) => {
     setSelectedItems((prevSelected) => {
       const isSelected = prevSelected.some(
@@ -174,48 +184,42 @@ const handleTabPress = (tab) => {
  
   return (
     <View style={styles.container}>
-       {/* contoh tampilkan hasil filter */}
-       
-       <Text style={{ marginTop: 20 }}>Filter aktif:</Text>
-      {selectedFilters.map((f) => (
-        <Text key={f}>- {f}</Text>
-      ))}
-      {/* Tab Filter */}
       <View style={styles.filterContainer}>
-  {tabs.map((tab) => (
-    <TouchableOpacity
-      key={tab}
-      onPress={() => handleTabPress(tab)}
-      style={styles.filterWrapper}>
-      {activeTab === tab ? (
-        <LinearGradient
-          colors={['#CC1C22', '#F86469']}
-          style={styles.activeFilter}>
-          <Text style={styles.filterTextActive}>{tab}</Text>
-        </LinearGradient>
-      ) : (
-        <View style={styles.filterButton}>
-          <Text style={styles.filterText}>{tab}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  ))}
-</View>
+      {tabs.map((tab) => (
+        <TouchableOpacity
+          key={tab}
+          onPress={() => handleTabPress(tab)}
+          style={styles.filterWrapper}>
+          {activeTab === tab ? (
+            <LinearGradient
+              colors={['#CC1C22', '#F86469']}
+              style={styles.activeFilter}>
+              <Text style={styles.filterTextActive}>{tab}</Text>
+            </LinearGradient>
+          ) : (
+            <View style={styles.filterButton}>
+              <Text style={styles.filterText}>{tab}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      ))}
+    </View>
 
 
       {/* FlatList untuk daftar kartu */}
       {loading ? (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color="#CC1C22" />
-  </View>
-) : (
-  <FlatList
-    data={dataLenders}
-    renderItem={renderItem}
-    keyExtractor={(item) => item.id}
-    contentContainerStyle={styles.flatListContainer}
-  />
-)}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#CC1C22" />
+        </View>
+      ) : (
+        <FlatList
+          data={dataLenders}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.flatListContainer}
+          ListFooterComponent={ <View style={{ height: Dimensions.get('window').height * 0.1 }} />}
+        />
+      )}
 
 
       {selectedItems.length > 0 && (

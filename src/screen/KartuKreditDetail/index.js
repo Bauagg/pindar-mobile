@@ -28,7 +28,7 @@ const KartuKreditDetail = (props) => {
     setLoading(true);
     try {
       console.log(idDetail)
-      const token = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJpemt5eXNhQGdtYWlsLmNvbSIsInJvbGVzIjpbIkNVU1RPTUVSIl0sImlkIjoiMDZkYmJhNWQtNzY2Ny00ODJiLThmNGYtMzA5NTZkYTcxZjkxIiwiaWF0IjoxNzQ1NTAwMzc4LCJleHAiOjE3NDkxMDAzNzh9.sQNiwifpxPd4sFhdnfXKT5sSyiIyBN33-qAKR4nbIXQ'; // ← Token kamu di sini
+      const token = await AsyncStorage.getItem('accessToken'); // ← Token kamu di sini
       const response = await axios.get(`https://be.pindar.id/api/credit-card/detail/${idDetail}`, {
         headers: {
           Authorization: token,

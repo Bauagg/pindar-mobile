@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -23,9 +23,9 @@ const FilterModal = ({ visible, onClose, onApply}) => {
   ];
 
   const loanTypes = [
-    { id: 'all_types', label: 'Semua Pinjaman' },
-    { id: 'single_pay', label: 'Sekali Bayar' },
-    { id: 'installment', label: 'Cicilan' },
+    { id: '', label: 'Semua Pinjaman' },
+    { id: 'PAYMENT_TYPE_1', label: 'Sekali Bayar' },
+    { id: 'PAYMENT_TYPE_2', label: 'Cicilan' },
   ];
 
   const sortingOptions = [
@@ -50,6 +50,13 @@ const FilterModal = ({ visible, onClose, onApply}) => {
       ]);
     }
   };
+
+  useEffect(() => {
+    if (onApply) {
+      onApply(selectedFilters);
+    }
+  }, [selectedFilters]);
+  
 
   return (
     <Modal visible={visible} transparent animationType="slide">

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,14 +17,52 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KartuKreditScreen = (props) => {
   const [activeTab, setActiveTab] = useState('Semua');
-  const [selectedIssuer, setSelectedIssuer] = useState('Semua');
+  const [selectedIssuer, setSelectedIssuer] = useState({ name: 'Semua', id: null });
+
+console.log("DIPILIHHH", selectedIssuer);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataCC, setDataCC] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
+  const [filters, setFilters] = useState({});
+  console.log("INI DATA ", filters);
+  const [issuerOptions, setIssuerOptions] = useState(['Semua']);
+
+const getFilters = async () => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    const issuerRes = await api.get('/credit-card/card-publisher', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const publisherData = issuerRes.data.data.publishers || [];
+
+    // Map over the publisher data and ensure you're using the ID and Name
+    const uniquePublishers = Array.from(
+      new Set(publisherData.map(item => item.publisherName))
+    ).map(name => {
+      return publisherData.find(item => item.publisherName === name);
+    });
+
+    // Add 'Semua' as an option
+    setIssuerOptions([{ id: null, publisherName: 'Semua' }, ...uniquePublishers]);
+
+  } catch (error) {
+    console.error('Gagal mengambil data filter:', error);
+  }
+};
+
+
+
+
+useEffect(() => {
+  getFilters();
+}, []);
 
   const tabs = ['Semua', 'Premium', 'First Card'];
-  const issuers = ['Semua', 'BCA', 'BNI', 'Mandiri'];
+
 
   const toggleSelection = (item) => {
     setSelectedItems((prevSelected) => {
@@ -42,6 +81,20 @@ const KartuKreditScreen = (props) => {
       return newSelected;
     });
   };
+
+  const handleTabChange = (tab) => {
+  setActiveTab(tab); // set activeTab, ini akan trigger useEffect
+};
+
+const handleIssuerChange = (issuer) => {
+  setSelectedIssuer(issuer); // set selectedIssuer, ini akan trigger useEffect
+};
+const handleApplyFilter = (filters) => {
+  console.log('Filter diterapkan:', filters);
+  getDataCC(filters); // kamu bisa langsung lempar ke fungsi yang ambil data
+};
+
+
 
   const data = [
     {
@@ -72,7 +125,7 @@ const KartuKreditScreen = (props) => {
 
   const renderItem = ({ item }) => {
     const isChecked = selectedItems.some((selected) => selected.id === item.id);
-    console.log('Image link:', item);
+ 
     return (
       <View style={styles.card}>
         {/* Header */}
@@ -136,55 +189,116 @@ const KartuKreditScreen = (props) => {
       </View>
     );
   };
-  const getDataCC = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('token');
-      const response = await api.get(
-        `/credit-card/search?featureId=7113c3c7-d046-4824-82e9-d5bcf261495c,f64d11a9-ec99-43a6-a27c-9ab6ef4d73b9&minYearlyFee=0&maxYearlyFee=10000000&sortBy=yearly_fee&sortDirection=asc`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log(response.data.data.creditCards); // bisa disimpan ke state juga kalau mau
-      setDataCC(response.data.data.creditCards);
-    } catch (error) {
-      console.error('Gagal mengambil data lenders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
+ const getDataCC = async (filters = {}) => {
+  try {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('token');
 
-    getDataCC();
-  }, []);
+    const params = new URLSearchParams();
+
+    // Menambahkan issuer ID jika ada
+    if (filters.issuer) {
+      params.append("issuer", filters.issuer);
+    }
+
+    // Menambahkan jenis kartu jika ada
+    if (filters.jenis) {
+      params.append("jenis", filters.jenis);
+    }
+
+    // Menambahkan fitur kartu jika dipilih
+    if (filters.features && filters.features.length > 0) {
+      params.append("featureId", filters.features.join(','));
+    }
+
+    // Menambahkan iuran tahunan
+    params.append('minYearlyFee', filters.minIuran || '0');
+    params.append('maxYearlyFee', filters.maxIuran || '10000000');
+
+    // Menambahkan penghasilan minimal
+    params.append('minIncome', filters.minPenghasilan || '0');
+    params.append('maxIncome', filters.maxPenghasilan || '10000000');
+
+    // Menambahkan sorting jika dipilih
+    if (filters.sort === 'terbaru') {
+      params.append('sortBy', 'yearly_fee');
+      params.append('sortDirection', 'asc');
+    } else if (filters.sort === 'terlama') {
+      params.append('sortBy', 'yearly_fee');
+      params.append('sortDirection', 'desc');
+    }
+
+    const url = `/credit-card/search?${params.toString()}`;
+
+    const response = await api.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setDataCC(response.data.data.creditCards);
+  } catch (error) {
+    console.error('Gagal mengambil data credit card:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+
+
+   useEffect(() => {
+    const filters = {
+      issuer: selectedIssuer,      // Pilih issuer
+      jenis: activeTab,            // Pilih jenis kartu berdasarkan tab aktif
+      features: selectedFeatures,  // Pilih fitur kartu yang dipilih
+    };
+
+    // Panggil getDataCC dengan filters yang diteruskan
+    getDataCC(filters);
+  }, [activeTab, selectedIssuer, selectedFeatures]);
+
+
 
   return (
     <View style={styles.container}>
       <View style={styles.pickerContainer}>
         <Text style={styles.pickerLabel}>Penerbit Kartu</Text>
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedIssuer}
-            onValueChange={(itemValue) => setSelectedIssuer(itemValue)}
-            style={styles.picker}>
-            {issuers.map((issuer) => (
-              <Picker.Item key={issuer} label={issuer} value={issuer} />
-            ))}
-          </Picker>
-        </View>
+       <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={selectedIssuer ? selectedIssuer.id : null} // Ensure you're selecting by 'id'
+          onValueChange={(itemValue) => {
+            const selectedPublisher = issuerOptions.find(issuer => issuer.id === itemValue);
+            setSelectedIssuer(selectedPublisher); // Set the full object as selectedIssuer
+          }}
+          style={styles.picker}
+        >
+          {issuerOptions.map((issuer) => (
+            <Picker.Item
+              key={issuer.id || 'semua'} // Use 'semua' key for 'Semua' option
+              label={issuer.publisherName}
+              value={issuer.id} // Set the id as the value for each option
+            />
+          ))}
+        </Picker>
+
+
+
+
+
+      </View>
+
       </View>
       <View style={styles.filterContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => setActiveTab(tab)}  // Set active tab saat tab dipilih
             style={styles.filterWrapper}>
             {activeTab === tab ? (
               <LinearGradient
-                colors={['#CC1C22', '#F86469']}
+                colors={['#CC1C22', '#F86469']}  // Gradient saat tab aktif
                 style={styles.activeFilter}>
                 <Text style={styles.filterTextActive}>{tab}</Text>
               </LinearGradient>
@@ -196,12 +310,17 @@ const KartuKreditScreen = (props) => {
           </TouchableOpacity>
         ))}
       </View>
+
+       {loading ? (
+      <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+    ) : (
       <FlatList
         data={dataCC}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.flatListContainer}
       />
+    )}
       {selectedItems.length > 0 && (
         <TouchableOpacity
           style={styles.overlay}
@@ -242,6 +361,7 @@ const KartuKreditScreen = (props) => {
       <FilterModalKartu
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
+        onApply={handleApplyFilter}
       />
     </View>
   );
