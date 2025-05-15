@@ -222,6 +222,7 @@ export default function Home(props) {
                   justifyContent: 'space-between',
                   paddingHorizontal: 85,
                   paddingVertical: 12,
+                  width: Dimensions.get('window').width
                 }}>
                 <TouchableOpacity
                   style={styles.containerTopButton}

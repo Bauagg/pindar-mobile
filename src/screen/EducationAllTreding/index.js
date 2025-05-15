@@ -39,7 +39,7 @@ const EducationAllTreding = () => {
     Lexend: require('../../assets/fonts/Lexend-Regular.ttf'),
   });
 
-  if (!fontsLoaded) return null;
+
 
   const getTrendingEducation = async () => {
     try {

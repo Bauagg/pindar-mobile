@@ -17,8 +17,7 @@ import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../utils/axios';
 
-
-const articles = [
+  const articles = [
   {
     id: '1',
     title: '5 Kesalahan Pengguna Kartu Kredit yang Harus Dihindari',
@@ -51,15 +50,19 @@ const articles = [
   },
 ];
 
+
 export default function EducationAllTerbaru() {
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
-
+    const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [categoryData, setCategoryData] = useState([]);
+    const [dataContent, setDataContent] = useState([]);
+    console.log("INi data content", dataContent);
+  
 
     const getCategories = async () => {
       try {
@@ -76,11 +79,6 @@ export default function EducationAllTerbaru() {
         console.log('Error ambil kategori:', error);
       }
     };
-    
-    useEffect(() => {
-      getCategories();
-      getDataEducation();
-    }, []);
 
     const getDataEducation = async (categoryId = null) => {
       try {
@@ -104,6 +102,13 @@ export default function EducationAllTerbaru() {
         setLoading(false);
       }
     };
+    
+    useEffect(() => {
+      getCategories();
+      getDataEducation();
+    }, []);
+
+    
     
 
   const renderItem = ({ item }) => (
@@ -148,26 +153,32 @@ export default function EducationAllTerbaru() {
       <View style={{ paddingHorizontal: 10, paddingTop: 20 }}>
         <Text style={styles.header}>Terbaru</Text>
         <View style={styles.categoryContainer}>
-          {categories.map((category) => (
+          {categories.map((category, index) => (
             <TouchableOpacity
-              key={category}
-              onPress={() => setSelectedCategory(category)}>
+              key={category.id ?? `category-${index}`}
+              onPress={() => {
+                setSelectedCategory(category);
+                getDataEducation(category.id);
+              }}
+            >
               <Text
                 style={[
                   styles.categoryText,
-                  selectedCategory === category && styles.activeCategory,
-                ]}>
-                {category}
+                  selectedCategory?.id === category.id && styles.activeCategory,
+                ]}
+              >
+                {category.name}
               </Text>
-              {selectedCategory === category && (
+              {selectedCategory?.id === category.id && (
                 <View style={styles.underline} />
               )}
             </TouchableOpacity>
           ))}
+
         </View>
       </View>
       <FlatList
-        data={articles}
+        data={dataContent}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -224,6 +235,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 8,
     marginRight: 12,
+    resizeMode: 'contain',
   },
   textContainer: {
     flex: 1,

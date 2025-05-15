@@ -6,23 +6,35 @@ import {
   Animated,
   TouchableOpacity,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRoute } from '@react-navigation/native';
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
-const RedirectScreen = ({ navigation }) => {
+const RedirectScreen = () => {
+  const route = useRoute();
+  const { directLink, imageLink, lenderName } = route.params;
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(progressAnim, {
-      toValue: 100, // Nilai akhir progress bar
-      duration: 5000, // 5 detik
+      toValue: 100,
+      duration: 5000,
       useNativeDriver: false,
     }).start(() => {
-      console.log('Redirecting...');
+      handleRedirect();
     });
   }, []);
+
+  const handleRedirect = () => {
+    if (directLink) {
+      Linking.openURL(directLink).catch((err) =>
+        console.error('Gagal membuka link:', err)
+      );
+    }
+  };
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 100],
@@ -38,8 +50,9 @@ const RedirectScreen = ({ navigation }) => {
         backgroundColor: '#fff',
       }}>
       <Image
-        source={require('../../assets/akulaku.png')}
+        source={{ uri: `https://be.pindar.id${imageLink}` }}
         style={{ width: 80, height: 80, marginBottom: 10 }}
+        resizeMode="contain"
       />
 
       <Text
@@ -49,15 +62,16 @@ const RedirectScreen = ({ navigation }) => {
           marginBottom: 10,
           fontFamily: 'Poppins-Bold',
         }}>
-        Akulaku
+        {lenderName}
       </Text>
+
       <View style={{ width: Dimensions.get('window').width - 200 }}>
         <Text style={{ textAlign: 'center', marginBottom: 20 }}>
-          Anda akan dialihkan ke halaman aplikasi Akulaku
+          Anda akan dialihkan ke halaman aplikasi {lenderName}
         </Text>
       </View>
 
-      {/* Progress Bar dengan Linear Gradient */}
+      {/* Progress Bar */}
       <View
         style={{
           width: '80%',
@@ -80,8 +94,11 @@ const RedirectScreen = ({ navigation }) => {
 
       <View style={{ width: Dimensions.get('window').width - 120 }}>
         <Text style={{ marginTop: 10, textAlign: 'center' }}>
-          Jika anda tidak dialihkan dalam waktu 5 detik, klik{' '}
-          <Text style={{ color: 'blue' }}>di sini</Text> untuk melanjutkan
+          Jika anda tidak dialihkan dalam waktu 5 detik,{' '}
+          <Text style={{ color: 'blue' }} onPress={handleRedirect}>
+            klik di sini
+          </Text>{' '}
+          untuk melanjutkan
         </Text>
       </View>
     </View>

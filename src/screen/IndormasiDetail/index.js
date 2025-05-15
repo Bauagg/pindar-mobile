@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,48 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../utils/axios';
+import { Linking } from 'react-native';
+
 
 const InformasiDetail = (props) => {
   const [activeTab, setActiveTab] = useState('Informasi');
+  const [dataDetail, setDataDetail] = useState ([]);
+  console.log("INI DATA DETAIL", dataDetail);
+  const {id} = props?.route?.params;
+  const [loading, setLoading] = useState(false);
+  console.log("INI ID", id);
+
+  const getDetail = async (id) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+      const response = await api.get(`/lender/detail/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setDataDetail(response.data.data)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   const navRedirect = () => {
-    props.navigation.navigate('RedirecScreen');
-  };
+  props.navigation.navigate('RedirecScreen', {
+    directLink: dataDetail?.directLink,
+    imageLink: dataDetail?.imageLink,
+    lenderName: dataDetail?.lenderName,
+  });
+};
+
+
+
+
+useEffect(() => {
+ getDetail(id)
+}, [])
 
   return (
     <View style={styles.container}>
@@ -83,36 +119,31 @@ const InformasiDetail = (props) => {
             <ScrollView style={styles.content}>
               {activeTab === 'Informasi' ? (
                 <View>
-                  <Text style={styles.sectionTitle}>Fitur Utama</Text>
-                  <Text style={styles.listItem}>
-                    • Plafon pinjaman hingga Rp3 juta
-                  </Text>
-                  <Text style={styles.listItem}>
-                    • Tenor pinjaman hingga 3 bulan
-                  </Text>
-                  <Text style={styles.listItem}>• Bunga 0.03% per hari</Text>
+                  <Text style={styles.sectionTitle}>Informasi Pinjaman</Text>
+                  <Text style={styles.listItem}>• Jenis Pinjaman: {dataDetail?.loanType}</Text>
+                  <Text style={styles.listItem}>• Plafon Maksimum: Rp{dataDetail?.maxLoan}</Text>
+                  <Text style={styles.listItem}>• Tenor Maksimum: {dataDetail?.maxTenor} bulan</Text>
 
-                  <Text style={styles.sectionTitle}>Ulasan</Text>
-                  <Text style={styles.paragraph}>
-                    Informasi yang tertera di halaman ini dapat berubah
-                    sewaktu-waktu. Untuk informasi selengkapnya, dapat
-                    mengunjungi website resmi Akulaku.
-                  </Text>
+                  <Text style={styles.sectionTitle}>Keunggulan</Text>
+                  <Text style={styles.paragraph}>{dataDetail?.plusValue}</Text>
+
+                  <Text style={styles.sectionTitle}>Informasi Umum</Text>
+                  <Text style={styles.paragraph}>{dataDetail?.basicInfo}</Text>
+
+                  <Text style={styles.sectionTitle}>Cara Pengajuan</Text>
+                  <Text style={styles.paragraph}>{dataDetail?.applymentTutorial}</Text>
                 </View>
               ) : (
                 <View>
                   <Text style={styles.sectionTitle}>Syarat & Dokumen</Text>
-                  <Text style={styles.listItem}>
-                    • KTP sebagai identitas utama
-                  </Text>
-                  <Text style={styles.listItem}>
-                    • Rekening bank untuk pencairan
-                  </Text>
-                  <Text style={styles.listItem}>
-                    • Penghasilan tetap sebagai jaminan
-                  </Text>
+                  <Text style={styles.listItem}>• Tipe Pembayaran: {dataDetail?.paymentType}</Text>
+                  <Text style={styles.listItem}>• Informasi Tambahan: {dataDetail?.additionalInformation}</Text>
+
+                  <Text style={styles.sectionTitle}>Ketentuan</Text>
+                  <Text style={styles.paragraph}>{dataDetail?.termsDocument}</Text>
                 </View>
               )}
+
             </ScrollView>
           </>
         )}

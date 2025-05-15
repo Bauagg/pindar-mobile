@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { Linking } from 'react-native';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import FilterModal from './FilterModal';
@@ -19,7 +20,6 @@ const PindarScreen = (props) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([]);
-  console.log("DATA DARI FILTER", selectedFilters);
   const [dataLenders, setDataLenders] = useState([]);
   const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
   const [activeTab, setActiveTab] = useState('Semua');
@@ -38,9 +38,6 @@ const PindarScreen = (props) => {
     // panggil fungsi yang benar
     getDataLenders(paymentType, loanType, sortBy);
   };
-
-
-
   const getDataLenders = async (paymtype, loanType, sortBy) => {
     try {
       setLoading(true);
@@ -119,6 +116,29 @@ const handleTabPress = (tab) => {
     });
   };
   
+  const getDetail = async (id) => {
+  setLoading(true);
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const response = await api.get(`/lender/detail/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const directLink = response?.data?.data?.directLink;
+    if (directLink) {
+      Linking.openURL(directLink); // Open browser
+    } else {
+      console.warn('Direct link not found.');
+    }
+  } catch (error) {
+    console.log('Error getting detail:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
   
   const renderItem = ({ item }) => {
     const isChecked = selectedItems.some((selected) => selected.id === item.id);
@@ -141,22 +161,21 @@ const handleTabPress = (tab) => {
         <View style={{ alignSelf: 'center' }}>
           <Text style={styles.cardSubtitle}>Maksimal Pinjaman</Text>
           <Text style={styles.cardAmount}>
-  {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.maxloan)}
-</Text>
-
+            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.maxloan)}
+          </Text>
         </View>
-
         <View style={styles.row}>
           <Text style={styles.cardSubtitle}>Maksimal Lama Pinjam</Text>
           <Text style={styles.cardDuration}>{item.maxtenor} {""} Bulan</Text>
         </View>
-
         {/* Detail Button */}
-        <TouchableOpacity style={styles.detailButton}>
+        <TouchableOpacity
+          style={styles.detailButton}
+          onPress={() => props?.navigation.navigate('Informasi Detail', { id: item.id })}
+        >
           <Text style={styles.detailText}>Lihat Detail</Text>
           <FontAwesome name="external-link" size={14} color="red" />
         </TouchableOpacity>
-
         {/* Footer Buttons */}
         <View style={styles.footer}>
           <TouchableOpacity
@@ -169,7 +188,7 @@ const handleTabPress = (tab) => {
             />
             <Text style={styles.compareText}>Bandingkan</Text>
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => getDetail(item.id)}>
             <LinearGradient
               colors={['#CC1C22', '#F86469']}
               style={styles.applyGradient}>

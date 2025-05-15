@@ -9,15 +9,17 @@ import {
   Lexend_600SemiBold,
   Lexend_900Black,
 } from '@expo-google-fonts/lexend';
+import { useNavigation } from '@react-navigation/native';
 
 const TrendingCard = () => {
+  const navigation = useNavigation();
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
-  if (!fontsLoaded) {
-    return null;
-  }
+ const navEducationAllTreding = () => {
+    navigation?.navigate('Education All Treding');
+  };
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
@@ -28,7 +30,7 @@ const TrendingCard = () => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={navEducationAllTreding}>
         <Text style={styles.buttonText}>View all </Text>
         <Entypo name="chevron-right" size={16} color="white" />
       </TouchableOpacity>
