@@ -160,10 +160,14 @@ const handleApplyFilter = (filters) => {
 
 
         {/* Tombol Lihat Detail */}
-        <TouchableOpacity style={styles.detailButton}>
-          <Text style={styles.detailText}>Lihat Detail</Text>
-          <FontAwesome name="external-link" size={14} color="red" />
+        <TouchableOpacity
+            style={styles.detailButton}
+            onPress={() => props.navigation.navigate("Kartu Kredit Detail", { id: item.id })}
+          >
+            <Text style={styles.detailText}>Lihat Detail</Text>
+            <FontAwesome name="external-link" size={14} color="red" />
         </TouchableOpacity>
+
 
         {/* Footer */}
         <View style={styles.footer}>

@@ -6,21 +6,31 @@ import {
   Animated,
   TouchableOpacity,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
-const RedirectScreenKartu = ({ navigation }) => {
+const RedirectScreenKartu = ({ route, navigation }) => {
+  const { imageLink, redirectLink, title } = route.params || {};
+    console.log('DATA DARI NAVIGASI:');
+  console.log('imageLink:', imageLink);
+  console.log('redirectLink:', redirectLink);
+  console.log('title:', title);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(progressAnim, {
-      toValue: 100, // Nilai akhir progress bar
-      duration: 5000, // 5 detik
+      toValue: 100,
+      duration: 5000,
       useNativeDriver: false,
     }).start(() => {
-      console.log('Redirecting...');
+      if (redirectLink) {
+        Linking.openURL(redirectLink).catch((err) =>
+          console.error('Failed to open URL:', err)
+        );
+      }
     });
   }, []);
 
@@ -38,7 +48,7 @@ const RedirectScreenKartu = ({ navigation }) => {
         backgroundColor: '#fff',
       }}>
       <Image
-        source={require('../../assets/bca.png')}
+        source={{ uri: `https://be.pindar.id/api${imageLink}`}}
         style={{
           width: 200,
           height: 80,
@@ -54,7 +64,7 @@ const RedirectScreenKartu = ({ navigation }) => {
           marginBottom: 10,
           fontFamily: 'Poppins-Bold',
         }}>
-        BCA Mastercard
+        {title || 'BCA Mastercard'}
       </Text>
       <View style={{ width: Dimensions.get('window').width - 200 }}>
         <Text style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -62,7 +72,6 @@ const RedirectScreenKartu = ({ navigation }) => {
         </Text>
       </View>
 
-      {/* Progress Bar dengan Linear Gradient */}
       <View
         style={{
           width: '80%',
@@ -86,7 +95,16 @@ const RedirectScreenKartu = ({ navigation }) => {
       <View style={{ width: Dimensions.get('window').width - 120 }}>
         <Text style={{ marginTop: 10, textAlign: 'center' }}>
           Jika anda tidak dialihkan dalam waktu 5 detik, klik{' '}
-          <Text style={{ color: 'blue' }}>di sini</Text> untuk melanjutkan
+          <Text
+            style={{ color: 'blue' }}
+            onPress={() => {
+              if (redirectLink) {
+                Linking.openURL(redirectLink);
+              }
+            }}>
+            di sini
+          </Text>{' '}
+          untuk melanjutkan
         </Text>
       </View>
     </View>

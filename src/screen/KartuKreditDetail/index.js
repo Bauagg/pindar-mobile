@@ -14,11 +14,12 @@ import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KartuKreditDetail = (props) => {
-  const idDetail = props?.route?.params?.idDetail;
+  const idDetail = props?.route?.params?.id;
   const [detail, setDetail] = useState(null);
-  
+  console.log("INI DATA DETAIl", detail);
   const [loading, setLoading] = useState(false);
 
   console.log("ID DARI SCRENN SEBELUMNYA", detail);
@@ -48,8 +49,13 @@ const KartuKreditDetail = (props) => {
   }, []);
 
   const navAjukan = () => {
-    props.navigation.navigate('Redirect Kartu');
+    props.navigation.navigate('Redirect Kartu', {
+      imageLink: detail.imageLink,
+      redirectLink: detail.redicrectLink,
+      title: detail.title
+    });
   };
+
 
   const accordionData = [
     {
@@ -103,10 +109,10 @@ const KartuKreditDetail = (props) => {
       <TouchableOpacity
         style={[
           styles.accordionHeader,
-          expandedItems.includes(item.id) && styles.expandedHeader,
+          expandedItems.includes(item?.id) && styles.expandedHeader,
         ]}
         onPress={() => toggleExpand(item.id)}>
-        <Text style={styles.accordionTitle}>{item.title}</Text>
+        <Text style={styles.accordionTitle}>{item?.title}</Text>
         <Entypo
           name={expandedItems.includes(item.id) ? 'chevron-up' : 'chevron-down'}
           size={20}
@@ -115,7 +121,7 @@ const KartuKreditDetail = (props) => {
       </TouchableOpacity>
       {expandedItems.includes(item.id) && (
         <View style={styles.contentBox}>
-          <Text style={styles.contentText}>{item.content}</Text>
+          <Text style={styles.contentText}>{item?.content}</Text>
         </View>
       )}
     </View>
@@ -164,7 +170,7 @@ const KartuKreditDetail = (props) => {
             borderRadius: 10,
           }}>
           <Image
-            source={{ uri: `https://be.pindar.id/api${detail.imageLink}`}}
+            source={{ uri: `https://be.pindar.id/api${detail?.imageLink}`}}
             style={{ width: 280, height: 180, borderRadius: 10, marginTop: 20 }}
           />
         </View>
@@ -178,7 +184,7 @@ const KartuKreditDetail = (props) => {
             fontFamily: 'Lexend-Regular',
             fontWeight: 'semi-bold',
           }}>
-          {detail.title}
+          {detail?.title}
         </Text>
         <View
           style={{

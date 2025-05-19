@@ -212,7 +212,7 @@ export default function Signin(props) {
               style={styles.icon}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, {color: 'black'}]}
               placeholder="Username"
               value={username}
               onChangeText={setUsername}
@@ -226,7 +226,7 @@ export default function Signin(props) {
               style={styles.icon}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, {color: 'black'}]}
               placeholder="Password"
               secureTextEntry={secureText}
               value={password}
@@ -343,6 +343,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 40,
+    color: 'black',
   },
   button: {
     paddingVertical: 10,
