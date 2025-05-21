@@ -61,7 +61,11 @@ export default function EducationAllTerbaru() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [categoryData, setCategoryData] = useState([]);
     const [dataContent, setDataContent] = useState([]);
-    console.log("INi data content", dataContent);
+    const [searchText, setSearchText] = useState('');
+    console.log("INI DATA YANG DI CARI", searchText);
+    const handleSearch = () => {
+      getDataEducation(null, searchText); // atau isi categoryId jika perlu
+    };
   
 
     const getCategories = async () => {
@@ -80,20 +84,28 @@ export default function EducationAllTerbaru() {
       }
     };
 
-    const getDataEducation = async (categoryId = null) => {
+    const getDataEducation = async (categoryId = null, search = '') => {
       try {
-        console.log('Ambil data konten untuk kategoriId:', categoryId);
+        console.log('Ambil data konten untuk kategoriId:', categoryId, 'search:', search);
         setLoading(true);
         const token = await AsyncStorage.getItem('token');
-        const endpoint = categoryId
-          ? `/content/list?categoryId=${categoryId}`
-          : `/content/list`;
-    
+
+        let endpoint = '/content/list';
+        const queryParams = [];
+
+        if (categoryId) queryParams.push(`categoryId=${categoryId}`);
+        if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+
+        if (queryParams.length > 0) {
+          endpoint += `?${queryParams.join('&')}`;
+        }
+
         const response = await api.get(endpoint, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+
         console.log("INI data", response.data.data.contents);
         setDataContent(response.data.data.contents);
       } catch (error) {
@@ -102,6 +114,7 @@ export default function EducationAllTerbaru() {
         setLoading(false);
       }
     };
+
     
     useEffect(() => {
       getCategories();
@@ -147,7 +160,9 @@ export default function EducationAllTerbaru() {
             color="#999"
             style={styles.searchIcon}
           />
-          <TextInput placeholder="Search here.." style={styles.searchInput} />
+          <TextInput placeholder="Search here.." style={styles.searchInput} value={searchText}
+            onChangeText={setSearchText}
+            onSubmitEditing={handleSearch} />
         </View>
       </View>
       <View style={{ paddingHorizontal: 10, paddingTop: 20 }}>

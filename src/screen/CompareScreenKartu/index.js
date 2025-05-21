@@ -142,17 +142,17 @@ const CompareScreenKartu = (props) => {
   ];
 
   const tableData = [
-    { title: 'Provider Kartu', key: 'provider' },
+    { title: 'Provider Kartu', key: 'title' },
     { title: 'Iuran Tahunan', key: 'yearlyFee' },
-    { title: 'Biaya tahunan Kartu tambahan', key: 'extraCardFee' },
+    { title: 'Biaya tahunan Kartu tambahan', key: 'additionalCardAnnualFee' },
     { title: 'Purchase Rate', key: 'purchaseRate' },
     { title: 'Cashback Rate', key: 'cashbackRate' },
-    { title: 'Biaya penarikan tunai minimum', key: 'withdrawalFee' },
-    { title: 'Denda keterlambatan pembayaran', key: 'lateFee' },
+    { title: 'Biaya penarikan tunai minimum', key: 'monthlyIncomeMinimum' },
+    { title: 'Denda keterlambatan pembayaran', key: 'yearlyIncomeMinimum' },
     { title: 'Penghasilan Minimal', key: 'minimumIncome' },
-    { title: 'Usia maks. pemegang kartu utama', key: 'maxAge' },
-    { title: 'Usia min. pemegang kartu utama', key: 'minAge' },
-    { title: 'Usia min. pemegang kartu tambahan', key: 'minExtraAge' },
+    { title: 'Usia maks. pemegang kartu utama', key: 'mainCardMinimumAge' },
+    { title: 'Usia min. pemegang kartu utama', key: 'mainCardMaximumAge' },
+    { title: 'Usia min. pemegang kartu tambahan', key: 'additionalCardMinimumAge' },
   ];
 
   return (
@@ -161,7 +161,7 @@ const CompareScreenKartu = (props) => {
         style={{
           marginBottom: 45,
           marginTop: 10,
-          paddingHorizontal: 10,
+          paddingLeft: 100,
           width: Dimensions.get('window').width,
         }}>
         <FlatList
