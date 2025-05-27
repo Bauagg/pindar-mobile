@@ -118,37 +118,41 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
 
 
   const handleVerifyOtp = async () => {
-    const fullOtp = otp.join('');
-  console.log("JALNNNN")
-    if (fullOtp.length < 4) {
-      showAlert('Kode OTP belum lengkap.', 'error');
-      return;
+  const fullOtp = otp.join('');
+  console.log("JALAN");
+
+  if (fullOtp.length < 4) {
+    showAlert('Kode OTP belum lengkap.', 'error');
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await api.post('/user/confirm-otp', {
+      email: email, // ← nanti ini ambil dari props kalau bisa
+      otpCode: fullOtp,
+    });
+
+    console.log('RESPONSE DATA:', response.data);
+
+    if (response?.data?.code === 200) {
+      showAlert('Verifikasi berhasil!', 'success');
+      props.navigation.navigate('Signin');
+    } else {
+      showAlert(response?.data?.message || 'Kode OTP salah. Coba lagi.', 'error');
     }
-  
-    try {
-      setLoading(true);
-  
-      const response = await api.post('/user/confirm-otp', {
-        email: email, // ← nanti ini ambil dari props kalau bisa
-        otpCode: fullOtp,
-      });
-  
-      if (response?.data?.success) {
-        showAlert('Verifikasi berhasil!', 'success');
-        props.navigation.navigate('Signin')
-      } else {
-        showAlert('Kode OTP salah. Coba lagi.', 'error');
-      }
-    } catch (error) {
-      console.log(error);
-      showAlert(
-        error.response?.data?.message || 'Terjadi kesalahan saat verifikasi OTP.',
-        'error'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.log(error);
+    showAlert(
+      error.response?.data?.message || 'Terjadi kesalahan saat verifikasi OTP.',
+      'error'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
   
 
   return (

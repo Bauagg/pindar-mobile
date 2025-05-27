@@ -7,12 +7,12 @@ const AlertModalContext = createContext();
 
 export const AlertModalProvider = ({ children }) => {
   const [visible, setVisible] = useState(false);
-  const [title, setTitle] = useState(''); // Tambahkan Title
+  const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [type, setType] = useState('success'); // "success" atau "error"
 
   const showAlert = (alertTitle, msg, alertType = 'success') => {
-    setTitle(alertTitle); // Simpan Title
+    setTitle(alertTitle);
     setMessage(msg);
     setType(alertType);
     setVisible(true);
@@ -43,7 +43,7 @@ export const AlertModalProvider = ({ children }) => {
               alignItems: 'center',
               width: 300,
             }}>
-            {/* Gradient Lingkaran Ikon */}
+            {/* Ikon dalam lingkaran dengan warna merah tetap */}
             <LinearGradient
               colors={['#CC1C22', '#F86469']}
               style={{
@@ -61,14 +61,6 @@ export const AlertModalProvider = ({ children }) => {
               />
             </LinearGradient>
 
-            {/* <Text
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: type === 'success' ? '#F86469' : '#CC1C22',
-              }}>
-              {type === 'success' ? 'Berhasil' : 'Gagal'}
-            </Text> */}
             <Text
               style={{
                 marginVertical: 10,
@@ -89,7 +81,6 @@ export const AlertModalProvider = ({ children }) => {
               {message}
             </Text>
 
-            {/* Gradient Button OK */}
             <TouchableOpacity onPress={hideAlert}>
               <LinearGradient
                 colors={['#F86469', '#CC1C22']}

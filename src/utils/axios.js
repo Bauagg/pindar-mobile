@@ -87,7 +87,7 @@ api.interceptors.response.use(
           throw new Error('Invalid refresh token response.');
         }
       } catch (refreshError) {
-        console.error('Error refreshing token:', refreshError);
+        console.log('Error refreshing token:', refreshError);
         await AsyncStorage.removeItem('accessToken');
         await AsyncStorage.removeItem('refreshToken');
 

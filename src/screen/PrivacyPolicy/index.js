@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,101 +10,60 @@ import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../utils/axios';
-import { useAlertModal } from '../../contexts/AlertModalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const PrivacyPolicy = () => {
- const [loading, setLoading] = useState(false);
- const [dataPrivacy, setDataPrivacy] = useState({});
- console.log("INI DATA PRIVACY",dataPrivacy);
+  const [loading, setLoading] = useState(false);
+  const [dataPrivacy, setDataPrivacy] = useState({});
+  const scrollViewRef = useRef(null);
+
   const navigation = useNavigation();
+
   const getDataTerms = async () => {
     try {
-      console.log("JALANNNN")
       setLoading(true);
       const token = await AsyncStorage.getItem('accessToken');
-      console.log(token);
       const response = await api.get(`/parameter/PRIVACY_POLICY`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("INI RESPON",response.data.data);
       setDataPrivacy(response.data.data);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setLoading(false);
     }
+  };
 
-  }
-  useEffect(()=> {
+  useEffect(() => {
     getDataTerms();
-  },[]);
+  }, []);
+
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privasi Policy</Text>
-      </View> */}
-
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.updatedText}>
           Terakhir diperbarui: <Text style={styles.boldText}>24/02/2025</Text>
         </Text>
 
         <Text style={styles.sectionTitle}>1. Pendahuluan</Text>
-        <Text style={styles.contentText}>{dataPrivacy.param_value}
-          {/* Selamat datang di Pindar. Privasi Anda sangat penting bagi kami.
-          Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan,
-          menggunakan, dan melindungi informasi Anda saat menggunakan aplikasi
-          Pindar. */}
-        </Text>
-
-        {/* <Text style={styles.sectionTitle}>
-          2. Informasi yang Kami Kumpulkan
-        </Text>
         <Text style={styles.contentText}>
-          Kami dapat mengumpulkan informasi berikut dari pengguna:
+          {dataPrivacy.param_value}
         </Text>
-        <Text style={styles.listItem}>
-          • Informasi Pribadi: Nama, alamat email, nomor telepon, data identitas
-          (KTP, NPWP), dan informasi keuangan.
-        </Text>
-        <Text style={styles.listItem}>
-          • Informasi Perangkat: Jenis perangkat, sistem operasi, alamat IP.
-        </Text>
-        <Text style={styles.listItem}>
-          • Informasi Penggunaan: Aktivitas dalam aplikasi, preferensi.
-        </Text>
-
-        <Text style={styles.sectionTitle}>
-          3. Cara Kami Menggunakan Informasi
-        </Text>
-        <Text style={styles.contentText}>
-          Informasi yang dikumpulkan digunakan untuk:
-        </Text>
-        <Text style={styles.listItem}>
-          • Memproses pengajuan pinjaman atau kartu kredit.
-        </Text>
-        <Text style={styles.listItem}>
-          • Menyediakan informasi dan perbandingan layanan keuangan.
-        </Text>
-        <Text style={styles.listItem}>
-          • Meningkatkan pengalaman pengguna dalam aplikasi.
-        </Text>
-        <Text style={styles.listItem}>
-          • Mengirimkan notifikasi terkait status pengajuan.
-        </Text> */}
       </ScrollView>
 
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
+      <TouchableOpacity
+        onPress={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         <LinearGradient
           colors={['#CC1C22', '#F86469']}
-          style={styles.filterFloating}>
+          style={styles.filterFloating}
+        >
           <Feather
             name="arrow-down"
             size={14}
@@ -125,16 +84,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 24,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 16,
-  },
   scrollContainer: {
     paddingBottom: 80,
   },
@@ -153,25 +102,6 @@ const styles = StyleSheet.create({
   contentText: {
     color: 'gray',
     marginTop: 8,
-  },
-  listItem: {
-    color: 'gray',
-    marginTop: 4,
-    marginLeft: 16,
-  },
-  button: {
-    backgroundColor: 'red',
-    borderRadius: 24,
-    paddingVertical: 12,
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 24,
-    left: 16,
-    right: 16,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
   filterFloating: {
     position: 'absolute',

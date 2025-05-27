@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,51 +9,41 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../utils/axios';
-import { useAlertModal } from '../../contexts/AlertModalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TermsCondition = () => {
-   const [loading, setLoading] = useState(false);
-   const [dataTerms, setDataTerms] = useState({});
-   console.log("INI DATA TERMS", dataTerms);
-   
-   const getDataTerms = async () => {
+  const [loading, setLoading] = useState(false);
+  const [dataTerms, setDataTerms] = useState({});
+  const scrollViewRef = useRef(null);
+
+  const getDataTerms = async () => {
     try {
-      console.log("JALANNNN")
       setLoading(true);
       const token = await AsyncStorage.getItem('accessToken');
-      console.log(token);
       const response = await api.get(`/parameter/TERMS_CONDITION`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("INI RESPON",response.data.data);
       setDataTerms(response.data.data);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setLoading(false);
     }
+  };
 
-  }
-  useEffect(()=> {
+  useEffect(() => {
     getDataTerms();
-  },[]);
+  }, []);
+
   return (
     <View style={styles.container}>
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity>
-          <Entypo name="chevron-left" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Terms & Condition</Text>
-        <TouchableOpacity>
-          <Entypo name="dots-three-vertical" size={20} color="black" />
-        </TouchableOpacity>
-      </View> */}
-
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.lastUpdated}>
           Terakhir diperbarui: <Text style={styles.boldText}>24/02/2025</Text>
         </Text>
@@ -61,46 +51,16 @@ const TermsCondition = () => {
         <Text style={styles.sectionTitle}>1. Pendahuluan</Text>
         <Text style={styles.sectionContent}>
           {dataTerms.param_value}
-          {/* Selamat datang di Pindar, aplikasi agregasi pinjaman online dan kartu
-          kredit. Dengan menggunakan aplikasi ini, Anda menyetujui syarat dan
-          ketentuan yang berlaku. */}
         </Text>
-
-        {/* <Text style={styles.sectionTitle}>2. Definisi</Text>
-        <Text style={styles.sectionContent}>
-          • Pindar: Aplikasi yang menyediakan informasi dan perbandingan produk
-          pinjaman online serta kartu kredit.
-          {'\n'}• Pengguna: Individu yang mengakses layanan Pindar.
-          {'\n'}• Mitra Keuangan: Lembaga keuangan yang bekerja sama dengan
-          Pindar.
-        </Text>
-
-        <Text style={styles.sectionTitle}>3. Layanan yang Disediakan</Text>
-        <Text style={styles.sectionContent}>
-          • Menyediakan informasi dan perbandingan produk pinjaman online.
-          {'\n'}• Membantu pengguna mengajukan pinjaman atau kartu kredit.
-          {'\n'}• Memberikan notifikasi terkait status pengajuan.
-        </Text>
-
-        <Text style={styles.sectionTitle}>4. Kewajiban Pengguna</Text>
-        <Text style={styles.sectionContent}>
-          • Memberikan informasi yang akurat dan jujur.
-          {'\n'}• Tidak menggunakan aplikasi untuk tujuan ilegal.
-          {'\n'}• Menjaga keamanan akun.
-        </Text>
-
-        <Text style={styles.sectionTitle}>5. Privasi & Keamanan Data</Text>
-        <Text style={styles.sectionContent}>
-          • Pindar mengutamakan perlindungan data pengguna.
-          {'\n'}• Data pribadi digunakan sesuai kebijakan privasi Pindar.
-        </Text> */}
       </ScrollView>
 
-      {/* Button */}
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
+      <TouchableOpacity
+        onPress={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         <LinearGradient
           colors={['#CC1C22', '#F86469']}
-          style={styles.filterFloating}>
+          style={styles.filterFloating}
+        >
           <Feather
             name="arrow-down"
             size={14}
@@ -120,18 +80,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingHorizontal: 20,
     paddingTop: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
   },
   scrollView: {
     marginBottom: 80,
@@ -155,26 +103,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4b5563',
     marginBottom: 16,
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 24,
-    left: 20,
-    right: 20,
-  },
-  button: {
-    backgroundColor: '#ef4444',
-    paddingVertical: 12,
-    borderRadius: 9999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-    marginLeft: 8,
   },
   filterFloating: {
     position: 'absolute',

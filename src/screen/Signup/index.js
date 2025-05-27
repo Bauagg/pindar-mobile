@@ -60,42 +60,49 @@ const encryptPassword = (password) => {
 
 
   const handleSignup = async () => {
-    if (!fullname || !email || !phone || !password || !confirmPassword) {
-      showAlert('Semua field harus diisi.', 'error');
-      return;
-    }
-  
-    if (password !== confirmPassword) {
-      showAlert('Password dan Konfirmasi Password tidak sama.', 'error');
-      return;
-    }
-  
-    try {
-      setLoading(true);
-  
-      const encryptedPassword = encryptPassword(password); // 🔐 Enkripsi pakai node-forge
-      console.log('Encrypted Password:', encryptedPassword);
-  
-      const response = await api.post('/user/sign-up', {
-        fullName: fullname,
-        email: email,
-        phoneNumber: phone,
-        password: encryptedPassword,
-      });
-  
-      showAlert(response?.data?.message, 'success');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      navigateVerif();
-    } catch (error) {
-      console.log(error.response?.data);
-      showAlert(
-        error.response?.data?.message || 'Terjadi kesalahan saat signup.',
-        'error'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!fullname || !email || !phone || !password || !confirmPassword) {
+    showAlert('Gagal', 'Semua field harus diisi.', 'error');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showAlert('Gagal', 'Password dan Konfirmasi Password tidak sama.', 'error');
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const encryptedPassword = encryptPassword(password);
+    console.log('Encrypted Password:', encryptedPassword);
+
+    const response = await api.post('/user/sign-up', {
+      fullName: fullname,
+      email: email,
+      phoneNumber: phone,
+      password: encryptedPassword,
+    });
+
+    // ✅ Asumsikan sukses jika tidak masuk ke catch
+    const successMessage = response?.data?.message || 'OTP berhasil dikirim';
+    showAlert('Berhasil', successMessage, 'success');
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    navigateVerif();
+  } catch (error) {
+    console.log(error.response?.data);
+
+    showAlert(
+      'Gagal',
+      error.response?.data?.message || 'Terjadi kesalahan saat signup.',
+      'error'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   
 
   return (
