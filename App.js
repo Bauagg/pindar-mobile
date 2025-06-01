@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StatusBar } from 'react-native';
-import MainStackNavigator from './src/navigation';
-import SplashScreen from './src/screen/SplashScreen';
-import { setNavigationRef } from './src/utils/axios'; // <- sesuaikan path jika perlu
+import React, { useState, useEffect, useRef } from "react";
+import { StatusBar } from "react-native";
+import MainStackNavigator from "./src/navigation";
+import SplashScreen from "./src/screen/SplashScreen";
+import { setNavigationRef } from "./src/utils/axios"; // <- sesuaikan path jika perlu
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -19,7 +19,11 @@ const App = () => {
 
   return (
     <>
-      <StatusBar hidden={false} backgroundColor="#A0C5E8" />
+      <StatusBar
+        hidden={false}
+        backgroundColor="white"
+        barStyle="dark-content"
+      />
       {showSplash ? (
         <SplashScreen />
       ) : (

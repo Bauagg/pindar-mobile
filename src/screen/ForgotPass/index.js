@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   StatusBar,
   StyleSheet,
@@ -9,46 +9,51 @@ import {
   Image,
   Dimensions,
   Switch,
-} from 'react-native';
-import { Entypo } from '@expo/vector-icons';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import Feather from '@expo/vector-icons/Feather';
-import { LinearGradient } from 'expo-linear-gradient';
-import api from '../../utils/axios';
-import { useAlertModal } from '../../contexts/AlertModalContext';
+} from "react-native";
+import { Entypo } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import Feather from "@expo/vector-icons/Feather";
+import { LinearGradient } from "expo-linear-gradient";
+import api from "../../utils/axios";
+import { useAlertModal } from "../../contexts/AlertModalContext";
 export default function ForgotPass(props) {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState("");
   const { showAlert } = useAlertModal();
   const [loading, setLoading] = useState(false);
 
-
   const navSend = () => {
-    props.navigation.replace('Signin');
+    props.navigation.replace("Signin");
   };
 
   const handleForgotPass = async () => {
     try {
       setLoading(true);
-      const response = await api.post('/user/forgot-password', {
+      const response = await api.post("/user/forgot-password", {
         email: username,
       });
-      showAlert(response.data.message, 'success');
-      props.navigation.navigate('Signin');
+      showAlert(response.data.message, "success");
+      props.navigation.navigate("Signin");
     } catch (error) {
       setLoading(false);
       if (error.response?.data?.message) {
-        showAlert(error.response.data.message, 'error');
+        showAlert(
+          "Lupa Password Gagal",
+          error.response?.data?.message || "Terjadi kesalahan saat Lupa Pass.",
+          "error"
+        );
       } else {
-        showAlert('Terjadi kesalahan saat mengirim permintaan. Coba lagi nanti.', 'error');
+        showAlert(
+          "Terjadi kesalahan saat mengirim permintaan. Coba lagi nanti.",
+          "error"
+        );
       }
       console.log(error);
     }
-    
-  }
+  };
 
   return (
     <>
-      <StatusBar translucent={true} backgroundColor={'transparent'} />
+      <StatusBar translucent={true} backgroundColor={"transparent"} />
       <View style={styles.container}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Forgot Password</Text>
@@ -73,12 +78,16 @@ export default function ForgotPass(props) {
               onChangeText={setUsername}
             />
           </View>
-          <TouchableOpacity onPress={handleForgotPass} style={styles.buttonContainer}>
+          <TouchableOpacity
+            onPress={handleForgotPass}
+            style={styles.buttonContainer}
+          >
             <LinearGradient
-              colors={['#CC1C22', '#F86469']}
+              colors={["#CC1C22", "#F86469"]}
               start={{ x: 0.5, y: 1 }} // Mulai dari atas
               end={{ x: 0.5, y: 0 }} // Berakhir di bawah
-              style={styles.button}>
+              style={styles.button}
+            >
               <Text style={styles.buttonText}>SEND</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -91,34 +100,34 @@ export default function ForgotPass(props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
   title: {
     fontSize: 24,
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: "Poppins-SemiBold",
     fontWeight: 500,
     marginBottom: 20,
   },
   subtitle: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: "Poppins-Regular",
     fontSize: 16,
     marginBottom: 20,
   },
   titleContainer: {
-    width: '100%',
+    width: "100%",
     paddingLeft: 10,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 20,
-    width: '100%',
+    width: "100%",
   },
   input: {
     flex: 1,
@@ -127,32 +136,32 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonContainer: {
-    width: '100%',
+    width: "100%",
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   forgotContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
     marginBottom: 20,
   },
   orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 20,
   },
   signupContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 200,
   },
   formContainer: {
