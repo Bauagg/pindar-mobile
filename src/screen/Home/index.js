@@ -288,7 +288,7 @@ export default function Home(props) {
               <View>
                 <PopularDeal />
               </View>
-              <View style={{ height: 100 }} />
+              <View style={{ height: 120 }} />
             </>
           }
         />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,8 @@ import {
   Image,
   TextInput,
   Dimensions,
-} from 'react-native';
-import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Entypo, Feather, Ionicons } from "@expo/vector-icons";
 import {
   useFonts,
   Lexend_400Regular,
@@ -17,44 +17,41 @@ import {
   Lexend_500Medium,
   Lexend_600SemiBold,
   Lexend_900Black,
-} from '@expo-google-fonts/lexend';
-import api from '../../utils/axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+} from "@expo-google-fonts/lexend";
+import api from "../../utils/axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EducationDetail = (props) => {
-  const {id} = props.route.params;
+  const { id } = props.route.params;
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [dataEducation,setEducation] = useState([]);
+  const [dataEducation, setEducation] = useState([]);
   console.log("INI DATA", dataEducation);
   const [fontsLoaded] = useFonts({
     Lexend_400Regular,
     Lexend_700Bold,
   });
- 
+
   const navEducationComments = () => {
-    props.navigation.navigate('EducationComments');
+    props.navigation.navigate("EducationComments");
   };
 
-const getDataDetail = async () => {
-  try {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('accessToken');
-    console.log("INI TOKEN", token);
-    const response = await api.get(
-      `/content/detail/${id}`,
-      {
+  const getDataDetail = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("accessToken");
+      console.log("INI TOKEN", token);
+      const response = await api.get(`/content/detail/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
-    console.log(response.data.data);
-    setEducation(response.data.data);
-  } catch (error) {
-    console.log(error);
-  }
-}
+      });
+      console.log(response.data.data);
+      setEducation(response.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
     getDataDetail();
@@ -62,14 +59,14 @@ const getDataDetail = async () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={{ flexDirection: 'row' }}>
+      <View style={{ flexDirection: "row" }}>
         <Image
-          source={require('../../assets/loginlogo.png')}
+          source={require("../../assets/loginlogo.png")}
           style={{
             width: 50,
             height: 50,
             marginRight: 10,
-            resizeMode: 'contain',
+            resizeMode: "contain",
           }}
         />
         <View style={styles.searchContainer}>
@@ -89,11 +86,9 @@ const getDataDetail = async () => {
         style={styles.articleImage}
       />
       <View style={styles.articleContent}>
-        <Text style={styles.timestamp}>4h ago</Text>
-        <Text style={styles.articleTitle}>
-          {dataEducation.title || ""}
-        </Text>
-        <View style={styles.statsContainer}>
+        {/* <Text style={styles.timestamp}>4h ago</Text> */}
+        <Text style={styles.articleTitle}>{dataEducation.title || ""}</Text>
+        {/* <View style={styles.statsContainer}>
           <TouchableOpacity onPress={navEducationComments}>
             <Text style={styles.stat}>
               <Ionicons name="chatbubble-outline" size={16} /> 8 comments
@@ -107,10 +102,8 @@ const getDataDetail = async () => {
               <Ionicons name="share-social-outline" size={16} /> Share
             </Text>
           </TouchableOpacity>
-        </View>
-        <Text style={styles.articleText}>
-          {dataEducation.contentDetail}
-        </Text>
+        </View> */}
+        <Text style={styles.articleText}>{dataEducation.contentDetail}</Text>
       </View>
 
       {/* Share Modal */}
@@ -158,7 +151,8 @@ const getDataDetail = async () => {
             </View>
             <TouchableOpacity
               style={styles.closeButton}
-              onPress={() => setModalVisible(false)}>
+              onPress={() => setModalVisible(false)}
+            >
               <Text style={styles.cancelText}>CANCEL</Text>
             </TouchableOpacity>
           </View>
@@ -171,26 +165,26 @@ const getDataDetail = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: "#F9F9F9",
     padding: 15,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 15,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     elevation: 3,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '85%',
-    backgroundColor: '#F5F5F5',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "85%",
+    backgroundColor: "#F5F5F5",
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -202,9 +196,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   articleImage: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   articleContent: {
     padding: 15,
@@ -212,74 +206,74 @@ const styles = StyleSheet.create({
 
   timestamp: {
     fontSize: 12,
-    color: '#888',
-    fontFamily: 'Lexend_400Regular',
+    color: "#888",
+    fontFamily: "Lexend_400Regular",
   },
   articleTitle: {
     fontSize: 18,
     // fontWeight: 'bold',
-    fontFamily: 'Lexend_700Bold',
+    fontFamily: "Lexend_700Bold",
     marginVertical: 10,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 10,
     paddingRight: 100,
   },
   stat: {
     fontSize: 14,
-    color: '#444',
-    fontFamily: 'Lexend_400Regular',
+    color: "#444",
+    fontFamily: "Lexend_400Regular",
   },
   articleText: {
     fontSize: 14,
-    color: '#333',
-    fontFamily: 'Lexend_400Regular',
+    color: "#333",
+    fontFamily: "Lexend_400Regular",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    width: Dimensions.get('window').width,
+    width: Dimensions.get("window").width,
     // height: '60%',
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
     // fontWeight: 'bold',
     marginBottom: 15,
-    fontFamily: 'Lexend_700Bold',
+    fontFamily: "Lexend_700Bold",
   },
   shareOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+    width: "100%",
   },
   shareButton: {
-    alignItems: 'center',
+    alignItems: "center",
     margin: 10,
   },
   closeButton: {
     marginTop: 15,
-    backgroundColor: '#EAEAEA',
-    width: '100%',
+    backgroundColor: "#EAEAEA",
+    width: "100%",
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 10,
   },
   cancelText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#555',
+    fontWeight: "bold",
+    color: "#555",
   },
 });
 

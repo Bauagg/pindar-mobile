@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,32 +6,18 @@ import {
   FlatList,
   Dimensions,
   StyleSheet,
-} from 'react-native';
+  TouchableOpacity,
+  Linking,
+} from "react-native";
 import {
   useFonts,
   Lexend_400Regular,
   Lexend_700Bold,
-  Lexend_500Medium,
-  Lexend_600SemiBold,
-  Lexend_900Black,
-} from '@expo-google-fonts/lexend';
-import api from '../../utils/axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+} from "@expo-google-fonts/lexend";
+import api from "../../utils/axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width } = Dimensions.get('window'); // Mendapatkan lebar layar
-
-const data = [
-  {
-    title: 'Life Insurance',
-    subtitle: 'Masa Depan Aman, Mulai Rp100K/Bulan!',
-    image: require('../../assets/family.png'), // Ganti dengan gambar kamu
-  },
-  {
-    title: 'Health Plan',
-    subtitle: 'Lindungi Kesehatan Keluarga!',
-    image: require('../../assets/family.png'),
-  },
-];
+const { width } = Dimensions.get("window");
 
 const PopularPlus = () => {
   const flatListRef = useRef(null);
@@ -44,69 +30,70 @@ const PopularPlus = () => {
   });
 
   const handleScroll = (event) => {
-    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    const slideIndex = Math.round(
+      event.nativeEvent.contentOffset.x / (width * 0.9)
+    );
     setActiveIndex(slideIndex);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image
-        source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
-        style={styles.image}
-      />
-      <View style={styles.textContainer}>
-        <Text style={styles.smallText}>{item.title}</Text>
-        <Text style={styles.bigText}>{item.subtitle}</Text>
-      </View>
-    </View>
-  );
-
-  const refreshAccessToken = async () => {
-    const refreshToken = await AsyncStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      alert('Refresh token tidak ditemukan. Silakan login kembali.');
-      return null;
-    }
-  
+  const handlePress = async (id) => {
     try {
-      const response = await api.post('/auth/refresh', { refreshToken });
-      if (response.code === 200) {
-        const newAccessToken = response.data.accessToken;
-        await AsyncStorage.setItem('accessToken', newAccessToken); // Simpan access token baru
-        return newAccessToken;
-      } else {
-        alert('Gagal mendapatkan token baru. Silakan login kembali.');
-        return null;
-      }
-    } catch (error) {
-      console.error('Gagal refresh token:', error);
-      return null;
-    }
-  };
-  
-
-  const getDataCC = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('accessToken');
-      console.log(token);
-      const response = await api.get(`/announcement/active`, {
+      const token = await AsyncStorage.getItem("accessToken");
+      const response = await api.get(`/announcement/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response.data.data); // bisa disimpan ke state juga kalau mau
+
+      const url = response.data.data.url;
+      if (url) {
+        Linking.openURL(url);
+      } else {
+        console.warn("URL tidak tersedia.");
+      }
+    } catch (error) {
+      console.error("Gagal membuka detail:", error.message);
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handlePress(item.id)} activeOpacity={0.8}>
+      <View style={styles.card}>
+        <Image
+          source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+        {/* <View style={styles.overlay}>
+          <Text style={styles.smallText}>{item.title}</Text>
+          <Text style={styles.bigText}>{item.subtitle}</Text>
+        </View> */}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const getDataCC = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("accessToken");
+      const response = await api.get(`/announcement/active?type=popular`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setDataBanner(response.data.data);
     } catch (error) {
-      console.error('Gagal mengambil data lenders:', error.message);
+      console.error("Gagal mengambil data popular:", error.message);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => {
 
+  useEffect(() => {
     getDataCC();
   }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
     <View style={styles.container}>
@@ -120,9 +107,12 @@ const PopularPlus = () => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
+        scrollEventThrottle={16}
+        snapToInterval={width * 0.9 + 20} // +20 for margin
+        decelerationRate="fast"
       />
       <View style={styles.pagination}>
-        {data.map((_, index) => (
+        {dataBanner.map((_, index) => (
           <View
             key={index}
             style={[styles.dot, activeIndex === index && styles.activeDot]}
@@ -139,60 +129,54 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: 'Lexend_700Bold',
-    color: '#333',
+    fontFamily: "Lexend_700Bold",
+    color: "#333",
     marginLeft: 20,
     marginBottom: 10,
   },
   card: {
-    backgroundColor: '#CC1C22',
     borderRadius: 15,
     width: width * 0.9,
     height: 150,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
+    overflow: "hidden", // penting untuk border radius
     marginHorizontal: 10,
-    position: 'relative',
+    position: "relative",
+    backgroundColor: "#eee",
   },
   image: {
-    width: 135,
-    height: 200,
-    resizeMode: 'contain',
-    position: 'absolute',
-    left: 5,
-    // bottom: 0,
+    width: "100%",
+    height: "100%",
   },
-  textContainer: {
-    flex: 1,
-    marginLeft: 120,
+  overlay: {
+    position: "absolute",
+    left: 15,
+    bottom: 15,
+    right: 15,
   },
   smallText: {
     fontSize: 14,
-    color: 'white',
-    fontFamily: 'Lexend_400Regular',
+    color: "white",
+    fontFamily: "Lexend_400Regular",
   },
   bigText: {
     fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: 'Lexend_700Bold',
-    color: 'white',
+    fontFamily: "Lexend_700Bold",
+    color: "white",
   },
   pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 10,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
     marginHorizontal: 5,
   },
   activeDot: {
-    backgroundColor: 'orange',
+    backgroundColor: "orange",
   },
 });
 

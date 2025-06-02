@@ -1,33 +1,33 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 // Import Screens
-import Home from '../screen/Home';
-import Transaction from '../screen/Transaction';
-import Profile from '../screen/Profile';
-import Education from '../screen/Education';
-import PindarScreen from '../screen/PindarScreen';
-import HeaderName from '../components/Header/defaultwithname';
-import KartuKreditScreen from '../screen/KartuKreditScreen';
-import CompareScreen from '../screen/CompareScreen';
-import KartuKreditDetail from '../screen/KartuKreditDetail';
-import AccountInformation from '../screen/AccountInformation';
-import PasswordSecurity from '../screen/PasswordSecurity';
-import TermsConditions from '../screen/TermsAndCondition';
-import PrivacyPolicy from '../screen/PrivacyPolicy';
-import AboutUs from '../screen/AboutUs';
-import EducationDetail from '../screen/EducationDetail';
-import EducationComments from '../screen/EducationComments';
-import Notifikasi from '../screen/Notifikasi';
-import InformasiDetail from '../screen/IndormasiDetail';
-import RedirectScreen from '../screen/RedirectScreen';
-import CompareScreenKartu from '../screen/CompareScreenKartu';
-import RedirectScreenKartu from '../screen/RedirectScreenKartu';
-import EducationAllTerbaru from '../screen/EducationAllTerbaru';
-import EducationAllTreding from '../screen/EducationAllTreding';
+import Home from "../screen/Home";
+import Transaction from "../screen/Transaction";
+import Profile from "../screen/Profile";
+import Education from "../screen/Education";
+import PindarScreen from "../screen/PindarScreen";
+import HeaderName from "../components/Header/defaultwithname";
+import KartuKreditScreen from "../screen/KartuKreditScreen";
+import CompareScreen from "../screen/CompareScreen";
+import KartuKreditDetail from "../screen/KartuKreditDetail";
+import AccountInformation from "../screen/AccountInformation";
+import PasswordSecurity from "../screen/PasswordSecurity";
+import TermsConditions from "../screen/TermsAndCondition";
+import PrivacyPolicy from "../screen/PrivacyPolicy";
+import AboutUs from "../screen/AboutUs";
+import EducationDetail from "../screen/EducationDetail";
+import EducationComments from "../screen/EducationComments";
+import Notifikasi from "../screen/Notifikasi";
+import InformasiDetail from "../screen/IndormasiDetail";
+import RedirectScreen from "../screen/RedirectScreen";
+import CompareScreenKartu from "../screen/CompareScreenKartu";
+import RedirectScreenKartu from "../screen/RedirectScreenKartu";
+import EducationAllTerbaru from "../screen/EducationAllTerbaru";
+import EducationAllTreding from "../screen/EducationAllTreding";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -36,18 +36,19 @@ function BottomTabNavigator() {
     <Tab.Navigator
       screenOptions={{
         tabBarStyle: {
-          position: 'absolute',
+          position: "absolute",
           bottom: 0,
           left: 20,
           right: 20,
-          backgroundColor: '#ffffff',
+          backgroundColor: "#ffffff",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
-          height: 75,
+          height: 120,
           ...styles.shadow,
         },
         tabBarShowLabel: true,
-      }}>
+      }}
+    >
       <Tab.Screen
         name="Home"
         component={Home}
@@ -57,7 +58,7 @@ function BottomTabNavigator() {
             <MaterialIcons
               name="home-filled"
               size={24}
-              color={focused ? '#d62828' : 'gray'}
+              color={focused ? "#d62828" : "gray"}
             />
           ),
           tabBarLabel: ({ focused }) => (
@@ -81,7 +82,7 @@ function BottomTabNavigator() {
             <Ionicons
               name="newspaper-outline"
               size={24}
-              color={focused ? '#d62828' : 'gray'}
+              color={focused ? "#d62828" : "gray"}
             />
           ),
           tabBarLabel: ({ focused }) => (
@@ -103,7 +104,7 @@ function BottomTabNavigator() {
             <Ionicons
               name="person-outline"
               size={24}
-              color={focused ? '#d62828' : 'gray'}
+              color={focused ? "#d62828" : "gray"}
             />
           ),
           tabBarLabel: ({ focused }) => (
@@ -264,31 +265,31 @@ export default function AppStackNavigator() {
 // Styles
 const styles = StyleSheet.create({
   shadowStyle: {
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -1000 }, // Bayangan naik ke atas
     shadowOpacity: 0.5, // Sesuaikan transparansi
     shadowRadius: 100, // Lebarkan efek bayangan
     elevation: 20, // Untuk Android
-    backgroundColor: 'white', // Pastikan warna latar belakang sesuai
+    backgroundColor: "white", // Pastikan warna latar belakang sesuai
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
 
   labelContainer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   label: {
     fontSize: 12,
-    color: 'gray',
-    fontWeight: 'bold',
+    color: "gray",
+    fontWeight: "bold",
   },
   activeLabel: {
-    color: '#d62828',
+    color: "#d62828",
   },
   activeDivider: {
     width: 40,
     height: 4,
-    backgroundColor: '#d62828',
+    backgroundColor: "#d62828",
     borderRadius: 2,
     marginTop: 20, // Position below the text
   },
