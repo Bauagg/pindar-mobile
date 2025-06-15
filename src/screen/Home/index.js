@@ -232,16 +232,17 @@ export default function Home(props) {
       )}
       <>
         <FlatList
+          data={[]} // Kosong karena fokus ke Footer
+          renderItem={null}
           ListFooterComponent={
             <>
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingHorizontal: 85,
+                  justifyContent: "space-evenly", // atau "space-around"
                   paddingVertical: 12,
-                  width: Dimensions.get("window").width,
+                  paddingHorizontal: 16,
                 }}
               >
                 <TouchableOpacity
@@ -275,6 +276,22 @@ export default function Home(props) {
                     style={styles.imageTopRight}
                   />
                   <Text style={styles.text}>Kartu Kredit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.containerTopButton}
+                  onPress={navKartuKreditScreen}
+                >
+                  <LinearGradient
+                    colors={["#CC1C22", "rgba(255,255,255,0)"]} // Warna gradient (bisa disesuaikan)
+                    style={styles.gradient}
+                  />
+
+                  {/* Image */}
+                  <Image
+                    source={require("../../assets/menu2.png")}
+                    style={styles.imageTopRight}
+                  />
+                  <Text style={styles.text}>Pinjaman Bank</Text>
                 </TouchableOpacity>
               </View>
               {/* Trending Product */}

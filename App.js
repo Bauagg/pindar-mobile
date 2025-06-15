@@ -1,21 +1,35 @@
-import React, { useState, useEffect, useRef } from "react";
-import { StatusBar } from "react-native";
+import React, { useRef } from "react";
+import { StatusBar, ActivityIndicator, View } from "react-native";
 import MainStackNavigator from "./src/navigation";
 import SplashScreen from "./src/screen/SplashScreen";
-import { setNavigationRef } from "./src/utils/axios"; // <- sesuaikan path jika perlu
+import { setNavigationRef } from "./src/utils/axios";
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
+  Lexend_900Black,
+} from "@expo-google-fonts/lexend";
 
-const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+export default function App() {
+  const [fontsLoaded] = useFonts({
+    Lexend_400Regular,
+    Lexend_500Medium,
+    Lexend_600SemiBold,
+    Lexend_700Bold,
+    Lexend_900Black,
+  });
+
   const navRef = useRef(null);
 
-  useEffect(() => {
-    setNavigationRef(navRef.current); // kirim ke axios
-    const fetchData = async () => {
-      // bisa tambahkan logika cek login
-      setShowSplash(false);
-    };
-    fetchData();
-  }, []);
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#CC1C22" />
+      </View>
+    );
+  }
 
   return (
     <>
@@ -24,13 +38,7 @@ const App = () => {
         backgroundColor="white"
         barStyle="dark-content"
       />
-      {showSplash ? (
-        <SplashScreen />
-      ) : (
-        <MainStackNavigator navigationRef={navRef} />
-      )}
+      <MainStackNavigator navigationRef={navRef} />
     </>
   );
-};
-
-export default App;
+}
