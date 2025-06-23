@@ -28,6 +28,7 @@ import CompareScreenKartu from "../screen/CompareScreenKartu";
 import RedirectScreenKartu from "../screen/RedirectScreenKartu";
 import EducationAllTerbaru from "../screen/EducationAllTerbaru";
 import EducationAllTreding from "../screen/EducationAllTreding";
+import PinjamanBank from "../screen/PinjamanBank";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -43,7 +44,7 @@ function BottomTabNavigator() {
           backgroundColor: "#ffffff",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
-          height: 120,
+          height: 80,
           ...styles.shadow,
         },
         tabBarShowLabel: true,
@@ -256,6 +257,13 @@ export default function AppStackNavigator() {
         component={EducationAllTreding}
         options={{
           header: (props) => <HeaderName {...props} name="Education" />,
+        }}
+      />
+      <Stack.Screen
+        name="PinjamanBank"
+        component={PinjamanBank}
+        options={{
+          header: (props) => <HeaderName {...props} name="Pinjaman Bank" />,
         }}
       />
     </Stack.Navigator>

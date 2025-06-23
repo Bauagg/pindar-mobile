@@ -52,6 +52,9 @@ export default function Home(props) {
   const navKartuKreditScreen = () => {
     props.navigation.navigate("Kartu Kredit");
   };
+  const navPinjamanBank = () => {
+    props.navigation.navigate("PinjamanBank");
+  };
   const navCompareScreen = () => {
     props.navigation.navigate("Compare");
   };
@@ -240,8 +243,9 @@ export default function Home(props) {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-evenly", // atau "space-around"
-                  paddingVertical: 12,
+                  justifyContent: "space-evenly",
+                  paddingVertical: 10,
+                  marginBottom: 15,
                   paddingHorizontal: 16,
                 }}
               >
@@ -249,47 +253,31 @@ export default function Home(props) {
                   style={styles.containerTopButton}
                   onPress={navPindarScreen}
                 >
-                  <LinearGradient
-                    colors={["#CC1C22", "rgba(255,255,255,0)"]} // Warna gradient (bisa disesuaikan)
-                    style={styles.gradient}
-                  />
-
-                  {/* Image */}
                   <Image
                     source={require("../../assets/menu1.png")}
                     style={styles.image}
                   />
                   <Text style={styles.text}>Pindar</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.containerTopButton}
                   onPress={navKartuKreditScreen}
                 >
-                  <LinearGradient
-                    colors={["#CC1C22", "rgba(255,255,255,0)"]} // Warna gradient (bisa disesuaikan)
-                    style={styles.gradient}
-                  />
-
-                  {/* Image */}
                   <Image
                     source={require("../../assets/menu2.png")}
-                    style={styles.imageTopRight}
+                    style={styles.image}
                   />
                   <Text style={styles.text}>Kartu Kredit</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.containerTopButton}
-                  onPress={navKartuKreditScreen}
+                  onPress={navPinjamanBank}
                 >
-                  <LinearGradient
-                    colors={["#CC1C22", "rgba(255,255,255,0)"]} // Warna gradient (bisa disesuaikan)
-                    style={styles.gradient}
-                  />
-
-                  {/* Image */}
                   <Image
-                    source={require("../../assets/menu2.png")}
-                    style={styles.imageTopRight}
+                    source={require("../../assets/menu3.png")}
+                    style={[styles.image, { marginTop: 10 }]}
                   />
                   <Text style={styles.text}>Pinjaman Bank</Text>
                 </TouchableOpacity>
@@ -383,11 +371,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   image: {
-    width: 70,
-    height: 70,
-    position: "absolute", // Agar gambar ada di atas gradient
-    top: 10, // Posisikan gambar agar sesuai dengan desain
-    left: 15,
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+    resizeMode: "contain",
   },
   imageTopRight: {
     width: 70,
@@ -406,6 +393,8 @@ const styles = StyleSheet.create({
   },
   containerTopButton: {
     alignItems: "center",
+    justifyContent: "center",
+    width: Dimensions.get("window").width - 290,
   },
   containerTopButtonRight: {
     alignItems: "center",
