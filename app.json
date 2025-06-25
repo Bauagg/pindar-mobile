@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo_pindar_2.png",
+          "image": "./assets/images/ic_launcher-web.png",
           "imageWidth": 50,
           "resizeMode": "contain"
         }
