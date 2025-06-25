@@ -30,6 +30,7 @@ import {
 } from "@expo-google-fonts/lexend";
 
 const { width } = Dimensions.get("window");
+const screenWidth = Dimensions.get("window").width;
 import api from "../../utils/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -45,6 +46,7 @@ export default function Home(props) {
   const [fullName, setFullName] = useState(null);
   console.log(imageLink);
   const [dataUser, setDataUser] = useState({});
+  console.log("INI DATA USER");
 
   const navPindarScreen = () => {
     props.navigation.navigate("Pindar");
@@ -177,7 +179,7 @@ export default function Home(props) {
               <Text style={styles.greeting}>
                 Hi {fullName ? fullName : "Putri"}!
               </Text>
-              <Text style={styles.location}>Jakarta, Indonesia</Text>
+              <Text style={styles.location}>{dataUser.address}</Text>
             </View>
           </View>
 
@@ -242,45 +244,63 @@ export default function Home(props) {
               <View
                 style={{
                   flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-evenly",
+                  flexWrap: "wrap", // item bisa turun baris kalau tidak cukup
+                  justifyContent: "space-between", // atau "center"
                   paddingVertical: 10,
-                  marginBottom: 15,
                   paddingHorizontal: 16,
+                  marginBottom: 15,
                 }}
               >
-                <TouchableOpacity
-                  style={styles.containerTopButton}
-                  onPress={navPindarScreen}
-                >
-                  <Image
-                    source={require("../../assets/menu1.png")}
-                    style={styles.image}
-                  />
-                  <Text style={styles.text}>Pindar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.containerTopButton}
-                  onPress={navKartuKreditScreen}
-                >
-                  <Image
-                    source={require("../../assets/menu2.png")}
-                    style={styles.image}
-                  />
-                  <Text style={styles.text}>Kartu Kredit</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.containerTopButton}
-                  onPress={navPinjamanBank}
-                >
-                  <Image
-                    source={require("../../assets/menu3.png")}
-                    style={[styles.image, { marginTop: 10 }]}
-                  />
-                  <Text style={styles.text}>Pinjaman Bank</Text>
-                </TouchableOpacity>
+                {[
+                  // Gunakan array untuk lebih scalable jika mau
+                  {
+                    image: require("../../assets/menu1.png"),
+                    text: "Pindar",
+                    onPress: navPindarScreen,
+                  },
+                  {
+                    image: require("../../assets/menu2.png"),
+                    text: "Kartu Kredit",
+                    onPress: navKartuKreditScreen,
+                  },
+                  {
+                    image: require("../../assets/menu3.png"),
+                    text: "Pinjaman Bank",
+                    onPress: navPinjamanBank,
+                  },
+                ].map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={{
+                      width: screenWidth / 3 - 24, // agar muat 3 kolom dengan padding
+                      alignItems: "center",
+                      marginBottom: 12,
+                    }}
+                    onPress={item.onPress}
+                  >
+                    <Image
+                      source={item.image}
+                      style={{
+                        width: 60,
+                        height: 60,
+                        marginBottom: 6,
+                        resizeMode: "contain",
+                      }}
+                    />
+                    <Text
+                      style={{
+                        marginTop: 10, // Jarak antara gambar dan teks
+                        fontSize: 16,
+                        // fontWeight: 'bold',
+                        fontFamily: "Lexend_700Bold",
+                        textAlign: "center",
+                        color: "#333",
+                      }}
+                    >
+                      {item.text}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
               {/* Trending Product */}
               <View>

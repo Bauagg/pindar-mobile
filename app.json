@@ -4,7 +4,7 @@
     "slug": "pindar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo_pindar_2.png",
+    "icon": "./assets/images/logo_pj.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logopindar.png",
+        "foregroundImage": "./assets/images/logo_pj.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.pindar"
@@ -21,7 +21,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logopindar.png"
+      "favicon": "./assets/images/logo_pj.png"
     },
     "plugins": [
       "expo-router",
@@ -43,8 +43,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "d9354bfd-a04c-4e20-ad43-1942077cc6d7"
+        "projectId": "9a7e2494-4d04-4b0e-9fb8-7b3fef8b93df"
       }
-    }
+    },
+    "owner": "johniskandar"
   }
 }
