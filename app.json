@@ -4,7 +4,7 @@
     "slug": "pindar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo_pj.png",
+    "icon": "./assets/images/ic_launcher-web.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo_pj.png",
+        "foregroundImage": "./assets/images/playstore-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.pindar"
@@ -21,7 +21,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logo_pj.png"
+      "favicon": "./assets/images/ic_launcher-web.png"
     },
     "plugins": [
       "expo-router",
