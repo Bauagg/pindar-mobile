@@ -93,57 +93,12 @@ const ProfileScreen = (props) => {
           text: "Yes",
           onPress: async () => {
             try {
-              if (!token) {
-                console.warn(
-                  "Token tidak ditemukan, logout tetap dilanjutkan."
-                );
-              }
-
-              // Panggil API logout dengan email, password, dan token
-              const response = await api.post(
-                "/auth/logout",
-                { email: username, password }, // Body raw JSON
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`, // Kirim token di headers
-                  },
-                }
-              );
-
-              if (response.status === 200) {
-                // Hapus semua data sesi dari AsyncStorage
-                await AsyncStorage.removeItem("accessToken");
-                await AsyncStorage.removeItem("refreshToken");
-                await AsyncStorage.removeItem("username");
-                await AsyncStorage.removeItem("password");
-
-                showAlert("Logout berhasil!", "success");
-
-                // Redirect ke halaman login
-                props?.navigation.replace("AuthScreen");
-              } else {
-                console.error("Logout failed:", response.data);
-                showAlert(response.data.message || "Logout gagal.", "error");
-              }
-            } catch (error) {
-              if (error.response) {
-                console.error("Logout failed:", error.response.data);
-                showAlert(
-                  error.response.data.message ||
-                    "Terjadi kesalahan saat logout.",
-                  "error"
-                );
-
-                // Jika token expired (401), langsung hapus token dan logout paksa
-                if (error.response.status === 401) {
-                  await AsyncStorage.removeItem("accessToken");
-                  await AsyncStorage.removeItem("refreshToken");
-                  props?.navigation?.replace("AuthScreen");
-                }
-              } else {
-                console.error("Logout error:", error);
-                showAlert("Terjadi kesalahan saat logout.", "error");
-              }
+              await api.post("/auth/logout", { email: username, password });
+            } catch (_) {
+              // abaikan error logout, tetap clear session
+            } finally {
+              await AsyncStorage.multiRemove(["accessToken", "refreshToken", "username", "password", "imageLink", "fullName"]);
+              props?.navigation.replace("AuthScreen");
             }
           },
         },

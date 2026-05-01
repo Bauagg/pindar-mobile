@@ -75,14 +75,15 @@ AgMBAAE=
       setLoading(true);
 
       const encryptedPassword = encryptPassword(password);
-      console.log("Encrypted Password:", encryptedPassword);
 
-      const response = await api.post("/user/sign-up", {
+      const body = {
         fullName: fullname,
         email: email,
         phoneNumber: phone,
         password: encryptedPassword,
-      });
+      };
+
+      const response = await api.post("/user/sign-up", body);
 
       // ✅ Asumsikan sukses jika tidak masuk ke catch
       const successMessage = response?.data?.message || "OTP berhasil dikirim";

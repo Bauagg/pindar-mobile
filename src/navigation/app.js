@@ -2,7 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 // Import Screens
 import Home from "../screen/Home";
@@ -29,6 +30,7 @@ import RedirectScreenKartu from "../screen/RedirectScreenKartu";
 import EducationAllTerbaru from "../screen/EducationAllTerbaru";
 import EducationAllTreding from "../screen/EducationAllTreding";
 import PinjamanBank from "../screen/PinjamanBank";
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -36,6 +38,9 @@ function BottomTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
+        tabBarActiveTintColor: "#d62828",
+        tabBarInactiveTintColor: "gray",
+        tabBarLabelStyle: styles.label,
         tabBarStyle: {
           position: "absolute",
           bottom: 0,
@@ -45,7 +50,11 @@ function BottomTabNavigator() {
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           height: 80,
-          ...styles.shadow,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
+          elevation: 20,
         },
         tabBarShowLabel: true,
       }}
@@ -55,45 +64,21 @@ function BottomTabNavigator() {
         component={Home}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <MaterialIcons
-              name="home-filled"
-              size={24}
-              color={focused ? "#d62828" : "gray"}
-            />
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="home-filled" size={24} color={color} />
           ),
-          tabBarLabel: ({ focused }) => (
-            <View style={styles.labelContainer}>
-              <Text style={[styles.label, focused && styles.activeLabel]}>
-                Home
-              </Text>
-              {focused && <View style={styles.activeDivider} />}
-            </View>
-          ),
+          tabBarLabel: "Home",
         }}
       />
-
       <Tab.Screen
         name="Education"
         component={Education}
         options={{
           header: (props) => <HeaderName {...props} name="Education" />,
-
-          tabBarIcon: ({ focused }) => (
-            <Ionicons
-              name="newspaper-outline"
-              size={24}
-              color={focused ? "#d62828" : "gray"}
-            />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="newspaper-outline" size={24} color={color} />
           ),
-          tabBarLabel: ({ focused }) => (
-            <View style={styles.labelContainer}>
-              <Text style={[styles.label, focused && styles.activeLabel]}>
-                Education
-              </Text>
-              {focused && <View style={styles.activeDivider} />}
-            </View>
-          ),
+          tabBarLabel: "Education",
         }}
       />
       <Tab.Screen
@@ -101,21 +86,10 @@ function BottomTabNavigator() {
         component={Profile}
         options={{
           header: (props) => <HeaderName {...props} name="Profile" />,
-          tabBarIcon: ({ focused }) => (
-            <Ionicons
-              name="person-outline"
-              size={24}
-              color={focused ? "#d62828" : "gray"}
-            />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person-outline" size={24} color={color} />
           ),
-          tabBarLabel: ({ focused }) => (
-            <View style={styles.labelContainer}>
-              <Text style={[styles.label, focused && styles.activeLabel]}>
-                Profile
-              </Text>
-              {focused && <View style={styles.activeDivider} />}
-            </View>
-          ),
+          tabBarLabel: "Profile",
         }}
       />
     </Tab.Navigator>

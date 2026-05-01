@@ -28,11 +28,11 @@ import {
   Lexend_600SemiBold,
   Lexend_900Black,
 } from "@expo-google-fonts/lexend";
+import api from "../../utils/axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 const screenWidth = Dimensions.get("window").width;
-import api from "../../utils/axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Home(props) {
   const [searchText, setSearchText] = useState("");
@@ -95,12 +95,7 @@ export default function Home(props) {
     const getDataUser = async () => {
       try {
         setLoading(true);
-        const token = await AsyncStorage.getItem("accessToken");
-        const response = await api.get(`/user/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await api.get(`/user/profile`);
         console.log(response.data.data); // bisa disimpan ke state juga kalau mau
         setDataUser(response.data.data);
       } catch (error) {

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Entypo } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 import api from '../../utils/axios';
 import { useAlertModal } from '../../contexts/AlertModalContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -12,9 +12,10 @@ import { AntDesign, Entypo } from '@expo/vector-icons';
 import { List } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
-const { width } = Dimensions.get('window');
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width } = Dimensions.get('window');
 
 const KartuKreditDetail = (props) => {
   const idDetail = props?.route?.params?.id;
