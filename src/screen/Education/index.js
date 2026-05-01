@@ -220,7 +220,7 @@ export default function Education(props) {
               <Image
                 source={{
                   uri: item.imageLink
-                    ? `https://be.pindar.id/api${item.imageLink}`
+                    ? `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}`
                     : "https://via.placeholder.com/150", // fallback kalau null
                 }}
                 style={styles.trendingImage}
@@ -313,7 +313,7 @@ export default function Education(props) {
             >
               <View style={styles.articleContainer}>
                 <Image
-                  source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
+                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
                   style={styles.articleImage}
                   resizeMode="contain"
                 />

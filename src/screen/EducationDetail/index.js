@@ -82,7 +82,7 @@ const EducationDetail = (props) => {
 
       {/* Article */}
       <Image
-        source={{ uri: `https://be.pindar.id/api${dataEducation.imageLink}` }}
+        source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${dataEducation.imageLink}` }}
         style={styles.articleImage}
       />
       <View style={styles.articleContent}>

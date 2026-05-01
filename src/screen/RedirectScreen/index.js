@@ -50,7 +50,7 @@ const RedirectScreen = () => {
         backgroundColor: '#fff',
       }}>
       <Image
-        source={{ uri: `https://be.pindar.id${imageLink}` }}
+        source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${imageLink}` }}
         style={{ width: 80, height: 80, marginBottom: 10 }}
         resizeMode="contain"
       />

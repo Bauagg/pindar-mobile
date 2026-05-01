@@ -28,10 +28,10 @@ const CompareScreenKartu = (props) => {
     setLoading(true);
     console.log("JALANN");
     try {
-      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJpemt5eXNhQGdtYWlsLmNvbSIsInJvbGVzIjpbIkNVU1RPTUVSIl0sImlkIjoiMDZkYmJhNWQtNzY2Ny00ODJiLThmNGYtMzA5NTZkYTcxZjkxIiwiaWF0IjoxNzQ1NTAwMzc4LCJleHAiOjE3NDkxMDAzNzh9.sQNiwifpxPd4sFhdnfXKT5sSyiIyBN33-qAKR4nbIXQ';
+      const token = await AsyncStorage.getItem('accessToken');
 
       const requests = selectedIds.map((id) => {
-        const url = `https://be.pindar.id/api/credit-card/detail/${id}`;
+        const url = `${process.env.EXPO_PUBLIC_API_BASE_URL}/credit-card/detail/${id}`;
         console.log("Request URL:", url); // Log URL to verify
         return axios.get(url, {
           headers: {
@@ -171,7 +171,7 @@ const CompareScreenKartu = (props) => {
           contentContainerStyle={styles.logoList}
           renderItem={({ item }) => (
             <View style={styles.logoContainer}>
-              <Image source={{ uri: `https://be.pindar.id/api${item.imageLink}`}} style={styles.logo} />
+              <Image source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}`}} style={styles.logo} />
               <Text style={styles.logoText}>{item.title}</Text>
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}

@@ -119,7 +119,7 @@ const EducationAllTreding = (props) => {
             <Image
               source={{
                 uri: item.imageLink
-                  ? `https://be.pindar.id/api${item.imageLink}`
+                  ? `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}`
                   : "https://via.placeholder.com/300x180.png?text=No+Image",
               }}
               style={{ width: "100%", height: 180, borderRadius: 10 }}

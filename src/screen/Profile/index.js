@@ -224,7 +224,7 @@ const ProfileScreen = (props) => {
                 }}
               >
                 <Image
-                  source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
+                  source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${dataUser.imagelink}` }}
                   style={{ width: 100, height: 100, borderRadius: 50 }}
                 />
               </View>

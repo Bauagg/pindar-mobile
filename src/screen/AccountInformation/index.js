@@ -30,7 +30,7 @@ const AccountInformation = () => {
   const [formFields, setFormFields] = useState([]);
 
   const api = axios.create({
-    baseURL: "https://be.pindar.id/api",
+    baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
   });
 
   // Tambahkan interceptor di awal
@@ -261,7 +261,7 @@ const AccountInformation = () => {
       <View style={styles.profileContainer}>
         <View style={styles.profileImageWrapper}>
           <Image
-            source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
+            source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${dataUser.imagelink}` }}
             style={styles.profileImage}
           />
           <TouchableOpacity

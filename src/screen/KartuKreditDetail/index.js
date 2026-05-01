@@ -30,7 +30,7 @@ const KartuKreditDetail = (props) => {
     try {
       console.log(idDetail)
       const token = await AsyncStorage.getItem('accessToken'); // ← Token kamu di sini
-      const response = await axios.get(`https://be.pindar.id/api/credit-card/detail/${idDetail}`, {
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_BASE_URL}/credit-card/detail/${idDetail}`, {
         headers: {
           Authorization: token,
         },
@@ -170,7 +170,7 @@ const KartuKreditDetail = (props) => {
             borderRadius: 10,
           }}>
           <Image
-            source={{ uri: `https://be.pindar.id/api${detail?.imageLink}`}}
+            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${detail?.imageLink}`}}
             style={{ width: 280, height: 180, borderRadius: 10, marginTop: 20 }}
           />
         </View>

@@ -127,7 +127,7 @@ export default function EducationAllTerbaru() {
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer}>
       <Image
-        source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
+        source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
         style={styles.image}
       />
       <View style={styles.textContainer}>

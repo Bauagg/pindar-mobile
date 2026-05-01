@@ -9,7 +9,7 @@ export const setNavigationRef = (navRef) => {
 };
 
 const api = axios.create({
-  baseURL: 'https://be.pindar.id/api',
+  baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

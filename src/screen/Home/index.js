@@ -119,7 +119,7 @@ export default function Home(props) {
         // Mengambil imageLink dan menambahkan prefix
         const link = await AsyncStorage.getItem("imageLink");
         if (link) {
-          setImageLink(`https://be.pindar.id${link}`);
+          setImageLink(`${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${link}`);
         }
 
         // Mengambil fullName
@@ -171,7 +171,7 @@ export default function Home(props) {
           {/* Informasi User */}
           <View style={styles.userInfo}>
             <Image
-              source={{ uri: `https://be.pindar.id${dataUser.imagelink}` }}
+              source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${dataUser.imagelink}` }}
               style={styles.avatar}
             />
 
@@ -225,7 +225,7 @@ export default function Home(props) {
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Image
-                    source={{ uri: `https://be.pindar.id${item.imagelink}` }}
+                    source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
                     style={{ width: 40, height: 40, marginRight: 10 }}
                   />
                   <Text style={{ fontSize: 14 }}>{item.title}</Text>

@@ -148,7 +148,7 @@ const handleTabPress = (tab) => {
         {/* Header */}
         <View style={styles.cardHeader}>
           <Image
-            source={{ uri: `https://be.pindar.id${item.imagelink}` }}
+            source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
             style={styles.logo}
             resizeMode="contain"
           />

@@ -60,7 +60,7 @@ const PopularPlus = () => {
     <TouchableOpacity onPress={() => handlePress(item.id)} activeOpacity={0.8}>
       <View style={styles.card}>
         <Image
-          source={{ uri: `https://be.pindar.id/api${item.imageLink}` }}
+          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
           style={styles.image}
           resizeMode="contain"
         />

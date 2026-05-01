@@ -156,7 +156,7 @@ const CompareScreen = (props) => {
           contentContainerStyle={styles.logoList}
           renderItem={({ item }) => (
             <View style={styles.logoContainer}>
-              <Image source={{ uri: `https://be.pindar.id/api${item.imageLink}`}} style={styles.logo} />
+              <Image source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}`}} style={styles.logo} />
               <Text style={styles.logoText}>{item.lenderName}</Text>
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}

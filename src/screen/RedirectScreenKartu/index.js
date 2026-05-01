@@ -48,7 +48,7 @@ const RedirectScreenKartu = ({ route, navigation }) => {
         backgroundColor: '#fff',
       }}>
       <Image
-        source={{ uri: `https://be.pindar.id/api${imageLink}`}}
+        source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${imageLink}`}}
         style={{
           width: 200,
           height: 80,
