@@ -10,23 +10,18 @@ import {
   FlatList,
   TouchableOpacity,
   Linking,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { Entypo } from "@expo/vector-icons";
+import { Entypo, Feather } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-// import AksenGaris from '../../assets/aksen.svg';
 import { LinearGradient } from "expo-linear-gradient";
-import TrendingCard from "./TredingCard";
-import PopularPlus from "./PopularPlus";
-import PopularDeal from "./PopularDeal";
 import {
   useFonts,
   Lexend_400Regular,
   Lexend_700Bold,
-  Lexend_500Medium,
-  Lexend_600SemiBold,
-  Lexend_900Black,
 } from "@expo-google-fonts/lexend";
 import api from "../../utils/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -34,56 +29,33 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width } = Dimensions.get("window");
 const screenWidth = Dimensions.get("window").width;
 
+const MENU_ITEMS = [
+  { image: require("../../assets/menu1.png"), text: "Pinjaman\nDaring", screen: "Pindar" },
+  { image: require("../../assets/menu2.png"), text: "Kartu\nKredit", screen: "Kartu Kredit" },
+  { image: require("../../assets/menu3.png"), text: "Pinjaman\nBank", screen: "PinjamanBank" },
+];
+
 export default function Home(props) {
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [fontsLoaded] = useFonts({
-    Lexend_400Regular,
-    Lexend_700Bold,
-  });
-  const [imageLink, setImageLink] = useState(null);
   const [fullName, setFullName] = useState(null);
-  console.log(imageLink);
   const [dataUser, setDataUser] = useState({});
-  console.log("INI DATA USER");
+  const [rekomendasi, setRekomendasi] = useState([]);
+  const [educationList, setEducationList] = useState([]);
+  const [trendingDate, setTrendingDate] = useState("");
+  const [loadingEdu, setLoadingEdu] = useState(false);
 
-  const navPindarScreen = () => {
-    props.navigation.navigate("Pindar");
-  };
-  const navKartuKreditScreen = () => {
-    props.navigation.navigate("Kartu Kredit");
-  };
-  const navPinjamanBank = () => {
-    props.navigation.navigate("PinjamanBank");
-  };
-  const navCompareScreen = () => {
-    props.navigation.navigate("Compare");
-  };
-  const navKartuKreditDetail = () => {
-    props.navigation.navigate("Kartu Kredit Detail");
-  };
-  const navNotifikasi = () => {
-    props.navigation.navigate("Notifikasi");
-  };
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
 
-  const dataList = [
-    { id: "1", name: "Kartu Kredit" },
-    { id: "2", name: "Pindar" },
-    { id: "3", name: "Promo Bank" },
-    { id: "4", name: "Asuransi" },
-  ];
+  const navNotifikasi = () => props.navigation.navigate("Notifikasi");
+
   const handleSearch = async (text) => {
     setSearchText(text);
-
     if (text.length > 0) {
       try {
-        const response = await api.get(
-          `/product/search?search=${encodeURIComponent(text)}`
-        );
-        setFilteredData(response.data.products); // ambil dari response API
-      } catch (error) {
-        console.log("Error saat fetch search:", error);
+        const response = await api.get(`/product/search?search=${encodeURIComponent(text)}`);
+        setFilteredData(response.data.products || []);
+      } catch {
         setFilteredData([]);
       }
     } else {
@@ -94,352 +66,594 @@ export default function Home(props) {
   useEffect(() => {
     const getDataUser = async () => {
       try {
-        setLoading(true);
+        const token = await AsyncStorage.getItem("accessToken");
+        console.log("Token saat fetch profile:", token ? token.slice(0, 30) + "..." : "NULL");
         const response = await api.get(`/user/profile`);
-        console.log(response.data.data); // bisa disimpan ke state juga kalau mau
-        setDataUser(response.data.data);
-      } catch (error) {
-        console.error("Gagal mengambil data Profile:", error);
+        setDataUser(response.data.data || {});
+      } catch (e) {
+        console.error("Gagal fetch profile:", e.response?.status, JSON.stringify(e.response?.data));
+      }
+    };
+
+    const fetchStorage = async () => {
+      try {
+        const name = await AsyncStorage.getItem("fullName");
+        if (name) setFullName(name);
+      } catch (e) {}
+    };
+
+    const fetchRekomendasi = async () => {
+      try {
+        const response = await api.get("/lender/list-pinned?limit=8&offset=1");
+        setRekomendasi(response.data.data?.lenders || []);
+      } catch (e) {
+        console.error("Gagal fetch rekomendasi:", e.message);
+      }
+    };
+
+    const fetchEducation = async () => {
+      try {
+        setLoadingEdu(true);
+        const response = await api.get("/content/list?limit=3");
+        const contents = response.data.data?.contents || [];
+        console.log("Education image URL contoh:", `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${contents[0]?.imageLink}`);
+        setEducationList(contents);
+        const d = new Date();
+        setTrendingDate(
+          `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`
+        );
+      } catch (e) {
+        console.error("Gagal fetch education:", e.message);
       } finally {
-        setLoading(false);
+        setLoadingEdu(false);
       }
     };
 
     getDataUser();
+    fetchStorage();
+    fetchRekomendasi();
+    fetchEducation();
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Mengambil imageLink dan menambahkan prefix
-        const link = await AsyncStorage.getItem("imageLink");
-        if (link) {
-          setImageLink(`${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${link}`);
-        }
+  if (!fontsLoaded) return null;
 
-        // Mengambil fullName
-        const name = await AsyncStorage.getItem("fullName");
-        if (name) {
-          setFullName(name);
-        }
-      } catch (error) {
-        console.log("Gagal mengambil data:", error);
-      }
-    };
+  const firstName = (fullName || dataUser?.fullName || "User").split(" ")[0];
 
-    fetchData();
-  }, []);
   return (
-    <>
-      <StatusBar
-        translucent={true}
-        backgroundColor={"transparent"}
-        {...props}
-      />
+    <View style={{ flex: 1, backgroundColor: "#F5F6FA" }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        {/* <Image
-          source={require('../../assets/aksen.png')}
-          style={styles.svgStyle}
-        /> */}
-        {/* SVG Aksen Garis */}
-        <Svg
-          width={width}
-          height={234}
-          fill={"none"}
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox={`0 0 237 234`}
-          style={styles.svgStyle}
-        >
-          <Path
-            d="M 101.5,-0.5 C 108.167,-0.5 114.833,-0.5 121.5,-0.5C 123.643,13.4935 122.309,27.1602 117.5,40.5C 130.562,49.5625 141.229,60.8959 149.5,74.5C 163.461,74.5446 177.461,74.7113 191.5,75C 209.612,77.0546 224.612,84.8879 236.5,98.5C 236.5,132.167 236.5,165.833 236.5,199.5C 228.257,213.078 217.59,224.411 204.5,233.5C 197.167,233.5 189.833,233.5 182.5,233.5C 181.032,229.63 181.532,225.964 184,222.5C 218.006,203.164 233.673,173.83 231,134.5C 225.675,110.507 210.842,97.0071 186.5,94C 177.151,93.3897 167.817,93.5564 158.5,94.5C 166.411,130.144 155.744,158.644 126.5,180C 103.675,195.942 78.3417,203.608 50.5,203C 35.9833,202.324 24.15,196.491 15,185.5C 7.88241,171.252 8.54908,157.252 17,143.5C 33.8815,120.29 55.7148,103.457 82.5,93C 97.9544,87.5539 113.621,82.8873 129.5,79C 125.5,74.3333 121.5,69.6667 117.5,65C 114.926,62.7574 112.092,60.924 109,59.5C 89.7213,85.5767 63.888,100.577 31.5,104.5C 14.3545,104.345 3.68787,96.0119 -0.5,79.5C -0.5,76.5 -0.5,73.5 -0.5,70.5C 3.55912,57.5955 11.5591,47.7622 23.5,41C 47.643,26.9633 72.8096,24.7967 99,34.5C 103.117,22.9774 103.95,11.3107 101.5,-0.5 Z M 55.5,48.5 C 67.0704,47.7551 78.4037,48.9218 89.5,52C 74.3494,70.9143 54.6827,82.0809 30.5,85.5C 23.3834,85.5491 19.7167,82.0491 19.5,75C 21.5457,67.2777 26.2124,61.6111 33.5,58C 40.584,53.9504 47.9174,50.7837 55.5,48.5 Z M 136.5,97.5 C 137.75,97.5774 138.583,98.244 139,99.5C 145.792,125.792 138.292,146.959 116.5,163C 95.9029,177.977 72.9029,184.644 47.5,183C 31.3337,180.493 26.1671,171.66 32,156.5C 45.9933,136.186 64.4933,121.353 87.5,112C 103.626,106.057 119.959,101.224 136.5,97.5 Z"
-            strokeWidth={7}
-            opacity={0.951}
-            fill="rgba(254, 255, 254, 0.5)"
-            fillRule="evenodd"
-          />
-        </Svg>
+      {/* ── HEADER (sama seperti sebelumnya) ── */}
+      <LinearGradient
+        colors={["#CC1C22", "#E8424A"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <View style={styles.circle1} />
+        <View style={styles.circle2} />
 
-        {/* Konten Header */}
         <View style={styles.headerContent}>
-          {/* Informasi User */}
           <View style={styles.userInfo}>
-            <Image
-              source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${dataUser.imagelink}` }}
-              style={styles.avatar}
-            />
-
+            <View style={styles.avatarWrapper}>
+              {dataUser.imagelink ? (
+                <Image
+                  source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${dataUser.imagelink}` }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <LinearGradient
+                  colors={["#FF6B6B", "#CC1C22"]}
+                  style={styles.avatarInitial}
+                >
+                  <Text style={styles.avatarInitialText}>
+                    {firstName.charAt(0).toUpperCase()}
+                  </Text>
+                </LinearGradient>
+              )}
+            </View>
             <View>
-              <Text style={styles.greeting}>
-                Hi {fullName ? fullName : "Putri"}!
-              </Text>
-              <Text style={styles.location}>{dataUser.address}</Text>
+              <Text style={styles.greetingSmall}>Selamat datang 👋</Text>
+              <Text style={styles.greeting}>Hi, {firstName}!</Text>
             </View>
           </View>
-
-          {/* Ikon Notifikasi */}
-          <TouchableOpacity onPress={navNotifikasi}>
-            <MaterialCommunityIcons
-              name="bell-badge-outline"
-              size={28}
-              color="white"
-            />
+          <TouchableOpacity onPress={navNotifikasi} style={styles.bellBtn}>
+            <MaterialCommunityIcons name="bell-badge-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar */}
+        {/* Search */}
         <View style={styles.searchBar}>
-          <Image
-            source={require("../../assets/loginlogo.png")}
-            style={styles.logo}
-          />
-          <Ionicons name="search-outline" size={24} color="black" />
+          <Ionicons name="search-outline" size={18} color="#CC1C22" />
           <TextInput
-            placeholder="Search here..."
-            style={styles.input}
+            placeholder="Search pindar..."
+            style={styles.searchInput}
             placeholderTextColor="#aaa"
             value={searchText}
             onChangeText={handleSearch}
           />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={() => { setSearchText(""); setFilteredData([]); }}>
+              <Ionicons name="close-circle" size={16} color="#ccc" />
+            </TouchableOpacity>
+          )}
         </View>
-      </View>
+      </LinearGradient>
+
+      {/* Search dropdown */}
       {searchText.length > 0 && filteredData.length > 0 && (
-        <View style={styles.searchResultContainer}>
+        <View style={styles.searchDropdown}>
           <FlatList
             data={filteredData}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id?.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.searchResultItem}
+                style={styles.searchItem}
                 onPress={() => {
-                  Linking.openURL(item.directlink); // buka link saat diklik
-                  setSearchText(""); // clear input
-                  setFilteredData([]); // clear hasil
+                  Linking.openURL(item.directlink);
+                  setSearchText("");
+                  setFilteredData([]);
                 }}
               >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Image
-                    source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
-                    style={{ width: 40, height: 40, marginRight: 10 }}
-                  />
-                  <Text style={{ fontSize: 14 }}>{item.title}</Text>
-                </View>
+                <Image
+                  source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
+                  style={styles.searchItemImg}
+                />
+                <Text style={styles.searchItemText}>{item.title}</Text>
+                <Entypo name="chevron-right" size={16} color="#ccc" />
               </TouchableOpacity>
             )}
           />
         </View>
       )}
-      <>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── MENU GRID ── */}
+        <View style={styles.menuGrid}>
+          {MENU_ITEMS.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.menuCard}
+              activeOpacity={0.85}
+              onPress={() => props.navigation.navigate(item.screen)}
+            >
+              <Image source={item.image} style={styles.menuImg} />
+              <Text style={styles.menuLabel}>{item.text}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ── TRENDING EDUCATION ── */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          style={styles.trendingBanner}
+          onPress={() => props.navigation.navigate("Education All Treding")}
+        >
+          <LinearGradient
+            colors={["#CC1C22", "#E8424A"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.trendingGradient}
+          >
+            <View style={styles.trendingCircle1} />
+            <View style={styles.trendingCircle2} />
+            <View>
+              <Text style={styles.trendingTitle}>Trending Education</Text>
+              <Text style={styles.trendingDate}>Last Date {trendingDate || "—"}</Text>
+            </View>
+            <View style={styles.trendingBtn}>
+              <Text style={styles.trendingBtnText}>View all</Text>
+              <Feather name="arrow-right" size={14} color="white" style={{ marginLeft: 4 }} />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* ── APLIKASI REKOMENDASI ── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Aplikasi Rekomendasi</Text>
+          <TouchableOpacity onPress={() => props.navigation.navigate("Pindar")}>
+            <Text style={styles.sectionViewAll}>View all →</Text>
+          </TouchableOpacity>
+        </View>
         <FlatList
-          data={[]} // Kosong karena fokus ke Footer
-          renderItem={null}
-          ListFooterComponent={
-            <>
-              <View
-                style={{
-                  flexDirection: "row",
-                  flexWrap: "wrap", // item bisa turun baris kalau tidak cukup
-                  justifyContent: "space-between", // atau "center"
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  marginBottom: 15,
-                }}
-              >
-                {[
-                  // Gunakan array untuk lebih scalable jika mau
-                  {
-                    image: require("../../assets/menu1.png"),
-                    text: "Pindar",
-                    onPress: navPindarScreen,
-                  },
-                  {
-                    image: require("../../assets/menu2.png"),
-                    text: "Kartu Kredit",
-                    onPress: navKartuKreditScreen,
-                  },
-                  {
-                    image: require("../../assets/menu3.png"),
-                    text: "Pinjaman Bank",
-                    onPress: navPinjamanBank,
-                  },
-                ].map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={{
-                      width: screenWidth / 3 - 24, // agar muat 3 kolom dengan padding
-                      alignItems: "center",
-                      marginBottom: 12,
-                    }}
-                    onPress={item.onPress}
-                  >
-                    <Image
-                      source={item.image}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        marginBottom: 6,
-                        resizeMode: "contain",
-                      }}
-                    />
-                    <Text
-                      style={{
-                        marginTop: 10, // Jarak antara gambar dan teks
-                        fontSize: 16,
-                        // fontWeight: 'bold',
-                        fontFamily: "Lexend_700Bold",
-                        textAlign: "center",
-                        color: "#333",
-                      }}
-                    >
-                      {item.text}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {/* Trending Product */}
-              <View>
-                <TrendingCard />
-              </View>
-              {/* Popular Plus */}
-              <View>
-                <PopularPlus />
-              </View>
-              <View>
-                <PopularDeal />
-              </View>
-              <View style={{ height: 120 }} />
-            </>
-          }
+          data={rekomendasi}
+          keyExtractor={(item, i) => i.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4, gap: 12 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.rekoCard}
+              activeOpacity={0.85}
+              onPress={() => item.directlink && Linking.openURL(item.directlink)}
+            >
+              <Image
+                source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
+                style={styles.rekoImg}
+                resizeMode="contain"
+              />
+              <Text style={styles.rekoName} numberOfLines={1}>{item.lendername}</Text>
+            </TouchableOpacity>
+          )}
         />
-      </>
-    </>
+
+        {/* ── EDUCATION PRODUCT ── */}
+        <View style={[styles.sectionRow, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Education Product</Text>
+          <TouchableOpacity onPress={() => props.navigation.navigate("Education All Treding")}>
+            <Text style={styles.sectionViewAll}>View all →</Text>
+          </TouchableOpacity>
+        </View>
+
+        {loadingEdu ? (
+          <ActivityIndicator color="#CC1C22" style={{ marginVertical: 20 }} />
+        ) : (
+          <View style={{ paddingHorizontal: 16, gap: 14 }}>
+            {educationList.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.eduCard}
+                activeOpacity={0.88}
+                onPress={() => props.navigation.navigate("Education Detail", { id: item.id })}
+              >
+                <Image
+                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                  style={styles.eduImg}
+                  resizeMode="cover"
+                />
+                <View style={styles.eduOverlay}>
+                  <View style={styles.eduBadge}>
+                    <Text style={styles.eduBadgeText}>{item.category || "Artikel"}</Text>
+                  </View>
+                  <Text style={styles.eduTitle} numberOfLines={2}>{item.title}</Text>
+                  <View style={styles.eduMeta}>
+                    <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.eduMetaText}>  {new Date(item.createdDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        <View style={{ height: 120 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  /* ── HEADER ── */
   header: {
-    backgroundColor: "#CC1C22",
-    width: width,
-    height: 220,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    paddingTop: 40,
+    width,
+    paddingTop: 50,
     paddingHorizontal: 20,
-    position: "relative",
+    paddingBottom: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     overflow: "hidden",
   },
-  svgStyle: {
+  circle1: {
     position: "absolute",
-    top: 0,
-    left: 90,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    top: -40,
+    right: -30,
+  },
+  circle2: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    bottom: 10,
+    left: -20,
   },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 15,
+    marginBottom: 18,
   },
   userInfo: {
     flexDirection: "row",
     alignItems: "center",
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+  avatarWrapper: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.6)",
+    marginRight: 12,
+    overflow: "hidden",
+    backgroundColor: "#eee",
+  },
+  avatar: { width: "100%", height: "100%" },
+  avatarInitial: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(255,255,255,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarInitialText: {
+    color: "white",
+    fontSize: 20,
+    fontFamily: "Lexend_700Bold",
+  },
+  greetingSmall: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 12,
+    fontFamily: "Lexend_400Regular",
   },
   greeting: {
     color: "white",
-    fontSize: 16,
-    // fontWeight: 'bold',
+    fontSize: 18,
     fontFamily: "Lexend_700Bold",
   },
-  location: {
-    color: "white",
-    fontSize: 12,
+  bellBtn: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    padding: 8,
+    borderRadius: 12,
   },
   searchBar: {
     backgroundColor: "white",
-    height: 50,
-    borderRadius: 20,
+    height: 46,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 15,
-    marginTop: 40,
+    paddingHorizontal: 14,
+    gap: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  logo: {
-    width: 30,
-    height: 30,
-    marginRight: 10,
-  },
-  input: {
+  searchInput: {
     flex: 1,
-    fontSize: 14,
-  },
-  gradient: {
-    width: 65,
-    height: 90,
-    borderRadius: 20, // Agar sudut melengkung
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  image: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
-    resizeMode: "contain",
-  },
-  imageTopRight: {
-    width: 70,
-    height: 70,
-    position: "absolute", // Agar gambar ada di atas gradient
-    top: 10, // Posisikan gambar agar sesuai dengan desain
-    left: 30,
-  },
-  text: {
-    marginTop: 10, // Jarak antara gambar dan teks
-    fontSize: 16,
-    // fontWeight: 'bold',
-    fontFamily: "Lexend_700Bold",
-    textAlign: "center",
-    color: "#333", // Warna teks
-  },
-  containerTopButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: Dimensions.get("window").width - 290,
-  },
-  containerTopButtonRight: {
-    alignItems: "center",
-  },
-  searchResult: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    backgroundColor: "#fff",
-  },
-  searchResultText: {
-    fontSize: 16,
+    fontSize: 13,
     color: "#333",
-  },
-  searchResultContainer: {
-    position: "absolute",
-    top: 185,
-    left: 10,
-    right: 10,
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 10,
-    zIndex: 9999, // Tinggi banget
-    elevation: 20, // Untuk Android
-    maxHeight: 250,
+    fontFamily: "Lexend_400Regular",
   },
 
-  searchResultItem: {
-    paddingVertical: 8,
+  /* ── SEARCH DROPDOWN ── */
+  searchDropdown: {
+    position: "absolute",
+    top: 190,
+    left: 16,
+    right: 16,
+    backgroundColor: "white",
+    borderRadius: 14,
+    zIndex: 9999,
+    elevation: 20,
+    maxHeight: 260,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+  },
+  searchItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#f0f0f0",
+  },
+  searchItemImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: "#f5f5f5",
+  },
+  searchItemText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#333",
+    fontFamily: "Lexend_400Regular",
+  },
+
+  /* ── MENU GRID ── */
+  menuGrid: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 8,
+    gap: 12,
+  },
+  menuCard: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 16,
+    alignItems: "center",
+    paddingVertical: 18,
+    paddingHorizontal: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  menuImg: {
+    width: 52,
+    height: 52,
+    resizeMode: "contain",
+    marginBottom: 10,
+  },
+  menuLabel: {
+    fontSize: 12,
+    fontFamily: "Lexend_700Bold",
+    color: "#333",
+    textAlign: "center",
+    lineHeight: 17,
+  },
+
+  /* ── TRENDING BANNER ── */
+  trendingBanner: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#CC1C22",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  trendingGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    overflow: "hidden",
+  },
+  trendingCircle1: {
+    position: "absolute",
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    top: -30,
+    right: 100,
+  },
+  trendingCircle2: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    bottom: -20,
+    right: 20,
+  },
+  trendingTitle: {
+    color: "white",
+    fontSize: 16,
+    fontFamily: "Lexend_700Bold",
+    marginBottom: 4,
+  },
+  trendingDate: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 12,
+    fontFamily: "Lexend_400Regular",
+  },
+  trendingBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.65)",
+    borderRadius: 20,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+  },
+  trendingBtnText: {
+    color: "white",
+    fontSize: 13,
+    fontFamily: "Lexend_700Bold",
+  },
+
+  /* ── SECTION ── */
+  sectionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: "Lexend_700Bold",
+    color: "#1A1A2E",
+  },
+  sectionViewAll: {
+    fontSize: 13,
+    color: "#CC1C22",
+    fontFamily: "Lexend_400Regular",
+  },
+
+  /* ── REKOMENDASI ── */
+  rekoCard: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 14,
+    alignItems: "center",
+    width: 120,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  rekoImg: {
+    width: 70,
+    height: 46,
+    marginBottom: 10,
+  },
+  rekoName: {
+    fontSize: 12,
+    fontFamily: "Lexend_700Bold",
+    color: "#333",
+    textAlign: "center",
+  },
+
+  /* ── EDUCATION ── */
+  eduCard: {
+    borderRadius: 18,
+    overflow: "hidden",
+    height: 200,
+    backgroundColor: "#eee",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 14,
+  },
+  eduImg: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+  },
+  eduOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: 16,
+    backgroundColor: "rgba(0,0,0,0.38)",
+  },
+  eduBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#CC1C22",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  eduBadgeText: {
+    color: "white",
+    fontSize: 11,
+    fontFamily: "Lexend_700Bold",
+  },
+  eduTitle: {
+    color: "white",
+    fontSize: 15,
+    fontFamily: "Lexend_700Bold",
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  eduMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  eduMetaText: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 11,
+    fontFamily: "Lexend_400Regular",
   },
 });

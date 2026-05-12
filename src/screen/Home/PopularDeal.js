@@ -16,42 +16,24 @@ import {
   Lexend_700Bold,
 } from "@expo-google-fonts/lexend";
 import api from "../../utils/axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = width * 0.5;
-const CARD_MARGIN = 15;
+const CARD_WIDTH = width * 0.55;
+const CARD_MARGIN = 12;
 
 const PopularDeal = () => {
   const flatListRef = useRef(null);
-  const [fontsLoaded] = useFonts({
-    Lexend_400Regular,
-    Lexend_700Bold,
-  });
-
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
   const [loading, setLoading] = useState(false);
   const [dataBanner, setDataBanner] = useState([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const handleScroll = (event) => {
-    const slideIndex = Math.round(
-      event.nativeEvent.contentOffset.x / (CARD_WIDTH + CARD_MARGIN)
-    );
-    setActiveIndex(slideIndex);
-  };
 
   const getDataDeal = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("accessToken");
-      const response = await api.get(`/announcement/active?type=deal`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setDataBanner(response.data.data);
+      const response = await api.get(`/announcement/active?type=deal`);
+      setDataBanner(response.data.data || []);
     } catch (error) {
-      console.error("Gagal mengambil data popular:", error.message);
+      console.error("Gagal mengambil data deal:", error.message);
     } finally {
       setLoading(false);
     }
@@ -59,19 +41,9 @@ const PopularDeal = () => {
 
   const handlePress = async (id) => {
     try {
-      const token = await AsyncStorage.getItem("accessToken");
-      const response = await api.get(`/announcement/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const response = await api.get(`/announcement/${id}`);
       const url = response.data.data.url;
-      if (url) {
-        Linking.openURL(url);
-      } else {
-        console.warn("URL tidak tersedia.");
-      }
+      if (url) Linking.openURL(url);
     } catch (error) {
       console.error("Gagal membuka detail:", error.message);
     }
@@ -81,51 +53,49 @@ const PopularDeal = () => {
     getDataDeal();
   }, []);
 
-  const renderItem = ({ item, index }) => (
-    <TouchableOpacity
-      onPress={() => handlePress(item.id)}
-      activeOpacity={0.8}
-      style={[
-        styles.card,
-        {
-          marginLeft: index === 0 ? 20 : 0,
-          marginRight: index === dataBanner.length - 1 ? 20 : CARD_MARGIN,
-        },
-      ]}
-    >
-      <Image
-        source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
-        style={styles.image}
-        resizeMode="contain"
-      />
-    </TouchableOpacity>
-  );
-
   if (!fontsLoaded || loading) {
     return (
-      <View style={{ padding: 20 }}>
-        <ActivityIndicator size="small" color="#004AAD" />
+      <View style={styles.loadingBox}>
+        <ActivityIndicator color="#CC1C22" />
       </View>
     );
   }
 
+  const renderItem = ({ item, index }) => (
+    <TouchableOpacity
+      onPress={() => handlePress(item.id)}
+      activeOpacity={0.88}
+      style={[
+        styles.card,
+        {
+          marginLeft: index === 0 ? 20 : CARD_MARGIN,
+          marginRight: index === dataBanner.length - 1 ? 20 : 0,
+        },
+      ]}
+    >
+      <Image
+        source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imageLink}` }}
+        style={styles.image}
+        resizeMode="cover"
+      />
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>Deal</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Popular Deal 🔥</Text>
-      </View>
       <FlatList
         ref={flatListRef}
         data={dataBanner}
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         horizontal
-        pagingEnabled={false}
         showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
         snapToInterval={CARD_WIDTH + CARD_MARGIN}
         decelerationRate="fast"
+        contentContainerStyle={{ paddingBottom: 4 }}
       />
     </View>
   );
@@ -133,29 +103,42 @@ const PopularDeal = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 20,
+    paddingBottom: 8,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: "Lexend_700Bold",
-    color: "#333",
+  loadingBox: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
   },
   card: {
     width: CARD_WIDTH,
-    height: 180,
-    borderRadius: 15,
+    height: 200,
+    borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "#f1f1f1",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
   },
   image: {
     width: "100%",
     height: "100%",
+  },
+  badge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    backgroundColor: "#CC1C22",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 11,
+    fontFamily: "Lexend_700Bold",
   },
 });
 
