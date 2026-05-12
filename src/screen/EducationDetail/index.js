@@ -2,278 +2,296 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  ScrollView,
+  Image,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  Image,
-  TextInput,
+  ActivityIndicator,
+  Share,
   Dimensions,
 } from "react-native";
-import { Entypo, Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { WebView } from "react-native-webview";
 import {
   useFonts,
   Lexend_400Regular,
   Lexend_700Bold,
-  Lexend_500Medium,
-  Lexend_600SemiBold,
-  Lexend_900Black,
 } from "@expo-google-fonts/lexend";
 import api from "../../utils/axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const { width } = Dimensions.get("window");
 
 const EducationDetail = (props) => {
   const { id } = props.route.params;
-  const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [dataEducation, setEducation] = useState([]);
-  console.log("INI DATA", dataEducation);
-  const [fontsLoaded] = useFonts({
-    Lexend_400Regular,
-    Lexend_700Bold,
-  });
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [webViewHeight, setWebViewHeight] = useState(300);
 
-  const navEducationComments = () => {
-    props.navigation.navigate("EducationComments");
-  };
-
-  const getDataDetail = async () => {
+  const fetchDetail = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("accessToken");
-      console.log("INI TOKEN", token);
-      const response = await api.get(`/content/detail/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log(response.data.data);
-      setEducation(response.data.data);
+      const response = await api.get(`/content/detail/${id}`);
+      setData(response.data.data);
     } catch (error) {
-      console.log(error);
+      console.log("Error fetch detail:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    getDataDetail();
+    fetchDetail();
   }, []);
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: data?.title || "Baca artikel edukasi di Pindar!",
+      });
+    } catch (_) {}
+  };
+
+  if (!fontsLoaded) return null;
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#CC1C22" />
+      </View>
+    );
+  }
+
+  if (!data) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color="#ccc" />
+        <Text style={styles.emptyText}>Artikel tidak ditemukan</Text>
+      </View>
+    );
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: -apple-system, sans-serif;
+          font-size: 15px;
+          color: #333;
+          line-height: 1.75;
+          padding: 0 4px;
+          word-break: break-word;
+        }
+        img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 10px;
+          margin: 8px 0;
+        }
+        p { margin-bottom: 12px; }
+        h1, h2, h3 { color: #1A1A2E; margin-bottom: 8px; margin-top: 16px; }
+        ul, ol { padding-left: 20px; margin-bottom: 12px; }
+        li { margin-bottom: 4px; }
+        a { color: #CC1C22; }
+        blockquote {
+          border-left: 3px solid #CC1C22;
+          padding-left: 12px;
+          color: #666;
+          margin: 12px 0;
+        }
+        strong { color: #1A1A2E; }
+      </style>
+    </head>
+    <body>
+      ${data.contentDetail || "<p>Tidak ada konten.</p>"}
+      <script>
+        window.ReactNativeWebView.postMessage(document.body.scrollHeight);
+      </script>
+    </body>
+    </html>
+  `;
+
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={{ flexDirection: "row" }}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 40 }}
+    >
+      {/* Hero Image */}
+      <View style={styles.heroWrapper}>
         <Image
-          source={require("../../assets/loginlogo.png")}
-          style={{
-            width: 50,
-            height: 50,
-            marginRight: 10,
-            resizeMode: "contain",
+          source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${data.imageLink}` }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.5)"]}
+          style={styles.heroGradient}
+        />
+        {/* Category badge */}
+        {data.category && (
+          <View style={styles.heroBadge}>
+            <Text style={styles.heroBadgeText}>{data.category}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Content Card */}
+      <View style={styles.card}>
+        {/* Meta row */}
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <Ionicons name="time-outline" size={13} color="#999" />
+            <Text style={styles.metaText}>
+              {data.createdDate
+                ? new Date(data.createdDate).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : ""}
+            </Text>
+          </View>
+          {data.viewCount != null && (
+            <View style={styles.metaItem}>
+              <Ionicons name="eye-outline" size={13} color="#999" />
+              <Text style={styles.metaText}>{data.viewCount} views</Text>
+            </View>
+          )}
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+            <Ionicons name="share-social-outline" size={16} color="#CC1C22" />
+            <Text style={styles.shareBtnText}>Bagikan</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Title */}
+        <Text style={styles.title}>{data.title}</Text>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* HTML Content */}
+        <WebView
+          originWhitelist={["*"]}
+          source={{ html: htmlContent }}
+          style={{ width: width - 48, height: webViewHeight }}
+          scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
+          onMessage={(e) => {
+            const h = parseInt(e.nativeEvent.data, 10);
+            if (!isNaN(h) && h > 0) setWebViewHeight(h + 32);
           }}
         />
-        <View style={styles.searchContainer}>
-          <Entypo
-            name="magnifying-glass"
-            size={20}
-            color="#999"
-            style={styles.searchIcon}
-          />
-          <TextInput placeholder="Search here.." style={styles.searchInput} />
-        </View>
       </View>
-
-      {/* Article */}
-      <Image
-        source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${dataEducation.imageLink}` }}
-        style={styles.articleImage}
-      />
-      <View style={styles.articleContent}>
-        {/* <Text style={styles.timestamp}>4h ago</Text> */}
-        <Text style={styles.articleTitle}>{dataEducation.title || ""}</Text>
-        {/* <View style={styles.statsContainer}>
-          <TouchableOpacity onPress={navEducationComments}>
-            <Text style={styles.stat}>
-              <Ionicons name="chatbubble-outline" size={16} /> 8 comments
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.stat}>
-            <Ionicons name="heart-outline" size={16} /> 34 likes
-          </Text>
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Text style={styles.stat}>
-              <Ionicons name="share-social-outline" size={16} /> Share
-            </Text>
-          </TouchableOpacity>
-        </View> */}
-        <Text style={styles.articleText}>{dataEducation.contentDetail}</Text>
-      </View>
-
-      {/* Share Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Share</Text>
-            <View style={styles.shareOptions}>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="copy-outline" size={24} color="black" />
-                <Text style={styles.shareText}>Copy Link</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="logo-whatsapp" size={24} color="green" />
-                <Text style={styles.shareText}>WhatsApp</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="logo-facebook" size={24} color="blue" />
-                <Text style={styles.shareText}>Facebook</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="logo-messenger" size={24} color="blue" />
-                <Text style={styles.shareText}>Messenger</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="logo-twitter" size={24} color="skyblue" />
-                <Text style={styles.shareText}>Twitter</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="logo-instagram" size={24} color="purple" />
-                <Text style={styles.shareText}>Instagram</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons name="logo-skype" size={24} color="blue" />
-                <Text style={styles.shareText}>Skype</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Ionicons
-                  name="chatbubble-ellipses-outline"
-                  size={24}
-                  color="green"
-                />
-                <Text style={styles.shareText}>Message</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.cancelText}>CANCEL</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9F9F9",
-    padding: 15,
+    backgroundColor: "#F5F6FA",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 15,
-    backgroundColor: "#FFF",
-    elevation: 3,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "85%",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  searchIcon: {
-    marginRight: 5,
-  },
-  searchInput: {
+  loadingContainer: {
     flex: 1,
-  },
-  articleImage: {
-    width: "100%",
-    height: 200,
-    resizeMode: "cover",
-  },
-  articleContent: {
-    padding: 15,
-  },
-
-  timestamp: {
-    fontSize: 12,
-    color: "#888",
-    fontFamily: "Lexend_400Regular",
-  },
-  articleTitle: {
-    fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: "Lexend_700Bold",
-    marginVertical: 10,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-    paddingRight: 100,
-  },
-  stat: {
-    fontSize: 14,
-    color: "#444",
-    fontFamily: "Lexend_400Regular",
-  },
-  articleText: {
-    fontSize: 14,
-    color: "#333",
-    fontFamily: "Lexend_400Regular",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "flex-end",
+    backgroundColor: "#F5F6FA",
+    gap: 12,
   },
-  modalContainer: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    width: Dimensions.get("window").width,
-    // height: '60%',
-    alignItems: "center",
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    fontFamily: "Lexend_400Regular",
   },
-  modalTitle: {
-    fontSize: 18,
-    // fontWeight: 'bold',
-    marginBottom: 15,
+  heroWrapper: {
+    width: "100%",
+    height: 240,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+  heroGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+  },
+  heroBadge: {
+    position: "absolute",
+    bottom: 14,
+    left: 16,
+    backgroundColor: "rgba(204,28,34,0.9)",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  heroBadgeText: {
+    color: "white",
+    fontSize: 11,
     fontFamily: "Lexend_700Bold",
   },
-  shareOptions: {
+  card: {
+    margin: 16,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  metaRow: {
     flexDirection: "row",
+    alignItems: "center",
     flexWrap: "wrap",
-    justifyContent: "space-around",
-    width: "100%",
+    gap: 12,
+    marginBottom: 14,
   },
-  shareButton: {
+  metaItem: {
+    flexDirection: "row",
     alignItems: "center",
-    margin: 10,
+    gap: 4,
   },
-  closeButton: {
-    marginTop: 15,
-    backgroundColor: "#EAEAEA",
-    width: "100%",
-    padding: 12,
+  metaText: {
+    fontSize: 11,
+    color: "#999",
+    fontFamily: "Lexend_400Regular",
+  },
+  shareBtn: {
+    flexDirection: "row",
     alignItems: "center",
-    borderRadius: 10,
+    gap: 4,
+    marginLeft: "auto",
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
   },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#555",
+  shareBtnText: {
+    fontSize: 12,
+    color: "#CC1C22",
+    fontFamily: "Lexend_700Bold",
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: "Lexend_700Bold",
+    color: "#1A1A2E",
+    lineHeight: 26,
+    marginBottom: 16,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginBottom: 16,
   },
 });
 

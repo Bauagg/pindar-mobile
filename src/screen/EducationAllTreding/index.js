@@ -7,162 +7,285 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  StyleSheet,
+  Dimensions,
 } from "react-native";
-import { Entypo, Feather } from "@expo/vector-icons";
-import { useFonts } from "expo-font";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from "@expo-google-fonts/lexend";
 import api from "../../utils/axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const { width } = Dimensions.get("window");
 
 const EducationAllTreding = (props) => {
-  const [dataTreding, setDataTreding] = useState([]);
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [fontsLoaded] = useFonts({
-    Lexend: require("../../assets/fonts/Lexend-Regular.ttf"),
-  });
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchText);
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [searchText]);
-
-  useEffect(() => {
-    getTrendingEducation(debouncedSearch);
-  }, [debouncedSearch]);
-
-  const getTrendingEducation = async (keyword = "") => {
+  const fetchData = async (keyword = "", pageNum = 1, append = false) => {
     try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem("token");
-      const response = await api.get(`/content/list?search=${keyword}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("INI data Trending", response.data.data.contents);
-      setDataTreding(response.data.data.contents);
+      if (pageNum === 1) setLoading(true);
+      else setLoadingMore(true);
+
+      let endpoint = `/content/list?limit=10&offset=${(pageNum - 1) * 10}`;
+      if (keyword) endpoint += `&search=${encodeURIComponent(keyword)}`;
+
+      const response = await api.get(endpoint);
+      const contents = response.data.data.contents || [];
+      const pagination = response.data.data.pagination;
+
+      if (append) setData((prev) => [...prev, ...contents]);
+      else setData(contents);
+
+      setHasMore(pageNum < (pagination?.totalPages || 1));
+      setPage(pageNum);
     } catch (error) {
-      console.log("Error ambil konten:", error);
+      console.log("Error fetch trending:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchData(searchText, 1, false);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchText]);
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) fetchData(searchText, page + 1, true);
+  };
+
+  if (!fontsLoaded) return null;
+
   return (
-    <View style={{ flex: 1, padding: 16, backgroundColor: "#fff" }}>
-      {/* Header Search Bar */}
-      <View style={{ flexDirection: "row" }}>
-        <Image
-          source={require("../../assets/loginlogo.png")}
-          style={{
-            width: 50,
-            height: 50,
-            marginRight: 10,
-            resizeMode: "contain",
-          }}
-        />
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "#f5f5f5",
-            borderRadius: 20,
-            width: "85%",
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
-        >
-          <Feather name="search" size={20} color="#888" />
-          <TextInput
-            placeholder="Search here.."
-            style={{
-              flex: 1,
-              marginLeft: 10,
-              fontFamily: "Lexend",
-
-              padding: 10,
-            }}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-          {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
-        </View>
-      </View>
-
-      {/* Title */}
-      <Text
-        style={{
-          fontSize: 22,
-          fontWeight: "bold",
-          marginVertical: 20,
-          fontFamily: "Lexend",
-        }}
-      >
-        Trending
-      </Text>
-
-      {/* Articles */}
+    <View style={{ flex: 1, backgroundColor: "#F5F6FA" }}>
       <FlatList
-        data={dataTreding}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={{ marginBottom: 20 }}
-            onPress={() =>
-              props.navigation.navigate("EducationDetail", { id: item.id })
-            }
-          >
-            <Image
-              source={{
-                uri: item.imageLink
-                  ? `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}`
-                  : "https://via.placeholder.com/300x180.png?text=No+Image",
-              }}
-              style={{ width: "100%", height: 180, borderRadius: 10 }}
+        data={loading ? [] : data}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        showsVerticalScrollIndicator={false}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.3}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <View style={styles.searchBar}>
+            <Ionicons name="search-outline" size={18} color="#CC1C22" />
+            <TextInput
+              placeholder="Cari artikel trending..."
+              style={styles.searchInput}
+              placeholderTextColor="#aaa"
+              value={searchText}
+              onChangeText={setSearchText}
             />
-            <Text style={{ color: "#666", marginTop: 8, fontFamily: "Lexend" }}>
-              {item.category}
-            </Text>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "bold",
-                fontFamily: "Lexend",
-              }}
-            >
-              {item.title}
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginTop: 5,
-              }}
-            >
-              <Feather name="clock" size={14} color="#888" />
-              <Text
-                style={{ marginLeft: 5, color: "#888", fontFamily: "Lexend" }}
-              >
-                {item.viewCount} views
-              </Text>
-              <TouchableOpacity
-                style={{ marginLeft: "auto" }}
-                onPress={() =>
-                  props.navigation.navigate("EducationDetail", { id: item.id })
-                }
-              >
-                <Entypo name="dots-three-horizontal" size={16} color="#888" />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText("")}>
+                <Ionicons name="close-circle" size={16} color="#ccc" />
               </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+            )}
+          </View>
+        }
+        renderItem={({ item, index }) => (
+          index === 0 ? (
+            // Card besar untuk item pertama
+            <TouchableOpacity
+              style={styles.featuredCard}
+              activeOpacity={0.88}
+              onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
+            >
+              <Image
+                source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                style={styles.featuredImage}
+                resizeMode="cover"
+              />
+              <LinearGradient
+                colors={["transparent", "rgba(0,0,0,0.78)"]}
+                style={styles.featuredOverlay}
+              >
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{item.category || "Artikel"}</Text>
+                </View>
+                <Text style={styles.featuredTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.metaRow}>
+                  <Ionicons name="flame" size={12} color="#FF6B6B" />
+                  <Text style={styles.metaTextWhite}>  {item.viewCount || 0} views</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : (
+            // Card kecil untuk item selanjutnya
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.88}
+              onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
+            >
+              <Image
+                source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+              <View style={styles.cardBody}>
+                <View style={styles.badgeSmall}>
+                  <Text style={styles.badgeTextSmall}>{item.category || "Artikel"}</Text>
+                </View>
+                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.metaRow}>
+                  <Ionicons name="eye-outline" size={12} color="#999" />
+                  <Text style={styles.metaText}>  {item.viewCount || 0} views</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )
         )}
+        ListFooterComponent={
+          loading ? (
+            <ActivityIndicator color="#CC1C22" style={{ marginVertical: 20 }} />
+          ) : loadingMore ? (
+            <ActivityIndicator color="#CC1C22" style={{ marginVertical: 20 }} />
+          ) : (
+            <View style={{ height: 100 }} />
+          )
+        }
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  listContent: {
+    padding: 16,
+    gap: 12,
+  },
+  searchBar: {
+    backgroundColor: "white",
+    height: 46,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    gap: 8,
+    marginBottom: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: "#333",
+    fontFamily: "Lexend_400Regular",
+  },
+  featuredCard: {
+    height: 220,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#eee",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+  },
+  featuredImage: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+  },
+  featuredOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: 16,
+  },
+  featuredTitle: {
+    color: "white",
+    fontSize: 16,
+    fontFamily: "Lexend_700Bold",
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  badge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(204,28,34,0.9)",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginBottom: 8,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontFamily: "Lexend_700Bold",
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  metaTextWhite: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 11,
+    fontFamily: "Lexend_400Regular",
+  },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderRadius: 16,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+  },
+  cardImage: {
+    width: 100,
+    height: 100,
+    backgroundColor: "#f0f0f0",
+  },
+  cardBody: {
+    flex: 1,
+    padding: 12,
+    justifyContent: "center",
+  },
+  badgeSmall: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FEE2E2",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginBottom: 6,
+  },
+  badgeTextSmall: {
+    color: "#CC1C22",
+    fontSize: 10,
+    fontFamily: "Lexend_700Bold",
+  },
+  cardTitle: {
+    fontSize: 13,
+    fontFamily: "Lexend_700Bold",
+    color: "#1A1A2E",
+    lineHeight: 19,
+    marginBottom: 8,
+  },
+  metaText: {
+    fontSize: 11,
+    color: "#999",
+    fontFamily: "Lexend_400Regular",
+  },
+});
 
 export default EducationAllTreding;

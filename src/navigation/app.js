@@ -27,7 +27,6 @@ import InformasiDetail from "../screen/IndormasiDetail";
 import RedirectScreen from "../screen/RedirectScreen";
 import CompareScreenKartu from "../screen/CompareScreenKartu";
 import RedirectScreenKartu from "../screen/RedirectScreenKartu";
-import EducationAllTerbaru from "../screen/EducationAllTerbaru";
 import EducationAllTreding from "../screen/EducationAllTreding";
 import PinjamanBank from "../screen/PinjamanBank";
 
@@ -217,13 +216,6 @@ export default function AppStackNavigator() {
         component={RedirectScreenKartu}
         options={{
           header: (props) => <HeaderName {...props} name="Kartu Kredit" />,
-        }}
-      />
-      <Stack.Screen
-        name="Education All Terbaru"
-        component={EducationAllTerbaru}
-        options={{
-          header: (props) => <HeaderName {...props} name="Education" />,
         }}
       />
       <Stack.Screen
