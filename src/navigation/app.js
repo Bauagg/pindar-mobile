@@ -4,6 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Import Screens
 import Home from "../screen/Home";
@@ -34,6 +35,9 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function BottomTabNavigator() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 60 + insets.bottom;
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -48,7 +52,8 @@ function BottomTabNavigator() {
           backgroundColor: "#ffffff",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
-          height: 80,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.1,

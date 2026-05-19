@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { StatusBar, ActivityIndicator, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import MainStackNavigator from "./src/navigation";
 import SplashScreen from "./src/screen/SplashScreen";
 import { setNavigationRef } from "./src/utils/axios";
@@ -32,13 +33,13 @@ export default function App() {
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar
         hidden={false}
         backgroundColor="white"
         barStyle="dark-content"
       />
       <MainStackNavigator navigationRef={navRef} />
-    </>
+    </SafeAreaProvider>
   );
 }

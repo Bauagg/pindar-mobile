@@ -307,7 +307,7 @@ export default function Home(props) {
 
         {/* ── POPULAR DEAL ── */}
         {popularDeal.length > 0 && (
-          <View style={{ marginTop: 24 }}>
+          <View style={{ marginTop: 4 }}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>Popular Deal</Text>
             </View>
@@ -355,7 +355,7 @@ export default function Home(props) {
 
         {/* ── POPULAR PLUS ── */}
         {popularPlus.length > 0 && (
-          <View style={{ marginTop: 24 }}>
+          <View style={{ marginTop: 2 }}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>Popular Plus</Text>
             </View>
@@ -680,8 +680,8 @@ const styles = StyleSheet.create({
   menuGrid: {
     flexDirection: "row",
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 0,
     gap: 12,
   },
   menuCard: {
@@ -689,7 +689,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 16,
     alignItems: "center",
-    paddingVertical: 18,
+    paddingVertical: 12,
     paddingHorizontal: 6,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -852,7 +852,8 @@ const styles = StyleSheet.create({
   dotsRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 10,
+    marginTop: 8,
+    marginBottom: 0,
     gap: 6,
   },
   dot: {
