@@ -111,27 +111,25 @@ const issuers = [{ id: '', name: 'Semua' }, ...publishers.map((p) => ({
   if (!fontsLoaded) return null;
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.dragHandle}
-          />
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={() => {}}>
+          <View style={styles.dragHandle} />
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.header}>
               <Text style={styles.headerText}>Filter</Text>
-              <TouchableOpacity onPress={selectAll} style={styles.selectAllButton}>
-                <FontAwesome
-                  name={
-                    selectedFilters.length === features.length
-                      ? 'check-square'
-                      : 'square-o'
-                  }
-                  size={20}
-                  color="#CC1C22"
-                />
-                <Text style={styles.selectAllText}> Select all</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <TouchableOpacity onPress={selectAll} style={styles.selectAllButton}>
+                  <FontAwesome
+                    name={selectedFilters.length === features.length ? 'check-square' : 'square-o'}
+                    size={20}
+                    color="#CC1C22"
+                  />
+                  <Text style={styles.selectAllText}> Select all</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                  <FontAwesome name="times" size={18} color="#666" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Penerbit */}
@@ -258,8 +256,8 @@ const issuers = [{ id: '', name: 'Semua' }, ...publishers.map((p) => ({
               <Text style={styles.applyText}>Terapkan Filter</Text>
             </TouchableOpacity>
           </ScrollView>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 };
@@ -269,14 +267,13 @@ const styles = {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
-    paddingHorizontal: 10,
   },
   modalContainer: {
     width: '100%',
     height: '85%',
     backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
   },
   dragHandle: {
@@ -298,6 +295,10 @@ const styles = {
     color: '#333',
   },
   selectAllButton: { flexDirection: 'row', alignItems: 'center' },
+  closeButton: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center',
+  },
   selectAllText: {
     color: '#CC1C22',
     marginLeft: 5,

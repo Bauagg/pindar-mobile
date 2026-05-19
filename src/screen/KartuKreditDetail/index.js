@@ -4,40 +4,37 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   Dimensions,
   StyleSheet,
+  ActivityIndicator,
+  StatusBar,
 } from 'react-native';
-import { AntDesign, Entypo } from '@expo/vector-icons';
-import { List } from 'react-native-paper';
-import Svg, { Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
+import api from '../../utils/axios';
 
 const { width } = Dimensions.get('window');
 
 const KartuKreditDetail = (props) => {
   const idDetail = props?.route?.params?.id;
+  const insets = useSafeAreaInsets();
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
   const [detail, setDetail] = useState(null);
-  console.log("INI DATA DETAIl", detail);
-  const [loading, setLoading] = useState(false);
-
-  console.log("ID DARI SCRENN SEBELUMNYA", detail);
-  const [expandedItems, setExpandedItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedSections, setExpandedSections] = useState(['fitur', 'info']);
 
   const fetchDetails = async () => {
-    setLoading(true);
     try {
-      console.log(idDetail)
-      const token = await AsyncStorage.getItem('accessToken'); // ← Token kamu di sini
-      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_BASE_URL}/credit-card/detail/${idDetail}`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      setDetail(response.data.data);
-      
+      setLoading(true);
+      const response = await api.get(`/credit-card/detail/${idDetail}`);
+setDetail(response.data.data);
     } catch (error) {
       console.error('Gagal ambil detail:', error);
     } finally {
@@ -45,213 +42,211 @@ const KartuKreditDetail = (props) => {
     }
   };
 
-  useEffect(() => {
-    fetchDetails();
-  }, []);
+  useEffect(() => { fetchDetails(); }, []);
+
+  const toggleSection = (key) => {
+    setExpandedSections(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
 
   const navAjukan = () => {
     props.navigation.navigate('Redirect Kartu', {
       imageLink: detail.imageLink,
-      redirectLink: detail.redicrectLink,
-      title: detail.title
+      redirectLink: detail.redirectLink || detail.redicrectLink,
+      title: detail.title,
     });
   };
 
+  if (!fontsLoaded) return null;
 
-  const accordionData = [
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#CC1C22" />
+        <Text style={styles.loadingText}>Memuat detail kartu...</Text>
+      </View>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Ionicons name="alert-circle-outline" size={56} color="#ccc" />
+        <Text style={styles.emptyText}>Data tidak ditemukan</Text>
+      </View>
+    );
+  }
+
+  const feeText = detail.yearlyFee === '0' || detail.yearlyFee === 0
+    ? 'Gratis'
+    : `Rp ${parseInt(detail.yearlyFee).toLocaleString('id-ID')}`;
+
+  const infoItems = [
+    detail.detailYearlyFee && detail.detailYearlyFee !== '0' && {
+      label: 'Keterangan Iuran', value: detail.detailYearlyFee,
+    },
+    detail.benefitName && { label: 'Benefit Utama', value: detail.benefitName },
+    detail.publisher?.publisherName && { label: 'Penerbit', value: detail.publisher.publisherName },
+    detail.type?.typeName && { label: 'Tipe Kartu', value: detail.type.typeName },
+  ].filter(Boolean);
+
+  const sections = [
     {
-      id: 1,
-      title: 'Detail Informasi',
-      content: 'Kartu Kredit BCA Black Visa adalah kartu kredit premium...',
+      key: 'fitur',
+      title: 'Fitur Kartu',
+      icon: 'star-outline',
+      hasData: detail.features?.length > 0,
+      render: () => (
+        <View style={{ gap: 10, width: '100%' }}>
+          {detail.features.map((feature, i) => (
+            <View key={i} style={styles.featureRow}>
+              <Ionicons name="checkmark-circle" size={18} color="#CC1C22" style={{ marginTop: 1 }} />
+              <Text style={styles.featureText}>{feature}</Text>
+            </View>
+          ))}
+        </View>
+      ),
     },
     {
-      id: 2,
-      title: 'Fitur Utama',
-      content:
-        'Kartu ini menyediakan limit kredit tinggi, reward points, dan berbagai promo...',
-    },
-    {
-      id: 3,
-      title: 'Fasilitas Kartu',
-      content:
-        'Pemegang kartu dapat menikmati berbagai fasilitas eksklusif dan layanan prioritas...',
-    },
-    {
-      id: 4,
-      title: 'Biaya & Denda',
-      content:
-        'Kartu ini memiliki biaya tahunan Rp 450.000 dengan bunga rendah...',
-    },
-    {
-      id: 5,
-      title: 'Persyaratan',
-      content:
-        'Pengajuan kartu memerlukan penghasilan minimal dan dokumen pendukung...',
-    },
-    {
-      id: 6,
-      title: 'Cara Pengajuan',
-      content:
-        'Pengajuan kartu dapat dilakukan secara online melalui website resmi bank...',
+      key: 'info',
+      title: 'Informasi Biaya',
+      icon: 'information-circle-outline',
+      hasData: infoItems.length > 0,
+      render: () => (
+        <View style={{ gap: 0 }}>
+          {infoItems.map((item, i) => (
+            <View key={i} style={[styles.infoRow, i === infoItems.length - 1 && { borderBottomWidth: 0 }]}>
+              <Text style={styles.infoLabel}>{item.label}</Text>
+              <Text style={styles.infoValue}>{item.value}</Text>
+            </View>
+          ))}
+        </View>
+      ),
     },
   ];
 
-  const toggleExpand = (id) => {
-    setExpandedItems(
-      (prevExpanded) =>
-        prevExpanded.includes(id)
-          ? prevExpanded.filter((item) => item !== id) // Tutup jika sudah terbuka
-          : [...prevExpanded, id] // Buka jika belum terbuka
-    );
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.accordionContainer}>
-      <TouchableOpacity
-        style={[
-          styles.accordionHeader,
-          expandedItems.includes(item?.id) && styles.expandedHeader,
-        ]}
-        onPress={() => toggleExpand(item.id)}>
-        <Text style={styles.accordionTitle}>{item?.title}</Text>
-        <Entypo
-          name={expandedItems.includes(item.id) ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color="#555"
-        />
-      </TouchableOpacity>
-      {expandedItems.includes(item.id) && (
-        <View style={styles.contentBox}>
-          <Text style={styles.contentText}>{item?.content}</Text>
-        </View>
-      )}
-    </View>
-  );
-
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
-      {/* Header */}
-      <View
-        style={{
-          backgroundColor: '#CC1C22',
-          width: width,
-          height: 220,
-          borderBottomLeftRadius: 30,
-          borderBottomRightRadius: 30,
-          paddingTop: 40,
-          paddingHorizontal: 20,
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-        <Svg
-          width={width}
-          height={234}
-          fill={'none'}
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox={`0 0 237 234`}
-          style={styles.svgStyle}>
-          <Path
-            d="M 101.5,-0.5 C 108.167,-0.5 114.833,-0.5 121.5,-0.5C 123.643,13.4935 122.309,27.1602 117.5,40.5C 130.562,49.5625 141.229,60.8959 149.5,74.5C 163.461,74.5446 177.461,74.7113 191.5,75C 209.612,77.0546 224.612,84.8879 236.5,98.5C 236.5,132.167 236.5,165.833 236.5,199.5C 228.257,213.078 217.59,224.411 204.5,233.5C 197.167,233.5 189.833,233.5 182.5,233.5C 181.032,229.63 181.532,225.964 184,222.5C 218.006,203.164 233.673,173.83 231,134.5C 225.675,110.507 210.842,97.0071 186.5,94C 177.151,93.3897 167.817,93.5564 158.5,94.5C 166.411,130.144 155.744,158.644 126.5,180C 103.675,195.942 78.3417,203.608 50.5,203C 35.9833,202.324 24.15,196.491 15,185.5C 7.88241,171.252 8.54908,157.252 17,143.5C 33.8815,120.29 55.7148,103.457 82.5,93C 97.9544,87.5539 113.621,82.8873 129.5,79C 125.5,74.3333 121.5,69.6667 117.5,65C 114.926,62.7574 112.092,60.924 109,59.5C 89.7213,85.5767 63.888,100.577 31.5,104.5C 14.3545,104.345 3.68787,96.0119 -0.5,79.5C -0.5,76.5 -0.5,73.5 -0.5,70.5C 3.55912,57.5955 11.5591,47.7622 23.5,41C 47.643,26.9633 72.8096,24.7967 99,34.5C 103.117,22.9774 103.95,11.3107 101.5,-0.5 Z M 55.5,48.5 C 67.0704,47.7551 78.4037,48.9218 89.5,52C 74.3494,70.9143 54.6827,82.0809 30.5,85.5C 23.3834,85.5491 19.7167,82.0491 19.5,75C 21.5457,67.2777 26.2124,61.6111 33.5,58C 40.584,53.9504 47.9174,50.7837 55.5,48.5 Z M 136.5,97.5 C 137.75,97.5774 138.583,98.244 139,99.5C 145.792,125.792 138.292,146.959 116.5,163C 95.9029,177.977 72.9029,184.644 47.5,183C 31.3337,180.493 26.1671,171.66 32,156.5C 45.9933,136.186 64.4933,121.353 87.5,112C 103.626,106.057 119.959,101.224 136.5,97.5 Z"
-            strokeWidth={7}
-            opacity={0.951}
-            fill="rgba(254, 255, 254, 0.5)"
-            fillRule="evenodd"
-          />
-        </Svg>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#F5F6FA' }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      {/* Gambar Kartu */}
-      <View style={{ alignItems: 'center', marginTop: -150 }}>
-        <View
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            width: 310,
-            height: 200,
-            alignItems: 'center',
-            borderRadius: 10,
-          }}>
-          <Image
-            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${detail?.imageLink}`}}
-            style={{ width: 280, height: 180, borderRadius: 10, marginTop: 20 }}
-          />
-        </View>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
 
-      {/* Kartu Detail */}
-      <View style={{ alignItems: 'center', marginVertical: 10 }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontFamily: 'Lexend-Regular',
-            fontWeight: 'semi-bold',
-          }}>
-          {detail?.title}
-        </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingHorizontal: 14,
-            alignItems: 'center',
-            marginTop: 30,
-          }}>
-          <View style={{ alignItems: 'center', marginRight: 100 }}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: '#3D3D5C',
-                fontFamily: 'Lexend-Regular',
-              }}>
-              Rp 450.000
-              <Text
-                style={{ fontSize: 14, fontWeight: 'bold', color: '#3D3D5C' }}>
-                *
-              </Text>
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#3D3D5C',
-                fontFamily: 'Lexend-Regular',
-              }}>
-              Iuran Tahunan
-            </Text>
+        {/* ── HERO ── */}
+        <LinearGradient
+          colors={['#B01018', '#CC1C22', '#E8424A']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.heroCircle1} />
+          <View style={styles.heroCircle2} />
+          <View style={styles.heroCircle3} />
+
+          {/* Card image dengan efek shadow */}
+          <View style={styles.cardShadowWrapper}>
+            <View style={styles.cardImageWrapper}>
+              <Image
+                source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${detail.imageLink}` }}
+                style={styles.cardImage}
+                resizeMode="contain"
+              />
+            </View>
           </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: '#3D3D5C',
-                fontFamily: 'Lexend-Regular',
-              }}>
-              Premium
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#3D3D5C',
-                fontFamily: 'Lexend-Regular',
-              }}>
-              Signature Card
-            </Text>
+        </LinearGradient>
+
+        {/* ── TITLE SECTION ── */}
+        <View style={styles.titleCard}>
+          <View style={styles.titleRow}>
+            <Text style={styles.cardTitle}>{detail.title}</Text>
+            {detail.benefitName && (
+              <View style={styles.benefitBadge}>
+                <Ionicons name="gift-outline" size={11} color="#CC1C22" />
+                <Text style={styles.benefitBadgeText}>{detail.benefitName}</Text>
+              </View>
+            )}
           </View>
+          {detail.publisher?.publisherName && (
+            <Text style={styles.publisherText}>
+              <Ionicons name="business-outline" size={12} color="#999" /> {detail.publisher.publisherName}
+            </Text>
+          )}
         </View>
-      </View>
 
-      <View style={styles.container}>
-        <FlatList
-          data={accordionData}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
-        />
+        {/* ── STATS ── */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <LinearGradient colors={['#FFF5F5', '#FEE2E2']} style={styles.statIconBg}>
+              <Ionicons name="wallet-outline" size={20} color="#CC1C22" />
+            </LinearGradient>
+            <Text style={styles.statValue}>{feeText}</Text>
+            <Text style={styles.statLabel}>Iuran Tahunan</Text>
+          </View>
 
-        <TouchableOpacity onPress={navAjukan}>
+          {detail.type?.typeName && (
+            <View style={styles.statCard}>
+              <LinearGradient colors={['#FFF5F5', '#FEE2E2']} style={styles.statIconBg}>
+                <Ionicons name="card-outline" size={20} color="#CC1C22" />
+              </LinearGradient>
+              <Text style={styles.statValue} numberOfLines={1}>{detail.type.typeName}</Text>
+              <Text style={styles.statLabel}>Tipe Kartu</Text>
+            </View>
+          )}
+
+          {detail.features?.length > 0 && (
+            <View style={styles.statCard}>
+              <LinearGradient colors={['#FFF5F5', '#FEE2E2']} style={styles.statIconBg}>
+                <Ionicons name="star-outline" size={20} color="#CC1C22" />
+              </LinearGradient>
+              <Text style={styles.statValue}>{detail.features.length}</Text>
+              <Text style={styles.statLabel}>Fitur</Text>
+            </View>
+          )}
+        </View>
+
+        {/* ── ACCORDION SECTIONS ── */}
+        <View style={styles.sectionsWrapper}>
+          {sections.filter(s => s.hasData).map((section) => {
+            const isOpen = expandedSections.includes(section.key);
+            return (
+              <View key={section.key} style={styles.accordion}>
+                <TouchableOpacity
+                  style={styles.accordionHeader}
+                  onPress={() => toggleSection(section.key)}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.accordionLeft}>
+                    <View style={styles.accordionIconBox}>
+                      <Ionicons name={section.icon} size={15} color="#CC1C22" />
+                    </View>
+                    <Text style={styles.accordionTitle}>{section.title}</Text>
+                  </View>
+                  <View style={[styles.chevronBox, isOpen && styles.chevronBoxOpen]}>
+                    <Ionicons name="chevron-down" size={14} color={isOpen ? 'white' : '#999'} />
+                  </View>
+                </TouchableOpacity>
+
+                {isOpen && (
+                  <View style={styles.accordionBody}>
+                    {section.render()}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      {/* ── BOTTOM BAR ── */}
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <TouchableOpacity onPress={navAjukan} activeOpacity={0.88} style={{ flex: 1 }}>
           <LinearGradient
-            colors={['#CC1C22', '#F86469']}
-            style={styles.applyGradient}>
+            colors={['#CC1C22', '#E8424A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.applyBtn}
+          >
+            <Ionicons name="paper-plane-outline" size={16} color="white" />
             <Text style={styles.applyText}>Ajukan Sekarang</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -261,92 +256,246 @@ const KartuKreditDetail = (props) => {
 };
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: '#CC1C22',
-    width: width,
-    height: 220,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    paddingTop: 40,
-    paddingHorizontal: 20,
-    position: 'relative',
+  loadingContainer: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#F5F6FA', gap: 12,
+  },
+  loadingText: { fontSize: 13, color: '#999', fontFamily: 'Lexend_400Regular' },
+  emptyText: { fontSize: 14, color: '#999', fontFamily: 'Lexend_400Regular' },
+
+  /* Hero */
+  hero: {
+    height: 280,
+    alignItems: 'center',
+    justifyContent: 'center',
     overflow: 'hidden',
   },
-  svgStyle: {
-    position: 'absolute',
-    top: 0,
-    left: 90,
+  heroCircle1: {
+    position: 'absolute', width: 240, height: 240, borderRadius: 120,
+    backgroundColor: 'rgba(255,255,255,0.06)', top: -80, right: -60,
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
+  heroCircle2: {
+    position: 'absolute', width: 160, height: 160, borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.05)', bottom: -40, left: -30,
   },
-  listContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 100, // Supaya tombol tidak menutupi list
+  heroCircle3: {
+    position: 'absolute', width: 80, height: 80, borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.08)', top: 20, left: 30,
   },
-  accordionContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 10,
-    elevation: 3,
+  cardShadowWrapper: {
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  cardImageWrapper: {
+    width: width - 48,
+    height: 190,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+
+  /* Title Card */
+  titleCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 6,
+  },
+  cardTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontFamily: 'Lexend_700Bold',
+    color: '#1A1A2E',
+    lineHeight: 26,
+  },
+  benefitBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#FEE2E2', borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 5,
+  },
+  benefitBadgeText: {
+    fontSize: 10, color: '#CC1C22', fontFamily: 'Lexend_700Bold',
+  },
+  publisherText: {
+    fontSize: 12, color: '#999', fontFamily: 'Lexend_400Regular',
+  },
+
+  /* Stats */
+  statsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 10,
+    marginTop: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  statIconBg: {
+    width: 40, height: 40, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 13,
+    fontFamily: 'Lexend_700Bold',
+    color: '#1A1A2E',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  statLabel: {
+    fontSize: 10,
+    color: '#999',
+    fontFamily: 'Lexend_400Regular',
+    textAlign: 'center',
+  },
+
+  /* Sections */
+  sectionsWrapper: {
+    paddingHorizontal: 16,
+    gap: 12,
+    marginTop: 14,
+  },
+
+  /* Accordion */
+  accordion: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+    width: '100%',
   },
   accordionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    borderRadius: 12,
-    backgroundColor: 'white',
+    padding: 16,
   },
-  expandedHeader: {
-    backgroundColor: '#F5F5F5',
+  accordionLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  accordionIconBox: {
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center', justifyContent: 'center',
   },
   accordionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    fontFamily: 'Lexend-Regular',
+    fontSize: 14, fontFamily: 'Lexend_700Bold', color: '#1A1A2E',
   },
-  contentBox: {
-    padding: 15,
-    backgroundColor: 'white',
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+  chevronBox: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center', justifyContent: 'center',
   },
-  contentText: {
-    fontSize: 14,
-    fontWeight: 'normal',
-    color: '#555',
-    lineHeight: 20,
-    fontFamily: 'Lexend-Regular',
+  chevronBoxOpen: {
+    backgroundColor: '#CC1C22',
+  },
+  accordionBody: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F5F5F5',
+    width: '100%',
   },
 
-  applyGradient: {
-    // backgroundColor: 'red',
-    paddingVertical: 15,
-    borderRadius: 10,
+  /* Feature */
+  featureRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    width: '100%',
+  },
+  featureIconBox: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: '#CC1C22',
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 2, flexShrink: 0,
+  },
+  featureText: {
+    flexShrink: 1,
+    flexGrow: 1,
+    fontSize: 13,
+    color: '#444',
+    fontFamily: 'Lexend_400Regular',
+    lineHeight: 20,
+  },
+
+  /* Info */
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  infoLabel: {
+    fontSize: 13, color: '#999', fontFamily: 'Lexend_400Regular',
+  },
+  infoValue: {
+    fontSize: 13, color: '#1A1A2E', fontFamily: 'Lexend_700Bold',
+    textAlign: 'right', flex: 1, marginLeft: 8,
+  },
+
+  /* Bottom */
+  bottomBar: {
     position: 'absolute',
-    bottom: 20,
-    width: '90%',
-    alignSelf: 'center',
-    elevation: 5,
+    bottom: 0, left: 0, right: 0,
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingTop: 12,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  applyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 15,
+    borderRadius: 16,
   },
   applyText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
+    color: 'white', fontSize: 15, fontFamily: 'Lexend_700Bold',
   },
 });
 

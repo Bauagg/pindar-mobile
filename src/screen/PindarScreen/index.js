@@ -7,68 +7,46 @@ import {
   Image,
   ActivityIndicator,
   StyleSheet,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { Linking } from 'react-native';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FilterModal from './FilterModal';
 import api from '../../utils/axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 16 * 2 - 10) / 2;
 
 const PindarScreen = (props) => {
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
+  const insets = useSafeAreaInsets();
+
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState([]);
   const [dataLenders, setDataLenders] = useState([]);
-  const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
   const [activeTab, setActiveTab] = useState('Semua');
-  const [paymentType, setPaymentType] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleApplyFilter = (selectedFilters) => {
-    const loanTypeOptions = ['LOAN_TYPE_1', 'LOAN_TYPE_2'];
-    const paymentTypeOptions = ['PAYMENT_TYPE_1', 'PAYMENT_TYPE_2'];
-    const sortOptions = ['recommended', 'lowest', 'highest'];
+  const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
 
-    const loanType = selectedFilters.find((f) => loanTypeOptions.includes(f));
-    const paymentType = selectedFilters.find((f) => paymentTypeOptions.includes(f));
-    const sortBy = selectedFilters.find((f) => sortOptions.includes(f));
-
-    // panggil fungsi yang benar
-    getDataLenders(paymentType, loanType, sortBy);
-  };
-  const getDataLenders = async (paymtype, loanType, sortBy) => {
+  const getDataLenders = async (paymentType, loanType, sortBy) => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('accessToken');
-
-      let url = `/lender/list?limit=5&offset=0&search=`;
-
-      if (sortBy === 'lowest') {
-        url += `&sortBy=maxloan&sortDirection=asc`;
-      } else if (sortBy === 'highest') {
-        url += `&sortBy=maxloan&sortDirection=desc`;
-      }
-
-      if (paymtype) {
-        url += `&paymentType=${paymtype}`;
-      }
-
-      if (loanType) {
-        url += `&loanType=${loanType}`;
-      }
-
-      console.log("URL:", url);
-
-      const response = await api.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log(response.data.data.lenders);
-      setDataLenders(response.data.data.lenders);
+      let url = `/lender/list?limit=20&offset=0&search=`;
+      if (sortBy === 'lowest') url += `&sortBy=maxloan&sortDirection=asc`;
+      else if (sortBy === 'highest') url += `&sortBy=maxloan&sortDirection=desc`;
+      if (paymentType) url += `&paymentType=${paymentType}`;
+      if (loanType) url += `&loanType=${loanType}`;
+      const response = await api.get(url);
+      setDataLenders(response.data.data.lenders || []);
     } catch (error) {
       console.error('Gagal mengambil data lenders:', error);
     } finally {
@@ -76,381 +54,336 @@ const PindarScreen = (props) => {
     }
   };
 
-  
-useEffect(() => {
-  getDataLenders(paymentType);
-}, [paymentType]);
+  useEffect(() => {
+    getDataLenders();
+  }, []);
 
+  const handleTabPress = (tab) => {
+    setActiveTab(tab);
+    let paymentType = null;
+    if (tab === 'Sekali bayar') paymentType = 'PAYMENT_TYPE_1';
+    else if (tab === 'Cicilan') paymentType = 'PAYMENT_TYPE_2';
+    getDataLenders(paymentType);
+  };
 
-const handleTabPress = (tab) => {
-  setActiveTab(tab);
-
-  let paymtype = null;
-
-  if (tab === 'Sekali bayar') {
-    paymtype = 'PAYMENT_TYPE_1';
-  } else if (tab === 'Cicilan') {
-    paymtype = 'PAYMENT_TYPE_2';
-  }
-
-  setPaymentType(paymtype);
-  getDataLenders(paymtype, selectedFilters); // tambahkan selectedFilters di sini
-};
-
+  const handleApplyFilter = (filters) => {
+    const loanTypeOptions = ['LOAN_TYPE_1', 'LOAN_TYPE_2'];
+    const paymentTypeOptions = ['PAYMENT_TYPE_1', 'PAYMENT_TYPE_2'];
+    const sortOptions = ['recommended', 'lowest', 'highest'];
+    const loanType = filters.find((f) => loanTypeOptions.includes(f));
+    const paymentType = filters.find((f) => paymentTypeOptions.includes(f));
+    const sortBy = filters.find((f) => sortOptions.includes(f));
+    getDataLenders(paymentType, loanType, sortBy);
+    setModalVisible(false);
+  };
 
   const toggleSelection = (item) => {
-    setSelectedItems((prevSelected) => {
-      const isSelected = prevSelected.some(
-        (selected) => selected.id === item.id
-      );
-  
-      let newSelected;
-      if (isSelected) {
-        newSelected = prevSelected.filter((selected) => selected.id !== item.id);
-      } else {
-        newSelected = [...prevSelected, item];
-      }
-  
-      console.log('Selected IDs:', newSelected.map(i => i.id));
-      return newSelected;
+    setSelectedItems((prev) => {
+      const isSelected = prev.some((s) => s.id === item.id);
+      return isSelected ? prev.filter((s) => s.id !== item.id) : [...prev, item];
     });
   };
-  
+
   const getDetail = async (id) => {
-  setLoading(true);
-  try {
-    const token = await AsyncStorage.getItem('token');
-    const response = await api.get(`/lender/detail/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const directLink = response?.data?.data?.directLink;
-    if (directLink) {
-      Linking.openURL(directLink); // Open browser
-    } else {
-      console.warn('Direct link not found.');
+    try {
+      setLoading(true);
+      const response = await api.get(`/lender/detail/${id}`);
+      const directLink = response?.data?.data?.directLink;
+      if (directLink) Linking.openURL(directLink);
+    } catch (error) {
+      console.error('Error getting detail:', error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.log('Error getting detail:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-  
+  if (!fontsLoaded) return null;
+
   const renderItem = ({ item }) => {
-    const isChecked = selectedItems.some((selected) => selected.id === item.id);
-    console.log('Image link:', item);
+    const isChecked = selectedItems.some((s) => s.id === item.id);
+    const maxLoan = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(item.maxloan);
+
     return (
-      <View style={styles.card}>
-        {/* Header */}
-        <View style={styles.cardHeader}>
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.92}
+        onPress={() => props.navigation.navigate('Informasi Detail', { id: item.id })}
+      >
+        {/* Logo area */}
+        <View style={styles.logoBox}>
           <Image
             source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.cardTitle}>{item.lendername}</Text>
+          {/* Bandingkan checkbox top-right */}
+          <TouchableOpacity
+            style={styles.checkWrap}
+            onPress={(e) => { e.stopPropagation?.(); toggleSelection(item); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View style={[styles.checkbox, isChecked && styles.checkboxActive]}>
+              {isChecked && <Ionicons name="checkmark" size={10} color="white" />}
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Name */}
+        <Text style={styles.cardName} numberOfLines={2}>{item.lendername}</Text>
+
+        {/* Max loan */}
+        <View style={styles.infoRow}>
+          <Ionicons name="cash-outline" size={12} color="#CC1C22" />
+          <Text style={styles.infoLabel} numberOfLines={1}>{maxLoan}</Text>
+        </View>
+
+        {/* Tenor */}
+        <View style={styles.infoRow}>
+          <Ionicons name="time-outline" size={12} color="#888" />
+          <Text style={styles.infoTenor}>{item.maxtenor} Bulan</Text>
         </View>
 
         <View style={styles.divider} />
 
-        {/* Content */}
-        <View style={{ alignSelf: 'center' }}>
-          <Text style={styles.cardSubtitle}>Maksimal Pinjaman</Text>
-          <Text style={styles.cardAmount}>
-            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.maxloan)}
-          </Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.cardSubtitle}>Maksimal Lama Pinjam</Text>
-          <Text style={styles.cardDuration}>{item.maxtenor} {""} Bulan</Text>
-        </View>
-        {/* Detail Button */}
+        {/* Ajukan button */}
         <TouchableOpacity
-          style={styles.detailButton}
-          onPress={() => props?.navigation.navigate('Informasi Detail', { id: item.id })}
+          onPress={(e) => { e.stopPropagation?.(); getDetail(item.id); }}
+          activeOpacity={0.85}
         >
-          <Text style={styles.detailText}>Lihat Detail</Text>
-          <FontAwesome name="external-link" size={14} color="red" />
+          <LinearGradient colors={['#CC1C22', '#E8424A']} style={styles.applyBtn}>
+            <Text style={styles.applyText}>Ajukan</Text>
+          </LinearGradient>
         </TouchableOpacity>
-        {/* Footer Buttons */}
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.compareButton}
-            onPress={() => toggleSelection(item)}>
-            <FontAwesome
-              name={isChecked ? 'check-square' : 'square-o'}
-              size={20}
-              color="red"
-            />
-            <Text style={styles.compareText}>Bandingkan</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => getDetail(item.id)}>
-            <LinearGradient
-              colors={['#CC1C22', '#F86469']}
-              style={styles.applyGradient}>
-              <Text style={styles.applyText}>Ajukan Sekarang</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </TouchableOpacity>
     );
   };
-  
- 
+
   return (
     <View style={styles.container}>
-      <View style={styles.filterContainer}>
-      {tabs.map((tab) => (
-        <TouchableOpacity
-          key={tab}
-          onPress={() => handleTabPress(tab)}
-          style={styles.filterWrapper}>
-          {activeTab === tab ? (
-            <LinearGradient
-              colors={['#CC1C22', '#F86469']}
-              style={styles.activeFilter}>
-              <Text style={styles.filterTextActive}>{tab}</Text>
-            </LinearGradient>
-          ) : (
-            <View style={styles.filterButton}>
-              <Text style={styles.filterText}>{tab}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-
-      {/* FlatList untuk daftar kartu */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#CC1C22" />
+      {/* Header Gradient */}
+      <LinearGradient
+        colors={['#CC1C22', '#E8424A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <View style={styles.circle1} />
+        <View style={styles.circle2} />
+        <Text style={styles.headerTitle}>Pindar</Text>
+        <Text style={styles.headerSubtitle}>Temukan pinjaman terbaik untukmu</Text>
+        <View style={styles.tabRow}>
+          {tabs.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.tabActive]}
+              onPress={() => handleTabPress(tab)}
+            >
+              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
+      </LinearGradient>
+
+      {/* Filter Button */}
+      <View style={styles.filterRow}>
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.85}
+        >
+          <LinearGradient colors={['#CC1C22', '#E8424A']} style={styles.filterGradient}>
+            <FontAwesome5 name="filter" size={13} color="white" />
+            <Text style={styles.filterBtnText}>Filter</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+
+      {/* Grid List */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#CC1C22" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
+          key="pindar-grid-2col"
           data={dataLenders}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.flatListContainer}
-          ListFooterComponent={ <View style={{ height: Dimensions.get('window').height * 0.1 }} />}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
-
+      {/* Compare Bar */}
       {selectedItems.length > 0 && (
         <TouchableOpacity
-          style={styles.overlay}
-          onPress={() => {
-            const selectedIds = selectedItems.map(item => item.id);
-            props.navigation.navigate('Compare', { selectedItems: selectedItems }); // ini benar
-
-          }}
-          >
-          <View style={styles.overlayContent}>
-            <View style={{ alignItems: 'center', marginRight: 10 }}>
-              <Text style={styles.number}>{selectedItems.length}</Text>
-              <Image source={require('../../assets/menu2.png')} />
+          style={[styles.compareBar, { bottom: Math.max(insets.bottom + 16, 32) }]}
+          onPress={() => props.navigation.navigate('Compare', { selectedItems })}
+        >
+          <View style={styles.compareBarLeft}>
+            <View style={styles.compareBadge}>
+              <Text style={styles.compareBadgeText}>{selectedItems.length}</Text>
             </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.title}> Pinjaman yang anda bandingkan</Text>
-              <Text style={styles.subtitle}>
-                Anda dapat membandingkan Max 3 Pinjaman
-              </Text>
+            <View>
+              <Text style={styles.compareBarTitle}>Pinjaman yang dibandingkan</Text>
+              <Text style={styles.compareBarSub}>Maks. 3 pinjaman</Text>
             </View>
-            <Text style={styles.arrow}>›</Text>
           </View>
+          <Ionicons name="chevron-forward" size={20} color="#CC1C22" />
         </TouchableOpacity>
       )}
 
-      {/* Floating Button */}
-      {!loading &&(
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <LinearGradient
-          colors={['#CC1C22', '#F86469']}
-          style={styles.filterFloating}>
-          <FontAwesome5
-            name="filter"
-            size={14}
-            color="white"
-            style={{ marginRight: 10 }}
-          />
-          <Text style={styles.filterFloatingText}>FILTER</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-      )}
-         <FilterModal
+      <FilterModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onApply={handleApplyFilter}
       />
-
-     
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  filterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    padding: 10,
-  },
-  filterWrapper: { marginHorizontal: 5, borderRadius: 10, overflow: 'hidden' },
-  filterButton: {
-    paddingVertical: 8,
+  container: { flex: 1, backgroundColor: '#F5F6FA' },
+
+  /* Header */
+  header: {
+    paddingTop: 52,
     paddingHorizontal: 20,
-    borderRadius: 5,
-    width: 120,
-    backgroundColor: '#E0E0E0',
-    alignItems: 'center',
+    paddingBottom: 20,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
   },
-  activeFilter: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    width: 120,
-    alignItems: 'center',
+  circle1: {
+    position: 'absolute', width: 160, height: 160, borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.07)', top: -40, right: -20,
   },
-  filterText: {
-    color: 'gray',
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
+  circle2: {
+    position: 'absolute', width: 100, height: 100, borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.05)', bottom: 10, left: -10,
   },
-  filterTextActive: {
-    color: 'white',
-    fontFamily: 'Lexend-Regular',
-    fontWeight: 'bold',
+  headerTitle: {
+    color: 'white', fontSize: 22, fontFamily: 'Lexend_700Bold', marginBottom: 4,
   },
-  flatListContainer: { paddingHorizontal: 16, paddingBottom: 100 },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Lexend_400Regular', marginBottom: 16,
+  },
+  tabRow: { flexDirection: 'row', gap: 8 },
+  tab: {
+    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  tabActive: { backgroundColor: 'white' },
+  tabText: { fontSize: 12, color: 'rgba(255,255,255,0.9)', fontFamily: 'Lexend_400Regular' },
+  tabTextActive: { color: '#CC1C22', fontFamily: 'Lexend_700Bold' },
+
+  /* Filter Row */
+  filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
+  filterBtn: { alignSelf: 'flex-start', borderRadius: 20, overflow: 'hidden' },
+  filterGradient: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 10, paddingHorizontal: 20,
+  },
+  filterBtnText: { color: 'white', fontSize: 13, fontFamily: 'Lexend_700Bold' },
+
+  /* Grid */
+  listContent: { paddingHorizontal: 16, paddingBottom: 120 },
+  columnWrapper: { justifyContent: 'space-between', marginBottom: 10 },
+
+  /* Card */
   card: {
+    width: CARD_WIDTH,
     backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 16,
-    elevation: 2,
+    borderRadius: 18,
+    padding: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  cardHeader: {
-    flexDirection: 'row',
+  logoBox: {
+    width: '100%',
+    height: 110,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  logo: { width: 40, height: 40, marginRight: 10 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#000' },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 10,
-  },
-  cardSubtitle: {
-    textAlign: 'center',
-    color: '#474864',
-    fontSize: 12,
-    fontFamily: 'Lexend-Regular',
-    fontWeight: 'bold',
-  },
-  cardAmount: {
-    fontSize: 20,
-    // fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
-    color: '#474864',
-    marginBottom: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardDuration: { fontSize: 14, fontWeight: 'bold', color: '#000' },
-  detailButton: {
-    backgroundColor: '#F2F2F2',
-    padding: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 10,
+    overflow: 'hidden',
   },
-  detailText: {
-    color: '#474864',
-    marginRight: 5,
-    fontFamily: 'Lexend-Regular',
-    fontWeight: 'bold',
+  logo: { width: '100%', height: '100%' },
+  checkWrap: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+  checkbox: {
+    width: 20, height: 20, borderRadius: 6,
+    borderWidth: 2, borderColor: '#CC1C22',
+    backgroundColor: 'white',
+    alignItems: 'center', justifyContent: 'center',
   },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  compareButton: { flexDirection: 'row', alignItems: 'center' },
-  compareText: { color: 'black', marginLeft: 5, fontFamily: 'Lexend-Regular' },
-  applyGradient: {
-    // backgroundColor: 'red',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  applyText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
+  checkboxActive: { backgroundColor: '#CC1C22', borderColor: '#CC1C22' },
+
+  cardName: {
+    fontSize: 12,
+    fontFamily: 'Lexend_700Bold',
+    color: '#1A1A2E',
+    lineHeight: 17,
+    marginBottom: 8,
   },
 
-  bottomText: { color: 'gray', fontFamily: 'Lexend-Regular' },
-  bottomAmount: { fontSize: 18, fontWeight: 'bold' },
-  filterFloating: {
-    position: 'absolute',
-    bottom: 20,
-    left: '50%',
-    marginLeft: -75,
-    width: 150,
-    backgroundColor: 'red',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  infoRow: {
     flexDirection: 'row',
-    borderRadius: 20,
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 4,
+  },
+  infoLabel: {
+    fontSize: 11,
+    fontFamily: 'Lexend_700Bold',
+    color: '#CC1C22',
+    flex: 1,
+  },
+  infoTenor: {
+    fontSize: 11,
+    fontFamily: 'Lexend_400Regular',
+    color: '#888',
+  },
+
+  divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 10 },
+
+  applyBtn: {
+    borderRadius: 10,
+    paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
   },
-  filterFloatingText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
+  applyText: { color: 'white', fontSize: 12, fontFamily: 'Lexend_700Bold' },
+
+  /* Compare Bar */
+  compareBar: {
+    position: 'absolute', left: 16, right: 16,
+    backgroundColor: 'white', borderRadius: 16, padding: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1, shadowRadius: 10, elevation: 8,
   },
-  overlay: {
-    position: 'absolute',
-    bottom: 70,
-    left: 16,
-    right: 16,
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+  compareBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  compareBadge: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center',
   },
-  overlayContent: { flexDirection: 'row', alignItems: 'center' },
-  textContainer: { flex: 1 },
-  title: { fontSize: 16, fontWeight: 'bold', color: '#CC1C22' },
-  number: { fontSize: 22, fontWeight: 'bold', color: '#CC1C22' },
-  subtitle: { fontSize: 12, color: '#666' },
-  arrow: { fontSize: 20, color: '#CC1C22', fontWeight: 'bold' },
+  compareBadgeText: { fontSize: 16, fontFamily: 'Lexend_700Bold', color: '#CC1C22' },
+  compareBarTitle: { fontSize: 13, fontFamily: 'Lexend_700Bold', color: '#1A1A2E' },
+  compareBarSub: { fontSize: 11, color: '#999', fontFamily: 'Lexend_400Regular' },
 });
 
 export default PindarScreen;

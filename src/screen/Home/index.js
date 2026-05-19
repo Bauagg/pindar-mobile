@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dimensions,
   StatusBar,
@@ -41,6 +41,17 @@ export default function Home(props) {
   const [fullName, setFullName] = useState(null);
   const [dataUser, setDataUser] = useState({});
   const [rekomendasi, setRekomendasi] = useState([]);
+  const [creditCards, setCreditCards] = useState([]);
+  const [popularDeal, setPopularDeal] = useState([]);
+  const [popularDealIndex, setPopularDealIndex] = useState(0);
+  const popularDealRef = useRef(null);
+  const popularDealIndexRef = useRef(0);
+  const [popularPlus, setPopularPlus] = useState([]);
+  const [popularPlusIndex, setPopularPlusIndex] = useState(0);
+  const popularPlusRef = useRef(null);
+  const popularPlusIndexRef = useRef(0);
+  const rekoFlatListRef = useRef(null);
+  const rekoIndexRef = useRef(0);
   const [educationList, setEducationList] = useState([]);
   const [trendingDate, setTrendingDate] = useState("");
   const [loadingEdu, setLoadingEdu] = useState(false);
@@ -91,6 +102,33 @@ export default function Home(props) {
       }
     };
 
+    const fetchPopularDeal = async () => {
+      try {
+        const response = await api.get("/announcement/active?type=deal");
+        setPopularDeal(response.data.data || []);
+      } catch (e) {
+        console.error("Gagal fetch popular deal:", e.message);
+      }
+    };
+
+    const fetchPopularPlus = async () => {
+      try {
+        const response = await api.get("/announcement/active?type=popular");
+        setPopularPlus(response.data.data || []);
+      } catch (e) {
+        console.error("Gagal fetch popular plus:", e.message);
+      }
+    };
+
+    const fetchCreditCards = async () => {
+      try {
+        const response = await api.get("/credit-card/search?limit=10&offset=1");
+        setCreditCards(response.data.data?.creditCards || []);
+      } catch (e) {
+        console.error("Gagal fetch credit cards:", e.message);
+      }
+    };
+
     const fetchEducation = async () => {
       try {
         setLoadingEdu(true);
@@ -112,8 +150,51 @@ export default function Home(props) {
     getDataUser();
     fetchStorage();
     fetchRekomendasi();
+    fetchCreditCards();
+    fetchPopularDeal();
+    fetchPopularPlus();
     fetchEducation();
   }, []);
+
+  useEffect(() => {
+    if (popularDeal.length === 0) return;
+    const CARD_WIDTH = (width - 32) / 2 + 12;
+    const interval = setInterval(() => {
+      const nextIndex = popularDealIndexRef.current + 1 >= popularDeal.length ? 0 : popularDealIndexRef.current + 1;
+      popularDealIndexRef.current = nextIndex;
+      setPopularDealIndex(nextIndex);
+      popularDealRef.current?.scrollToOffset({ offset: nextIndex * CARD_WIDTH, animated: true });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [popularDeal]);
+
+  useEffect(() => {
+    if (popularPlus.length === 0) return;
+    const BANNER_WIDTH = width - 32 + 12;
+    const interval = setInterval(() => {
+      const nextIndex = popularPlusIndexRef.current + 1 >= popularPlus.length ? 0 : popularPlusIndexRef.current + 1;
+      popularPlusIndexRef.current = nextIndex;
+      setPopularPlusIndex(nextIndex);
+      popularPlusRef.current?.scrollToOffset({ offset: nextIndex * BANNER_WIDTH, animated: true });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [popularPlus]);
+
+  useEffect(() => {
+    if (rekomendasi.length === 0) return;
+    const CARD_WIDTH = 120 + 12;
+    const interval = setInterval(() => {
+      const nextIndex = rekoIndexRef.current + 1;
+      if (nextIndex >= rekomendasi.length) {
+        rekoIndexRef.current = 0;
+        rekoFlatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      } else {
+        rekoIndexRef.current = nextIndex;
+        rekoFlatListRef.current?.scrollToOffset({ offset: nextIndex * CARD_WIDTH, animated: true });
+      }
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [rekomendasi]);
 
   if (!fontsLoaded) return null;
 
@@ -224,6 +305,101 @@ export default function Home(props) {
           ))}
         </View>
 
+        {/* ── POPULAR DEAL ── */}
+        {popularDeal.length > 0 && (
+          <View style={{ marginTop: 24 }}>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Popular Deal</Text>
+            </View>
+            <FlatList
+              ref={popularDealRef}
+              data={popularDeal}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={(width - 32) / 2 + 12}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              onScroll={(e) => {
+                const cardW = (width - 32) / 2 + 12;
+                const idx = Math.round(e.nativeEvent.contentOffset.x / cardW);
+                popularDealIndexRef.current = idx;
+                setPopularDealIndex(idx);
+              }}
+              scrollEventThrottle={16}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  activeOpacity={0.92}
+                  onPress={() => item.url && Linking.openURL(item.url)}
+                  style={styles.popularCard}
+                >
+                  <Image
+                    source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                    style={styles.popularImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              )}
+            />
+            <View style={styles.dotsRow}>
+              {popularDeal.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, popularDealIndex === i ? styles.dotActive : styles.dotInactive]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── POPULAR PLUS ── */}
+        {popularPlus.length > 0 && (
+          <View style={{ marginTop: 24 }}>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Popular Plus</Text>
+            </View>
+            <FlatList
+              ref={popularPlusRef}
+              data={popularPlus}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={width - 32 + 12}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              onScroll={(e) => {
+                const idx = Math.round(e.nativeEvent.contentOffset.x / (width - 32 + 12));
+                popularPlusIndexRef.current = idx;
+                setPopularPlusIndex(idx);
+              }}
+              scrollEventThrottle={16}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  activeOpacity={0.92}
+                  onPress={() => item.url && Linking.openURL(item.url)}
+                  style={styles.popularPlusCard}
+                >
+                  <Image
+                    source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                    style={styles.popularImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              )}
+            />
+            <View style={styles.dotsRow}>
+              {popularPlus.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, popularPlusIndex === i ? styles.dotActive : styles.dotInactive]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* ── TRENDING EDUCATION ── */}
         <TouchableOpacity
           activeOpacity={0.9}
@@ -257,6 +433,7 @@ export default function Home(props) {
           </TouchableOpacity>
         </View>
         <FlatList
+          ref={rekoFlatListRef}
           data={rekomendasi}
           keyExtractor={(item, i) => i.toString()}
           horizontal
@@ -266,7 +443,10 @@ export default function Home(props) {
             <TouchableOpacity
               style={styles.rekoCard}
               activeOpacity={0.85}
-              onPress={() => item.directlink && Linking.openURL(item.directlink)}
+              onPress={() => {
+                if (item.directlink) Linking.openURL(item.directlink);
+                else props.navigation.navigate("Pindar");
+              }}
             >
               <Image
                 source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
@@ -277,6 +457,43 @@ export default function Home(props) {
             </TouchableOpacity>
           )}
         />
+
+        {/* ── REKOMENDASI CREDIT CARD ── */}
+        <View style={[styles.sectionRow, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Rekomendasi Credit Card</Text>
+          <TouchableOpacity onPress={() => props.navigation.navigate("Kartu Kredit")}>
+            <Text style={styles.sectionViewAll}>View all →</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.ccGrid}>
+          {creditCards.slice(0, 6).map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.ccCard}
+              activeOpacity={0.88}
+              onPress={() => props.navigation.navigate("Kartu Kredit Detail", { id: item.id })}
+            >
+              <View style={styles.ccImageWrapper}>
+                <Image
+                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                  style={styles.ccImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.ccBody}>
+                <Text style={styles.ccTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.ccBadge}>
+                  <Text style={styles.ccBadgeText}>{item.benefitName}</Text>
+                </View>
+                <Text style={styles.ccFee}>
+                  {item.yearlyFee === "0"
+                    ? "Gratis Tahunan"
+                    : `Rp ${parseInt(item.yearlyFee).toLocaleString("id-ID")}/thn`}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* ── EDUCATION PRODUCT ── */}
         <View style={[styles.sectionRow, { marginTop: 24 }]}>
@@ -295,7 +512,7 @@ export default function Home(props) {
                 key={index}
                 style={styles.eduCard}
                 activeOpacity={0.88}
-                onPress={() => props.navigation.navigate("Education Detail", { id: item.id })}
+                onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
               >
                 <Image
                   source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
@@ -601,6 +818,112 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_700Bold",
     color: "#333",
     textAlign: "center",
+  },
+
+  /* ── POPULAR PLUS ── */
+  popularPlusCard: {
+    width: width - 32,
+    height: 180,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#eee",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  popularCard: {
+    width: (width - 32) / 2,
+    height: 240,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#eee",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  popularImage: {
+    width: "100%",
+    height: "100%",
+  },
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 10,
+    gap: 6,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
+  },
+  dotActive: {
+    width: 22,
+    backgroundColor: "#CC1C22",
+  },
+  dotInactive: {
+    width: 6,
+    backgroundColor: "#D9D9D9",
+  },
+
+  /* ── CREDIT CARD ── */
+  ccGrid: {
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  ccCard: {
+    width: (width - 44) / 2,
+    backgroundColor: "white",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  ccImageWrapper: {
+    backgroundColor: "#F8F8F8",
+    height: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+  },
+  ccImage: {
+    width: "100%",
+    height: "100%",
+  },
+  ccBody: {
+    padding: 12,
+  },
+  ccTitle: {
+    fontSize: 13,
+    fontFamily: "Lexend_700Bold",
+    color: "#1A1A2E",
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  ccBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FEE2E2",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginBottom: 6,
+  },
+  ccBadgeText: {
+    fontSize: 10,
+    color: "#CC1C22",
+    fontFamily: "Lexend_700Bold",
+  },
+  ccFee: {
+    fontSize: 11,
+    color: "#999",
+    fontFamily: "Lexend_400Regular",
   },
 
   /* ── EDUCATION ── */

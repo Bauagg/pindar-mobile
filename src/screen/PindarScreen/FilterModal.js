@@ -1,225 +1,201 @@
-import React, { useState,useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
 
-const FilterModal = ({ visible, onClose, onApply}) => {
-  const [selectedFilters, setSelectedFilters] = useState([]);
+const FilterModal = ({ visible, onClose, onApply }) => {
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
 
-  const toggleFilter = (id) => {
-    const newFilters = selectedFilters.includes(id)
-      ? selectedFilters.filter((item) => item !== id)
-      : [...selectedFilters, id];
-
-    setSelectedFilters(newFilters);
-    if (onApply) {
-      onApply(newFilters); // otomatis kirim ke parent
-    }
-  };
-
-  const filters = [
-    { id: '', label: 'Semua' },
-    { id: 'LOAN_TYPE_1', label: 'Kurang dari 1 Juta' },
-    { id: 'LOAN_TYPE_2', label: '0 - 1 Juta' },
-  ];
+  const [selectedLoanType, setSelectedLoanType] = useState('');
+  const [selectedPaymentType, setSelectedPaymentType] = useState('');
+  const [selectedSort, setSelectedSort] = useState('recommended');
 
   const loanTypes = [
+    { id: '', label: 'Semua' },
+    { id: 'LOAN_TYPE_1', label: 'Kurang dari 1 Juta' },
+    { id: 'LOAN_TYPE_2', label: '0 – 1 Juta' },
+  ];
+
+  const paymentTypes = [
     { id: '', label: 'Semua Pinjaman' },
     { id: 'PAYMENT_TYPE_1', label: 'Sekali Bayar' },
     { id: 'PAYMENT_TYPE_2', label: 'Cicilan' },
   ];
 
-  const sortingOptions = [
+  const sortOptions = [
     { id: 'recommended', label: 'Produk Pilihan' },
     { id: 'lowest', label: 'Plafond Terendah' },
     { id: 'highest', label: 'Plafond Tertinggi' },
   ];
 
-
-
-  const selectAll = () => {
-    if (
-      selectedFilters.length ===
-      filters.length + loanTypes.length + sortingOptions.length
-    ) {
-      setSelectedFilters([]);
-    } else {
-      setSelectedFilters([
-        ...filters.map((f) => f.id),
-        ...loanTypes.map((t) => t.id),
-        ...sortingOptions.map((s) => s.id),
-      ]);
-    }
+  const applyFilters = () => {
+    const filters = [];
+    if (selectedLoanType) filters.push(selectedLoanType);
+    if (selectedPaymentType) filters.push(selectedPaymentType);
+    if (selectedSort) filters.push(selectedSort);
+    if (onApply) onApply(filters);
   };
 
-  useEffect(() => {
-    if (onApply) {
-      onApply(selectedFilters);
-    }
-  }, [selectedFilters]);
-  
+  const RadioOption = ({ selected, onPress, label }) => (
+    <TouchableOpacity style={styles.option} onPress={onPress} activeOpacity={0.7}>
+      <View style={[styles.radio, selected && styles.radioSelected]}>
+        {selected && <View style={styles.radioDot} />}
+      </View>
+      <Text style={styles.optionText}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  if (!fontsLoaded) return null;
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={{
-              backgroundColor: '#E0DDDD',
-              height: 5,
-              width: 50,
-              alignItems: 'center',
-              alignSelf: 'center',
-              borderRadius: 10,
-            }}
-          />
+      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.container} activeOpacity={1} onPress={() => {}}>
+          <View style={styles.dragHandle} />
+
+          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerText}>Filter</Text>
-            <TouchableOpacity
-              onPress={selectAll}
-              style={styles.selectAllButton}>
-              <FontAwesome
-                name={
-                  selectedFilters.length ===
-                  filters.length + loanTypes.length + sortingOptions.length
-                    ? 'check-square'
-                    : 'square-o'
-                }
-                size={20}
-                color="#CC1C22"
-              />
-              <Text style={styles.selectAllText}> Select all</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={18} color="#666" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            {/* Jumlah Pinjaman */}
             <Text style={styles.sectionTitle}>Jumlah Pinjaman</Text>
-            {filters.map((filter) => (
-              <TouchableOpacity
-                key={filter.id}
-                style={styles.option}
-                onPress={() => toggleFilter(filter.id)}>
-                <FontAwesome
-                  name={
-                    selectedFilters.includes(filter.id)
-                      ? 'check-square'
-                      : 'square-o'
-                  }
-                  size={20}
-                  color="#CC1C22"
-                />
-                <Text style={styles.optionText}>{filter.label}</Text>
-              </TouchableOpacity>
+            {loanTypes.map((item) => (
+              <RadioOption
+                key={item.id}
+                selected={selectedLoanType === item.id}
+                onPress={() => setSelectedLoanType(item.id)}
+                label={item.label}
+              />
             ))}
 
+            {/* Jenis Pinjaman */}
             <Text style={styles.sectionTitle}>Jenis Pinjaman</Text>
-            {loanTypes.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={styles.option}
-                onPress={() => toggleFilter(type.id)}>
-                <FontAwesome
-                  name={
-                    selectedFilters.includes(type.id)
-                      ? 'check-square'
-                      : 'square-o'
-                  }
-                  size={20}
-                  color="#CC1C22"
-                />
-                <Text style={styles.optionText}>{type.label}</Text>
-              </TouchableOpacity>
+            {paymentTypes.map((item) => (
+              <RadioOption
+                key={item.id}
+                selected={selectedPaymentType === item.id}
+                onPress={() => setSelectedPaymentType(item.id)}
+                label={item.label}
+              />
             ))}
 
+            {/* Urutkan */}
             <Text style={styles.sectionTitle}>Urutkan</Text>
-            {sortingOptions.map((sort) => (
-              <TouchableOpacity
-                key={sort.id}
-                style={styles.option}
-                onPress={() => toggleFilter(sort.id)}>
-                <FontAwesome
-                  name={
-                    selectedFilters.includes(sort.id)
-                      ? 'check-square'
-                      : 'square-o'
-                  }
-                  size={20}
-                  color="#CC1C22"
-                />
-                <Text style={styles.optionText}>{sort.label}</Text>
-              </TouchableOpacity>
+            {sortOptions.map((item) => (
+              <RadioOption
+                key={item.id}
+                selected={selectedSort === item.id}
+                onPress={() => setSelectedSort(item.id)}
+                label={item.label}
+              />
             ))}
+
+            <View style={{ height: 20 }} />
           </ScrollView>
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Tutup</Text>
+          <TouchableOpacity style={styles.applyButton} onPress={applyFilters} activeOpacity={0.85}>
+            <Text style={styles.applyText}>Terapkan Filter</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 };
 
-const styles = {
-  modalOverlay: {
+const styles = StyleSheet.create({
+  overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
-    paddingHorizontal: 10,
   },
-  modalContainer: {
+  container: {
+    width: '100%',
+    maxHeight: '80%',
     backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
-    paddingBottom: 30,
+    paddingBottom: 24,
+  },
+  dragHandle: {
+    backgroundColor: '#E0DDDD',
+    height: 5, width: 50,
+    alignSelf: 'center',
+    borderRadius: 10,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    fontFamily: 'Lexend-Regular',
-  },
-  selectAllButton: { flexDirection: 'row', alignItems: 'center' },
-  selectAllText: {
-    color: '#CC1C22',
-    marginLeft: 5,
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
-  },
-  content: { marginTop: 10 },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 15,
-    fontFamily: 'Lexend-Regular',
-  },
-  option: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  optionText: {
-    fontSize: 14,
-    marginLeft: 10,
-    color: '#333',
-    fontFamily: 'Lexend-Regular',
+    fontSize: 20,
+    fontFamily: 'Lexend_700Bold',
+    color: '#1A1A2E',
   },
   closeButton: {
-    backgroundColor: '#CC1C22',
-    borderRadius: 10,
-    paddingVertical: 12,
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Lexend_700Bold',
+    color: '#1A1A2E',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  option: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    paddingVertical: 9,
+    gap: 12,
   },
-  closeButtonText: {
+  radio: {
+    width: 20, height: 20, borderRadius: 10,
+    borderWidth: 2, borderColor: '#DDD',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  radioSelected: { borderColor: '#CC1C22' },
+  radioDot: {
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: '#CC1C22',
+  },
+  optionText: {
+    fontSize: 14,
+    fontFamily: 'Lexend_400Regular',
+    color: '#333',
+  },
+  applyButton: {
+    marginTop: 12,
+    backgroundColor: '#CC1C22',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  applyText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    fontFamily: 'Lexend-Regular',
+    fontSize: 14,
+    fontFamily: 'Lexend_700Bold',
   },
-};
+});
 
 export default FilterModal;
