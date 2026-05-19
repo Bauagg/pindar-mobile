@@ -4,15 +4,13 @@ import {
   Text,
   ScrollView,
   Image,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Share,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { WebView } from "react-native-webview";
+import RenderHtml from "react-native-render-html";
 import {
   useFonts,
   Lexend_400Regular,
@@ -20,14 +18,12 @@ import {
 } from "@expo-google-fonts/lexend";
 import api from "../../utils/axios";
 
-const { width } = Dimensions.get("window");
-
 const EducationDetail = (props) => {
   const { id } = props.route.params;
+  const { width } = useWindowDimensions();
   const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [webViewHeight, setWebViewHeight] = useState(300);
 
   const fetchDetail = async () => {
     try {
@@ -44,14 +40,6 @@ const EducationDetail = (props) => {
   useEffect(() => {
     fetchDetail();
   }, []);
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message: data?.title || "Baca artikel edukasi di Pindar!",
-      });
-    } catch (_) {}
-  };
 
   if (!fontsLoaded) return null;
 
@@ -72,55 +60,35 @@ const EducationDetail = (props) => {
     );
   }
 
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-          font-family: -apple-system, sans-serif;
-          font-size: 15px;
-          color: #333;
-          line-height: 1.75;
-          padding: 0 4px;
-          word-break: break-word;
-        }
-        img {
-          max-width: 100%;
-          height: auto;
-          border-radius: 10px;
-          margin: 8px 0;
-        }
-        p { margin-bottom: 12px; }
-        h1, h2, h3 { color: #1A1A2E; margin-bottom: 8px; margin-top: 16px; }
-        ul, ol { padding-left: 20px; margin-bottom: 12px; }
-        li { margin-bottom: 4px; }
-        a { color: #CC1C22; }
-        blockquote {
-          border-left: 3px solid #CC1C22;
-          padding-left: 12px;
-          color: #666;
-          margin: 12px 0;
-        }
-        strong { color: #1A1A2E; }
-      </style>
-    </head>
-    <body>
-      ${data.contentDetail || "<p>Tidak ada konten.</p>"}
-      <script>
-        window.ReactNativeWebView.postMessage(document.body.scrollHeight);
-      </script>
-    </body>
-    </html>
-  `;
+  const tagsStyles = {
+    body: {
+      fontFamily: "sans-serif",
+      fontSize: 15,
+      color: "#333",
+      lineHeight: 26,
+    },
+    p: { marginBottom: 12 },
+    h1: { fontSize: 22, color: "#1A1A2E", marginBottom: 8, marginTop: 16, fontWeight: "bold" },
+    h2: { fontSize: 19, color: "#1A1A2E", marginBottom: 8, marginTop: 16, fontWeight: "bold" },
+    h3: { fontSize: 17, color: "#1A1A2E", marginBottom: 6, marginTop: 14, fontWeight: "bold" },
+    a: { color: "#CC1C22" },
+    li: { marginBottom: 4 },
+    blockquote: {
+      borderLeftWidth: 3,
+      borderLeftColor: "#CC1C22",
+      paddingLeft: 12,
+      color: "#666",
+      marginVertical: 12,
+    },
+    img: { borderRadius: 10, marginVertical: 8 },
+    strong: { color: "#1A1A2E" },
+  };
 
   return (
     <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 40 }}
+      contentContainerStyle={{ paddingBottom: 60 }}
     >
       {/* Hero Image */}
       <View style={styles.heroWrapper}>
@@ -133,7 +101,6 @@ const EducationDetail = (props) => {
           colors={["transparent", "rgba(0,0,0,0.5)"]}
           style={styles.heroGradient}
         />
-        {/* Category badge */}
         {data.category && (
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeText}>{data.category}</Text>
@@ -141,51 +108,41 @@ const EducationDetail = (props) => {
         )}
       </View>
 
-      {/* Content Card */}
-      <View style={styles.card}>
-        {/* Meta row */}
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={13} color="#999" />
-            <Text style={styles.metaText}>
-              {data.createdDate
-                ? new Date(data.createdDate).toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : ""}
-            </Text>
-          </View>
-          {data.viewCount != null && (
-            <View style={styles.metaItem}>
-              <Ionicons name="eye-outline" size={13} color="#999" />
-              <Text style={styles.metaText}>{data.viewCount} views</Text>
-            </View>
-          )}
-          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-            <Ionicons name="share-social-outline" size={16} color="#CC1C22" />
-            <Text style={styles.shareBtnText}>Bagikan</Text>
-          </TouchableOpacity>
+      {/* Meta */}
+      <View style={styles.metaRow}>
+        <View style={styles.metaItem}>
+          <Ionicons name="time-outline" size={13} color="#999" />
+          <Text style={styles.metaText}>
+            {data.createdDate
+              ? new Date(data.createdDate).toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })
+              : ""}
+          </Text>
         </View>
+        {data.viewCount != null && (
+          <View style={styles.metaItem}>
+            <Ionicons name="eye-outline" size={13} color="#999" />
+            <Text style={styles.metaText}>{data.viewCount} views</Text>
+          </View>
+        )}
+      </View>
 
-        {/* Title */}
-        <Text style={styles.title}>{data.title}</Text>
+      {/* Title */}
+      <Text style={styles.title}>{data.title}</Text>
 
-        {/* Divider */}
-        <View style={styles.divider} />
+      {/* Divider */}
+      <View style={styles.divider} />
 
-        {/* HTML Content */}
-        <WebView
-          originWhitelist={["*"]}
-          source={{ html: htmlContent }}
-          style={{ width: width - 48, height: webViewHeight }}
-          scrollEnabled={false}
-          showsVerticalScrollIndicator={false}
-          onMessage={(e) => {
-            const h = parseInt(e.nativeEvent.data, 10);
-            if (!isNaN(h) && h > 0) setWebViewHeight(h + 32);
-          }}
+      {/* HTML Content */}
+      <View style={styles.content}>
+        <RenderHtml
+          contentWidth={width - 32}
+          source={{ html: data.contentDetail || "<p>Tidak ada konten.</p>" }}
+          tagsStyles={tagsStyles}
+          enableExperimentalMarginCollapsing
         />
       </View>
     </ScrollView>
@@ -195,13 +152,13 @@ const EducationDetail = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F6FA",
+    backgroundColor: "white",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F5F6FA",
+    backgroundColor: "white",
     gap: 12,
   },
   emptyText: {
@@ -238,23 +195,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Lexend_700Bold",
   },
-  card: {
-    margin: 16,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
-  },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
     gap: 12,
-    marginBottom: 14,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   metaItem: {
     flexDirection: "row",
@@ -266,32 +213,22 @@ const styles = StyleSheet.create({
     color: "#999",
     fontFamily: "Lexend_400Regular",
   },
-  shareBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginLeft: "auto",
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  shareBtnText: {
-    fontSize: 12,
-    color: "#CC1C22",
-    fontFamily: "Lexend_700Bold",
-  },
   title: {
     fontSize: 18,
     fontFamily: "Lexend_700Bold",
     color: "#1A1A2E",
     lineHeight: 26,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    marginBottom: 14,
   },
   divider: {
     height: 1,
     backgroundColor: "#F0F0F0",
+    marginHorizontal: 16,
     marginBottom: 16,
+  },
+  content: {
+    paddingHorizontal: 16,
   },
 });
 
