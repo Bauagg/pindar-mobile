@@ -305,9 +305,145 @@ export default function Home(props) {
           ))}
         </View>
 
+        {/* ── TRENDING EDUCATION ── */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          style={styles.trendingBanner}
+          onPress={() => props.navigation.navigate("Education All Treding")}
+        >
+          <LinearGradient
+            colors={["#CC1C22", "#E8424A"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.trendingGradient}
+          >
+            <View style={styles.trendingCircle1} />
+            <View style={styles.trendingCircle2} />
+            <View>
+              <Text style={styles.trendingTitle}>Trending Education</Text>
+              <Text style={styles.trendingDate}>Last Date {trendingDate || "—"}</Text>
+            </View>
+            <View style={styles.trendingBtn}>
+              <Text style={styles.trendingBtnText}>View all</Text>
+              <Feather name="arrow-right" size={14} color="white" style={{ marginLeft: 4 }} />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* ── APLIKASI REKOMENDASI ── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Aplikasi Rekomendasi</Text>
+          <TouchableOpacity onPress={() => props.navigation.navigate("Pindar")}>
+            <Text style={styles.sectionViewAll}>View all →</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.rekoGrid}>
+          {rekomendasi.map((item, i) => (
+            <TouchableOpacity
+              key={i}
+              style={styles.rekoCard}
+              activeOpacity={0.85}
+              onPress={() => {
+                if (item.directlink) Linking.openURL(item.directlink);
+                else props.navigation.navigate("Pindar");
+              }}
+            >
+              <Image
+                source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
+                style={styles.rekoImg}
+                resizeMode="contain"
+              />
+              <Text style={styles.rekoName} numberOfLines={1}>{item.lendername}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ── REKOMENDASI CREDIT CARD ── */}
+        <View style={[styles.sectionRow, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Rekomendasi Credit Card</Text>
+          <TouchableOpacity onPress={() => props.navigation.navigate("Kartu Kredit")}>
+            <Text style={styles.sectionViewAll}>View all →</Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={creditCards}
+          keyExtractor={(item, i) => i.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={(width - 44) / 2 + 12}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.ccCard}
+              activeOpacity={0.88}
+              onPress={() => props.navigation.navigate("Kartu Kredit Detail", { id: item.id })}
+            >
+              <View style={styles.ccImageWrapper}>
+                <Image
+                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                  style={styles.ccImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.ccBody}>
+                <Text style={styles.ccTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.ccBadge}>
+                  <Text style={styles.ccBadgeText}>{item.benefitName}</Text>
+                </View>
+                <Text style={styles.ccFee}>
+                  {item.yearlyFee === "0"
+                    ? "Gratis Tahunan"
+                    : `Rp ${parseInt(item.yearlyFee).toLocaleString("id-ID")}/thn`}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* ── EDUCATION PRODUCT ── */}
+        <View style={[styles.sectionRow, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Education Product</Text>
+          <TouchableOpacity onPress={() => props.navigation.navigate("Education All Treding")}>
+            <Text style={styles.sectionViewAll}>View all →</Text>
+          </TouchableOpacity>
+        </View>
+
+        {loadingEdu ? (
+          <ActivityIndicator color="#CC1C22" style={{ marginVertical: 20 }} />
+        ) : (
+          <View style={{ paddingHorizontal: 16, gap: 14 }}>
+            {educationList.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.eduCard}
+                activeOpacity={0.88}
+                onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
+              >
+                <Image
+                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                  style={styles.eduImg}
+                  resizeMode="cover"
+                />
+                <View style={styles.eduOverlay}>
+                  <View style={styles.eduBadge}>
+                    <Text style={styles.eduBadgeText}>{item.category || "Artikel"}</Text>
+                  </View>
+                  <Text style={styles.eduTitle} numberOfLines={2}>{item.title}</Text>
+                  <View style={styles.eduMeta}>
+                    <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.eduMetaText}>  {new Date(item.createdDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* ── POPULAR DEAL ── */}
         {popularDeal.length > 0 && (
-          <View style={{ marginTop: 4 }}>
+          <View style={{ marginTop: 24 }}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>Popular Deal</Text>
             </View>
@@ -355,7 +491,7 @@ export default function Home(props) {
 
         {/* ── POPULAR PLUS ── */}
         {popularPlus.length > 0 && (
-          <View style={{ marginTop: 2 }}>
+          <View style={{ marginTop: 16 }}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>Popular Plus</Text>
             </View>
@@ -397,140 +533,6 @@ export default function Home(props) {
                 />
               ))}
             </View>
-          </View>
-        )}
-
-        {/* ── TRENDING EDUCATION ── */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={styles.trendingBanner}
-          onPress={() => props.navigation.navigate("Education All Treding")}
-        >
-          <LinearGradient
-            colors={["#CC1C22", "#E8424A"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.trendingGradient}
-          >
-            <View style={styles.trendingCircle1} />
-            <View style={styles.trendingCircle2} />
-            <View>
-              <Text style={styles.trendingTitle}>Trending Education</Text>
-              <Text style={styles.trendingDate}>Last Date {trendingDate || "—"}</Text>
-            </View>
-            <View style={styles.trendingBtn}>
-              <Text style={styles.trendingBtnText}>View all</Text>
-              <Feather name="arrow-right" size={14} color="white" style={{ marginLeft: 4 }} />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* ── APLIKASI REKOMENDASI ── */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Aplikasi Rekomendasi</Text>
-          <TouchableOpacity onPress={() => props.navigation.navigate("Pindar")}>
-            <Text style={styles.sectionViewAll}>View all →</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          ref={rekoFlatListRef}
-          data={rekomendasi}
-          keyExtractor={(item, i) => i.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4, gap: 12 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.rekoCard}
-              activeOpacity={0.85}
-              onPress={() => {
-                if (item.directlink) Linking.openURL(item.directlink);
-                else props.navigation.navigate("Pindar");
-              }}
-            >
-              <Image
-                source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
-                style={styles.rekoImg}
-                resizeMode="contain"
-              />
-              <Text style={styles.rekoName} numberOfLines={1}>{item.lendername}</Text>
-            </TouchableOpacity>
-          )}
-        />
-
-        {/* ── REKOMENDASI CREDIT CARD ── */}
-        <View style={[styles.sectionRow, { marginTop: 24 }]}>
-          <Text style={styles.sectionTitle}>Rekomendasi Credit Card</Text>
-          <TouchableOpacity onPress={() => props.navigation.navigate("Kartu Kredit")}>
-            <Text style={styles.sectionViewAll}>View all →</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.ccGrid}>
-          {creditCards.slice(0, 6).map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.ccCard}
-              activeOpacity={0.88}
-              onPress={() => props.navigation.navigate("Kartu Kredit Detail", { id: item.id })}
-            >
-              <View style={styles.ccImageWrapper}>
-                <Image
-                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
-                  style={styles.ccImage}
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={styles.ccBody}>
-                <Text style={styles.ccTitle} numberOfLines={2}>{item.title}</Text>
-                <View style={styles.ccBadge}>
-                  <Text style={styles.ccBadgeText}>{item.benefitName}</Text>
-                </View>
-                <Text style={styles.ccFee}>
-                  {item.yearlyFee === "0"
-                    ? "Gratis Tahunan"
-                    : `Rp ${parseInt(item.yearlyFee).toLocaleString("id-ID")}/thn`}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* ── EDUCATION PRODUCT ── */}
-        <View style={[styles.sectionRow, { marginTop: 24 }]}>
-          <Text style={styles.sectionTitle}>Education Product</Text>
-          <TouchableOpacity onPress={() => props.navigation.navigate("Education All Treding")}>
-            <Text style={styles.sectionViewAll}>View all →</Text>
-          </TouchableOpacity>
-        </View>
-
-        {loadingEdu ? (
-          <ActivityIndicator color="#CC1C22" style={{ marginVertical: 20 }} />
-        ) : (
-          <View style={{ paddingHorizontal: 16, gap: 14 }}>
-            {educationList.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.eduCard}
-                activeOpacity={0.88}
-                onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
-              >
-                <Image
-                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
-                  style={styles.eduImg}
-                  resizeMode="cover"
-                />
-                <View style={styles.eduOverlay}>
-                  <View style={styles.eduBadge}>
-                    <Text style={styles.eduBadgeText}>{item.category || "Artikel"}</Text>
-                  </View>
-                  <Text style={styles.eduTitle} numberOfLines={2}>{item.title}</Text>
-                  <View style={styles.eduMeta}>
-                    <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.8)" />
-                    <Text style={styles.eduMetaText}>  {new Date(item.createdDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
           </View>
         )}
 
@@ -796,12 +798,18 @@ const styles = StyleSheet.create({
   },
 
   /* ── REKOMENDASI ── */
+  rekoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    gap: 10,
+  },
   rekoCard: {
     backgroundColor: "white",
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     alignItems: "center",
-    width: 120,
+    width: (width - 32 - 20) / 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,

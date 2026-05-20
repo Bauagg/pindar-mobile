@@ -9,7 +9,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
+import RenderHtml from 'react-native-render-html';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,10 +27,11 @@ const { width } = Dimensions.get('window');
 const KartuKreditDetail = (props) => {
   const idDetail = props?.route?.params?.id;
   const insets = useSafeAreaInsets();
+  const { width: winWidth } = useWindowDimensions();
   const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedSections, setExpandedSections] = useState(['fitur', 'info']);
+  const [expandedSections, setExpandedSections] = useState(['fitur', 'info', 'terms']);
 
   const fetchDetails = async () => {
     try {
@@ -84,11 +87,13 @@ setDetail(response.data.data);
 
   const infoItems = [
     detail.detailYearlyFee && detail.detailYearlyFee !== '0' && {
-      label: 'Keterangan Iuran', value: detail.detailYearlyFee,
+      label: 'Keterangan Iuran', value: `Rp ${(parseInt(detail.detailYearlyFee) || 0).toLocaleString('id-ID')}`,
     },
-    detail.benefitName && { label: 'Benefit Utama', value: detail.benefitName },
-    detail.publisher?.publisherName && { label: 'Penerbit', value: detail.publisher.publisherName },
-    detail.type?.typeName && { label: 'Tipe Kartu', value: detail.type.typeName },
+    detail.publisher?.name && { label: 'Penerbit', value: detail.publisher.name },
+    detail.type?.name && { label: 'Jenis Kartu', value: detail.type.name },
+    detail.monthlyIncomeMinimum && { label: 'Min. Penghasilan/Bln', value: `Rp ${parseInt(detail.monthlyIncomeMinimum).toLocaleString('id-ID')}` },
+    detail.yearlyIncomeMinimum && { label: 'Min. Penghasilan/Thn', value: `Rp ${parseInt(detail.yearlyIncomeMinimum).toLocaleString('id-ID')}` },
+    detail.mainCardMinimumAge && { label: 'Usia Kartu Utama', value: `${detail.mainCardMinimumAge} – ${detail.mainCardMaximumAge} tahun` },
   ].filter(Boolean);
 
   const sections = [
@@ -121,6 +126,28 @@ setDetail(response.data.data);
               <Text style={styles.infoValue}>{item.value}</Text>
             </View>
           ))}
+        </View>
+      ),
+    },
+    {
+      key: 'terms',
+      title: 'Persyaratan',
+      icon: 'document-text-outline',
+      hasData: !!detail.termsDocument,
+      render: () => (
+        <View>
+          <Text style={styles.termsSubtitle}>Dokumen Dibutuhkan</Text>
+          <RenderHtml
+            contentWidth={winWidth - 64}
+            source={{ html: detail.termsDocument }}
+            tagsStyles={{
+              body: { fontFamily: 'sans-serif', fontSize: 13, color: '#444', lineHeight: 22 },
+              li: { marginBottom: 6 },
+              p: { marginBottom: 8 },
+              strong: { color: '#1A1A2E' },
+              a: { color: '#CC1C22' },
+            }}
+          />
         </View>
       ),
     },
@@ -159,16 +186,16 @@ setDetail(response.data.data);
         <View style={styles.titleCard}>
           <View style={styles.titleRow}>
             <Text style={styles.cardTitle}>{detail.title}</Text>
-            {detail.benefitName && (
+            {(detail.benefitName || detail.mainFeature) && (
               <View style={styles.benefitBadge}>
                 <Ionicons name="gift-outline" size={11} color="#CC1C22" />
-                <Text style={styles.benefitBadgeText}>{detail.benefitName}</Text>
+                <Text style={styles.benefitBadgeText}>{detail.benefitName || detail.mainFeature}</Text>
               </View>
             )}
           </View>
-          {detail.publisher?.publisherName && (
+          {detail.publisher?.name && (
             <Text style={styles.publisherText}>
-              <Ionicons name="business-outline" size={12} color="#999" /> {detail.publisher.publisherName}
+              <Ionicons name="business-outline" size={12} color="#999" /> {detail.publisher.name}
             </Text>
           )}
         </View>
@@ -179,29 +206,29 @@ setDetail(response.data.data);
             <LinearGradient colors={['#FFF5F5', '#FEE2E2']} style={styles.statIconBg}>
               <Ionicons name="wallet-outline" size={20} color="#CC1C22" />
             </LinearGradient>
-            <Text style={styles.statValue}>{feeText}</Text>
+            <Text style={styles.statValue} numberOfLines={1}>{feeText}</Text>
             <Text style={styles.statLabel}>Iuran Tahunan</Text>
           </View>
 
-          {detail.type?.typeName && (
-            <View style={styles.statCard}>
-              <LinearGradient colors={['#FFF5F5', '#FEE2E2']} style={styles.statIconBg}>
-                <Ionicons name="card-outline" size={20} color="#CC1C22" />
-              </LinearGradient>
-              <Text style={styles.statValue} numberOfLines={1}>{detail.type.typeName}</Text>
-              <Text style={styles.statLabel}>Tipe Kartu</Text>
-            </View>
-          )}
+          <View style={styles.statCard}>
+            <LinearGradient colors={['#EEF2FF', '#E0E7FF']} style={styles.statIconBg}>
+              <Ionicons name="card-outline" size={20} color="#4F46E5" />
+            </LinearGradient>
+            <Text style={styles.statValue} numberOfLines={1}>{detail.type?.name || '-'}</Text>
+            <Text style={styles.statLabel}>Jenis Kartu</Text>
+          </View>
 
-          {detail.features?.length > 0 && (
-            <View style={styles.statCard}>
-              <LinearGradient colors={['#FFF5F5', '#FEE2E2']} style={styles.statIconBg}>
-                <Ionicons name="star-outline" size={20} color="#CC1C22" />
-              </LinearGradient>
-              <Text style={styles.statValue}>{detail.features.length}</Text>
-              <Text style={styles.statLabel}>Fitur</Text>
-            </View>
-          )}
+          <View style={styles.statCard}>
+            <LinearGradient colors={['#F0FDF4', '#DCFCE7']} style={styles.statIconBg}>
+              <Ionicons name="cash-outline" size={20} color="#16A34A" />
+            </LinearGradient>
+            <Text style={styles.statValue} numberOfLines={1}>
+              {detail.monthlyIncomeMinimum
+                ? `Rp ${(parseInt(detail.monthlyIncomeMinimum) / 1000000).toFixed(0)}jt`
+                : '-'}
+            </Text>
+            <Text style={styles.statLabel}>Min. Income</Text>
+          </View>
         </View>
 
         {/* ── ACCORDION SECTIONS ── */}
@@ -471,6 +498,16 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 13, color: '#1A1A2E', fontFamily: 'Lexend_700Bold',
     textAlign: 'right', flex: 1, marginLeft: 8,
+  },
+
+  /* Terms */
+  termsSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Lexend_700Bold',
+    color: '#999',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   /* Bottom */
