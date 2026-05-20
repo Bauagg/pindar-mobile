@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   StatusBar,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { Linking } from 'react-native';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
@@ -32,20 +33,20 @@ const PindarScreen = (props) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataLenders, setDataLenders] = useState([]);
-  const [activeTab, setActiveTab] = useState('Semua');
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const debounceRef = useRef(null);
 
-  const tabs = ['Semua', 'Sekali bayar', 'Cicilan'];
-
-  const getDataLenders = async (paymentType, loanType, sortBy) => {
+  const getDataLenders = async (searchVal = '', paymentType = '', loanType = '', sortBy = '', sortDirection = 'asc') => {
     try {
       setLoading(true);
-      let url = `/lender/list?limit=20&offset=0&search=`;
-      if (sortBy === 'lowest') url += `&sortBy=maxloan&sortDirection=asc`;
-      else if (sortBy === 'highest') url += `&sortBy=maxloan&sortDirection=desc`;
-      if (paymentType) url += `&paymentType=${paymentType}`;
+      let url = `/lender/list?limit=20&offset=0&search=${encodeURIComponent(searchVal)}`;
       if (loanType) url += `&loanType=${loanType}`;
+      if (paymentType) url += `&paymentType=${paymentType}`;
+      if (sortBy) { url += `&sortBy=${sortBy}&sortDirection=${sortDirection}`; }
+      console.log('🔍 URL:', url);
       const response = await api.get(url);
+      console.log('📦 Lenders:', response.data.data.lenders?.length);
       setDataLenders(response.data.data.lenders || []);
     } catch (error) {
       console.error('Gagal mengambil data lenders:', error);
@@ -58,6 +59,14 @@ const PindarScreen = (props) => {
     getDataLenders();
   }, []);
 
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      getDataLenders(search);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
+
   const handleTabPress = (tab) => {
     setActiveTab(tab);
     let paymentType = null;
@@ -67,14 +76,8 @@ const PindarScreen = (props) => {
   };
 
   const handleApplyFilter = (filters) => {
-    const loanTypeOptions = ['LOAN_TYPE_1', 'LOAN_TYPE_2'];
-    const paymentTypeOptions = ['PAYMENT_TYPE_1', 'PAYMENT_TYPE_2'];
-    const sortOptions = ['recommended', 'lowest', 'highest'];
-    const loanType = filters.find((f) => loanTypeOptions.includes(f));
-    const paymentType = filters.find((f) => paymentTypeOptions.includes(f));
-    const sortBy = filters.find((f) => sortOptions.includes(f));
-    getDataLenders(paymentType, loanType, sortBy);
     setModalVisible(false);
+    getDataLenders(search, filters.paymentType, filters.loanType, filters.sortBy, filters.sortDirection);
   };
 
   const toggleSelection = (item) => {
@@ -177,32 +180,34 @@ const PindarScreen = (props) => {
         <View style={styles.circle2} />
         <Text style={styles.headerTitle}>Pindar</Text>
         <Text style={styles.headerSubtitle}>Temukan pinjaman terbaik untukmu</Text>
-        <View style={styles.tabRow}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}
-              onPress={() => handleTabPress(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
+
+        {/* Search Bar + Filter */}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <View style={[styles.searchBar, { flex: 1 }]}>
+            <Ionicons name="search-outline" size={16} color="#999" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Cari pinjaman..."
+              placeholderTextColor="#999"
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Ionicons name="close-circle" size={16} color="#ccc" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.filterIconBtn}
+            onPress={() => setModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="options-outline" size={18} color="#CC1C22" />
+          </TouchableOpacity>
         </View>
       </LinearGradient>
-
-      {/* Filter Button */}
-      <View style={styles.filterRow}>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setModalVisible(true)}
-          activeOpacity={0.85}
-        >
-          <LinearGradient colors={['#CC1C22', '#E8424A']} style={styles.filterGradient}>
-            <FontAwesome5 name="filter" size={13} color="white" />
-            <Text style={styles.filterBtnText}>Filter</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
 
       {/* Grid List */}
       {loading ? (
@@ -272,7 +277,20 @@ const styles = StyleSheet.create({
     color: 'white', fontSize: 22, fontFamily: 'Lexend_700Bold', marginBottom: 4,
   },
   headerSubtitle: {
-    color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Lexend_400Regular', marginBottom: 16,
+    color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Lexend_400Regular', marginBottom: 14,
+  },
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'white', borderRadius: 12,
+    paddingHorizontal: 12, paddingVertical: 5,
+  },
+  searchInput: {
+    flex: 1, fontSize: 12, fontFamily: 'Lexend_400Regular', color: '#1A1A2E',
+  },
+  filterIconBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: 'white',
+    alignItems: 'center', justifyContent: 'center',
   },
   tabRow: { flexDirection: 'row', gap: 8 },
   tab: {
@@ -293,7 +311,7 @@ const styles = StyleSheet.create({
   filterBtnText: { color: 'white', fontSize: 13, fontFamily: 'Lexend_700Bold' },
 
   /* Grid */
-  listContent: { paddingHorizontal: 16, paddingBottom: 120 },
+  listContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 120 },
   columnWrapper: { justifyContent: 'space-between', marginBottom: 10 },
 
   /* Card */

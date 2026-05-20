@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   ActivityIndicator,
   StatusBar,
   Dimensions,
+  TextInput,
 } from 'react-native';
-import { FontAwesome, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   useFonts,
@@ -24,42 +25,31 @@ const { width } = Dimensions.get('window');
 
 const KartuKreditScreen = (props) => {
   const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
-  const [activeTab, setActiveTab] = useState('Semua');
-  const [selectedIssuer, setSelectedIssuer] = useState({ name: 'Semua', id: null });
   const [selectedItems, setSelectedItems] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataCC, setDataCC] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedFeatures, setSelectedFeatures] = useState([]);
-  const [issuerOptions, setIssuerOptions] = useState([]);
+  const [search, setSearch] = useState('');
+  const debounceRef = useRef(null);
 
-  const tabs = ['Semua', 'Premium', 'First Card'];
-
-  const getFilters = async () => {
-    try {
-      const issuerRes = await api.get('/credit-card/card-publisher');
-      const publisherData = issuerRes.data.data.publishers || [];
-      const unique = Array.from(new Set(publisherData.map(i => i.publisherName)))
-        .map(name => publisherData.find(i => i.publisherName === name));
-      setIssuerOptions([{ id: null, publisherName: 'Semua' }, ...unique]);
-    } catch (error) {
-      console.error('Gagal mengambil data filter:', error);
-    }
-  };
-
-  const getDataCC = async (filters = {}) => {
+  const getDataCC = async (searchVal = '', filters = {}) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filters.issuer?.id) params.append('issuer', filters.issuer.id);
-      if (filters.jenis && filters.jenis !== 'Semua') params.append('jenis', filters.jenis);
-      if (filters.features?.length > 0) params.append('featureId', filters.features.join(','));
-      params.append('minYearlyFee', filters.minIuran || '0');
-      params.append('maxYearlyFee', filters.maxIuran || '10000000');
-      params.append('minIncome', filters.minPenghasilan || '0');
-      params.append('maxIncome', filters.maxPenghasilan || '10000000');
-      if (filters.sort === 'terbaru') { params.append('sortBy', 'yearly_fee'); params.append('sortDirection', 'asc'); }
-      else if (filters.sort === 'terlama') { params.append('sortBy', 'yearly_fee'); params.append('sortDirection', 'desc'); }
+      params.append('limit', '20');
+      params.append('offset', '0');
+      if (searchVal) params.append('search', searchVal);
+      if (filters.publisherId) params.append('publisherId', filters.publisherId);
+      if (filters.featureIds) params.append('featureIds', filters.featureIds);
+      params.append('minYearlyFee', filters.minYearlyFee ?? 0);
+      params.append('maxYearlyFee', filters.maxYearlyFee ?? 5000000);
+      params.append('minYearlyIncome', filters.minYearlyIncome ?? 0);
+      params.append('maxYearlyIncome', filters.maxYearlyIncome ?? 500000000);
+      if (filters.sortBy) {
+        params.append('sortBy', filters.sortBy);
+        params.append('sortDirection', filters.sortDirection || 'asc');
+      }
+      console.log('🔍 CC URL:', `/credit-card/search?${params.toString()}`);
       const response = await api.get(`/credit-card/search?${params.toString()}`);
       setDataCC(response.data.data.creditCards || []);
     } catch (error) {
@@ -69,11 +59,15 @@ const KartuKreditScreen = (props) => {
     }
   };
 
-  useEffect(() => { getFilters(); }, []);
+  useEffect(() => { getDataCC(); }, []);
 
   useEffect(() => {
-    getDataCC({ issuer: selectedIssuer, jenis: activeTab, features: selectedFeatures });
-  }, [activeTab, selectedIssuer, selectedFeatures]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      getDataCC(search);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
 
   const toggleSelection = (item) => {
     setSelectedItems(prev => {
@@ -92,7 +86,6 @@ const KartuKreditScreen = (props) => {
 
     return (
       <View style={styles.card}>
-        {/* Card Header */}
         <View style={styles.cardHeader}>
           <View style={styles.logoWrapper}>
             <Image
@@ -117,7 +110,6 @@ const KartuKreditScreen = (props) => {
 
         <View style={styles.divider} />
 
-        {/* Fitur */}
         {(item.features || []).length > 0 && (
           <>
             <Text style={styles.featureTitle}>Fitur Unggulan</Text>
@@ -130,7 +122,6 @@ const KartuKreditScreen = (props) => {
           </>
         )}
 
-        {/* Lihat Detail */}
         <TouchableOpacity
           style={styles.detailButton}
           onPress={() => props.navigation.navigate('Kartu Kredit Detail', { id: item.id })}
@@ -139,7 +130,6 @@ const KartuKreditScreen = (props) => {
           <Ionicons name="arrow-forward" size={14} color="#CC1C22" />
         </TouchableOpacity>
 
-        {/* Footer */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.compareButton} onPress={() => toggleSelection(item)}>
             <View style={[styles.checkbox, isChecked && styles.checkboxActive]}>
@@ -147,7 +137,6 @@ const KartuKreditScreen = (props) => {
             </View>
             <Text style={styles.compareText}>Bandingkan</Text>
           </TouchableOpacity>
-
           <TouchableOpacity activeOpacity={0.85}>
             <LinearGradient colors={['#CC1C22', '#E8424A']} style={styles.applyGradient}>
               <Text style={styles.applyText}>Ajukan Sekarang</Text>
@@ -162,7 +151,6 @@ const KartuKreditScreen = (props) => {
     <View style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-      {/* Header Gradient */}
       <LinearGradient
         colors={['#CC1C22', '#E8424A']}
         start={{ x: 0, y: 0 }}
@@ -174,23 +162,34 @@ const KartuKreditScreen = (props) => {
         <Text style={styles.headerTitle}>Kartu Kredit</Text>
         <Text style={styles.headerSubtitle}>Temukan kartu kredit terbaik untukmu</Text>
 
+        {/* Search + Filter */}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <View style={[styles.searchBar, { flex: 1 }]}>
+            <Ionicons name="search-outline" size={16} color="#999" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Cari kartu kredit..."
+              placeholderTextColor="#999"
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Ionicons name="close-circle" size={16} color="#ccc" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.filterIconBtn}
+            onPress={() => setModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="options-outline" size={18} color="#CC1C22" />
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
-      {/* Filter Button */}
-      <View style={styles.filterRow}>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setModalVisible(true)}
-          activeOpacity={0.85}
-        >
-          <LinearGradient colors={['#CC1C22', '#E8424A']} style={styles.filterGradient}>
-            <FontAwesome5 name="filter" size={13} color="white" />
-            <Text style={styles.filterBtnText}>Filter</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-
-      {/* List */}
       {loading ? (
         <ActivityIndicator size="large" color="#CC1C22" style={{ marginTop: 40 }} />
       ) : (
@@ -203,7 +202,6 @@ const KartuKreditScreen = (props) => {
         />
       )}
 
-      {/* Compare Bar */}
       {selectedItems.length > 0 && (
         <TouchableOpacity
           style={styles.compareBar}
@@ -222,11 +220,10 @@ const KartuKreditScreen = (props) => {
         </TouchableOpacity>
       )}
 
-
       <FilterModalKartu
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
-        onApply={(filters) => { setModalVisible(false); getDataCC(filters); }}
+        onApply={(filters) => { setModalVisible(false); getDataCC(search, filters); }}
       />
     </View>
   );
@@ -235,7 +232,6 @@ const KartuKreditScreen = (props) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6FA' },
 
-  /* Header */
   header: {
     paddingTop: 52,
     paddingHorizontal: 20,
@@ -256,35 +252,24 @@ const styles = StyleSheet.create({
     color: 'white', fontSize: 22, fontFamily: 'Lexend_700Bold', marginBottom: 4,
   },
   headerSubtitle: {
-    color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Lexend_400Regular', marginBottom: 16,
+    color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Lexend_400Regular', marginBottom: 14,
   },
-  issuerChip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  issuerChipActive: { backgroundColor: 'white' },
-  issuerChipText: { fontSize: 12, color: 'rgba(255,255,255,0.9)', fontFamily: 'Lexend_400Regular' },
-  issuerChipTextActive: { color: '#CC1C22', fontFamily: 'Lexend_700Bold' },
-
-  /* Filter Row */
-  filterRow: {
-    paddingHorizontal: 16, paddingVertical: 12,
-  },
-  filterBtn: {
-    alignSelf: 'flex-start',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  filterGradient: {
+  searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingVertical: 10, paddingHorizontal: 20,
+    backgroundColor: 'white', borderRadius: 12,
+    paddingHorizontal: 12, paddingVertical: 5,
   },
-  filterBtnText: { color: 'white', fontSize: 13, fontFamily: 'Lexend_700Bold' },
+  searchInput: {
+    flex: 1, fontSize: 12, fontFamily: 'Lexend_400Regular', color: '#1A1A2E',
+  },
+  filterIconBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: 'white',
+    alignItems: 'center', justifyContent: 'center',
+  },
 
-  /* List */
-  listContent: { paddingHorizontal: 16, paddingBottom: 40, gap: 14 },
+  listContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40, gap: 14 },
 
-  /* Card */
   card: {
     backgroundColor: 'white', borderRadius: 20, padding: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
@@ -316,10 +301,6 @@ const styles = StyleSheet.create({
     fontSize: 12, fontFamily: 'Lexend_700Bold', color: '#1A1A2E', marginBottom: 8,
   },
   featureItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 5 },
-  featureDot: {
-    width: 5, height: 5, borderRadius: 3, backgroundColor: '#CC1C22',
-    marginTop: 6, marginRight: 8,
-  },
   featureText: { flex: 1, fontSize: 12, color: '#555', fontFamily: 'Lexend_400Regular', lineHeight: 18 },
 
   detailButton: {
@@ -340,7 +321,6 @@ const styles = StyleSheet.create({
   applyGradient: { paddingVertical: 9, paddingHorizontal: 18, borderRadius: 10 },
   applyText: { color: 'white', fontSize: 13, fontFamily: 'Lexend_700Bold' },
 
-  /* Compare Bar */
   compareBar: {
     position: 'absolute', bottom: 80, left: 16, right: 16,
     backgroundColor: 'white', borderRadius: 16, padding: 14,
@@ -356,7 +336,6 @@ const styles = StyleSheet.create({
   compareBadgeText: { fontSize: 16, fontFamily: 'Lexend_700Bold', color: '#CC1C22' },
   compareBarTitle: { fontSize: 13, fontFamily: 'Lexend_700Bold', color: '#1A1A2E' },
   compareBarSub: { fontSize: 11, color: '#999', fontFamily: 'Lexend_400Regular' },
-
 });
 
 export default KartuKreditScreen;

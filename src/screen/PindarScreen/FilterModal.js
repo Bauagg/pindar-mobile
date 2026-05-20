@@ -7,7 +7,7 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import {
   useFonts,
   Lexend_400Regular,
@@ -17,37 +17,63 @@ import {
 const FilterModal = ({ visible, onClose, onApply }) => {
   const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
 
-  const [selectedLoanType, setSelectedLoanType] = useState('');
-  const [selectedPaymentType, setSelectedPaymentType] = useState('');
-  const [selectedSort, setSelectedSort] = useState('recommended');
+  const [selectedLoanTypes, setSelectedLoanTypes] = useState([]);
+  const [selectedPaymentTypes, setSelectedPaymentTypes] = useState([]);
+  const [sortBy, setSortBy] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   const loanTypes = [
-    { id: '', label: 'Semua' },
-    { id: 'LOAN_TYPE_1', label: 'Kurang dari 1 Juta' },
-    { id: 'LOAN_TYPE_2', label: '0 – 1 Juta' },
+    { id: 'KTA', label: 'KTA' },
+    { id: 'KPR', label: 'KPR' },
+    { id: 'KKB', label: 'KKB' },
+    { id: 'MULTIGUNA', label: 'Multiguna' },
   ];
 
   const paymentTypes = [
-    { id: '', label: 'Semua Pinjaman' },
-    { id: 'PAYMENT_TYPE_1', label: 'Sekali Bayar' },
-    { id: 'PAYMENT_TYPE_2', label: 'Cicilan' },
+    { id: 'BULANAN', label: 'Bulanan' },
+    { id: 'MINGGUAN', label: 'Mingguan' },
+    { id: 'HARIAN', label: 'Harian' },
   ];
 
   const sortOptions = [
-    { id: 'recommended', label: 'Produk Pilihan' },
-    { id: 'lowest', label: 'Plafond Terendah' },
-    { id: 'highest', label: 'Plafond Tertinggi' },
+    { id: 'lender_name', label: 'Nama Pinjaman' },
+    { id: 'max_loan', label: 'Plafond' },
+    { id: 'max_tenor', label: 'Tenor' },
   ];
 
+  const toggleMulti = (id, selected, setSelected) => {
+    setSelected(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const reset = () => {
+    setSelectedLoanTypes([]);
+    setSelectedPaymentTypes([]);
+    setSortBy('');
+    setSortDirection('asc');
+  };
+
   const applyFilters = () => {
-    const filters = [];
-    if (selectedLoanType) filters.push(selectedLoanType);
-    if (selectedPaymentType) filters.push(selectedPaymentType);
-    if (selectedSort) filters.push(selectedSort);
+    const filters = {
+      loanType: selectedLoanTypes.join(','),
+      paymentType: selectedPaymentTypes.join(','),
+      sortBy,
+      sortDirection,
+    };
     if (onApply) onApply(filters);
   };
 
-  const RadioOption = ({ selected, onPress, label }) => (
+  const CheckOption = ({ id, label, selected, onPress }) => (
+    <TouchableOpacity style={styles.option} onPress={onPress} activeOpacity={0.7}>
+      <View style={[styles.checkbox, selected && styles.checkboxActive]}>
+        {selected && <Ionicons name="checkmark" size={11} color="white" />}
+      </View>
+      <Text style={styles.optionText}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  const RadioOption = ({ id, label, selected, onPress }) => (
     <TouchableOpacity style={styles.option} onPress={onPress} activeOpacity={0.7}>
       <View style={[styles.radio, selected && styles.radioSelected]}>
         {selected && <View style={styles.radioDot} />}
@@ -64,47 +90,74 @@ const FilterModal = ({ visible, onClose, onApply }) => {
         <TouchableOpacity style={styles.container} activeOpacity={1} onPress={() => {}}>
           <View style={styles.dragHandle} />
 
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerText}>Filter</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={18} color="#666" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+              <TouchableOpacity onPress={reset}>
+                <Text style={styles.resetText}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Ionicons name="close" size={18} color="#666" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-            {/* Jumlah Pinjaman */}
-            <Text style={styles.sectionTitle}>Jumlah Pinjaman</Text>
-            {loanTypes.map((item) => (
-              <RadioOption
-                key={item.id}
-                selected={selectedLoanType === item.id}
-                onPress={() => setSelectedLoanType(item.id)}
-                label={item.label}
-              />
-            ))}
 
-            {/* Jenis Pinjaman */}
+            {/* Jenis Pinjaman — multiple */}
             <Text style={styles.sectionTitle}>Jenis Pinjaman</Text>
-            {paymentTypes.map((item) => (
-              <RadioOption
+            {loanTypes.map(item => (
+              <CheckOption
                 key={item.id}
-                selected={selectedPaymentType === item.id}
-                onPress={() => setSelectedPaymentType(item.id)}
+                id={item.id}
                 label={item.label}
+                selected={selectedLoanTypes.includes(item.id)}
+                onPress={() => toggleMulti(item.id, selectedLoanTypes, setSelectedLoanTypes)}
               />
             ))}
 
-            {/* Urutkan */}
-            <Text style={styles.sectionTitle}>Urutkan</Text>
-            {sortOptions.map((item) => (
-              <RadioOption
+            {/* Tipe Pembayaran — multiple */}
+            <Text style={styles.sectionTitle}>Tipe Pembayaran</Text>
+            {paymentTypes.map(item => (
+              <CheckOption
                 key={item.id}
-                selected={selectedSort === item.id}
-                onPress={() => setSelectedSort(item.id)}
+                id={item.id}
                 label={item.label}
+                selected={selectedPaymentTypes.includes(item.id)}
+                onPress={() => toggleMulti(item.id, selectedPaymentTypes, setSelectedPaymentTypes)}
               />
             ))}
+
+            {/* Urutkan — single */}
+            <Text style={styles.sectionTitle}>Urutkan</Text>
+            {sortOptions.map(item => (
+              <RadioOption
+                key={item.id}
+                id={item.id}
+                label={item.label}
+                selected={sortBy === item.id}
+                onPress={() => setSortBy(sortBy === item.id ? '' : item.id)}
+              />
+            ))}
+
+            {/* Arah — hanya muncul kalau sortBy dipilih */}
+            {sortBy !== '' && (
+              <>
+                <Text style={styles.sectionTitle}>Urutan</Text>
+                <RadioOption
+                  id="asc"
+                  label="Ascending (A–Z / Terkecil)"
+                  selected={sortDirection === 'asc'}
+                  onPress={() => setSortDirection('asc')}
+                />
+                <RadioOption
+                  id="desc"
+                  label="Descending (Z–A / Terbesar)"
+                  selected={sortDirection === 'desc'}
+                  onPress={() => setSortDirection('desc')}
+                />
+              </>
+            )}
 
             <View style={{ height: 20 }} />
           </ScrollView>
@@ -126,7 +179,7 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
-    maxHeight: '80%',
+    height: '80%',
     backgroundColor: 'white',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -151,13 +204,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Lexend_700Bold',
     color: '#1A1A2E',
   },
+  resetText: {
+    fontSize: 13,
+    fontFamily: 'Lexend_400Regular',
+    color: '#CC1C22',
+  },
   closeButton: {
     width: 32, height: 32, borderRadius: 16,
     backgroundColor: '#F0F0F0',
     alignItems: 'center', justifyContent: 'center',
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Lexend_700Bold',
     color: '#1A1A2E',
     marginTop: 16,
@@ -166,9 +224,15 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 9,
+    paddingVertical: 8,
     gap: 12,
   },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 6,
+    borderWidth: 2, borderColor: '#DDD',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxActive: { backgroundColor: '#CC1C22', borderColor: '#CC1C22' },
   radio: {
     width: 20, height: 20, borderRadius: 10,
     borderWidth: 2, borderColor: '#DDD',
@@ -180,7 +244,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#CC1C22',
   },
   optionText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Lexend_400Regular',
     color: '#333',
   },
