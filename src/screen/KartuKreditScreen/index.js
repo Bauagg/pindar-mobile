@@ -86,27 +86,26 @@ const KartuKreditScreen = (props) => {
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.logoWrapper}>
-            <Image
-              source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-            <View style={styles.feeBadge}>
-              <Text style={styles.feeBadgeText}>{feeText}</Text>
-            </View>
-            {item.benefitName && (
-              <View style={styles.benefitRow}>
-                <Ionicons name="gift-outline" size={12} color="#CC1C22" />
-                <Text style={styles.benefitText}>{item.benefitName}</Text>
-              </View>
-            )}
-          </View>
+        {/* Card Image full width */}
+        <View style={styles.cardImageWrapper}>
+          <Image
+            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+            style={styles.cardImage}
+            resizeMode="contain"
+          />
         </View>
+
+        {/* Info below image */}
+        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+        <View style={styles.feeBadge}>
+          <Text style={styles.feeBadgeText}>{feeText}</Text>
+        </View>
+        {item.benefitName && (
+          <View style={styles.benefitRow}>
+            <Ionicons name="gift-outline" size={12} color="#CC1C22" />
+            <Text style={styles.benefitText}>{item.benefitName}</Text>
+          </View>
+        )}
 
         <View style={styles.divider} />
 
@@ -271,46 +270,52 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40, gap: 14 },
 
   card: {
-    backgroundColor: 'white', borderRadius: 20, padding: 16,
+    backgroundColor: 'white', borderRadius: 20, overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
   },
-  cardHeader: { flexDirection: 'row', marginBottom: 12 },
-  logoWrapper: {
-    width: 90, height: 72, backgroundColor: '#F8F8F8',
-    borderRadius: 12, alignItems: 'center', justifyContent: 'center',
-    marginRight: 14, overflow: 'hidden',
+  cardImageWrapper: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F0F0F0',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
-  logo: { width: '90%', height: '90%' },
-  cardInfo: { flex: 1, justifyContent: 'center' },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
   cardTitle: {
     fontSize: 14, fontFamily: 'Lexend_700Bold', color: '#1A1A2E',
-    lineHeight: 20, marginBottom: 6,
+    lineHeight: 20, marginBottom: 6, marginTop: 14,
+    paddingHorizontal: 16,
   },
   feeBadge: {
     alignSelf: 'flex-start', backgroundColor: '#FEE2E2',
     borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 5,
+    marginHorizontal: 16,
   },
   feeBadgeText: { fontSize: 11, color: '#CC1C22', fontFamily: 'Lexend_700Bold' },
-  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 16 },
   benefitText: { fontSize: 11, color: '#666', fontFamily: 'Lexend_400Regular' },
 
   divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 12 },
 
   featureTitle: {
     fontSize: 12, fontFamily: 'Lexend_700Bold', color: '#1A1A2E', marginBottom: 8,
+    paddingHorizontal: 16,
   },
-  featureItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 5 },
+  featureItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 5, paddingHorizontal: 16 },
   featureText: { flex: 1, fontSize: 12, color: '#555', fontFamily: 'Lexend_400Regular', lineHeight: 18 },
 
   detailButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, backgroundColor: '#FEE2E2', borderRadius: 10,
-    paddingVertical: 10, marginTop: 12,
+    paddingVertical: 10, marginTop: 12, marginHorizontal: 16,
   },
   detailText: { color: '#CC1C22', fontSize: 13, fontFamily: 'Lexend_700Bold' },
 
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingHorizontal: 16, paddingBottom: 16 },
   compareButton: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   checkbox: {
     width: 20, height: 20, borderRadius: 6, borderWidth: 2, borderColor: '#CC1C22',

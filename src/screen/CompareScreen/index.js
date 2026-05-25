@@ -2,264 +2,285 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  FlatList,
-  Image,
   ScrollView,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Image,
+  StatusBar,
 } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  useFonts,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
 import api from '../../utils/axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width } = Dimensions.get('window');
+
+const LABEL_W = 120;
+const COL_W   = 150;
+const ROW_H   = 70;
+
+const COLORS = ['#CC1C22', '#2563EB', '#16A34A', '#D97706', '#7C3AED', '#0891B2', '#DB2777', '#059669'];
+
+const tableRows = [
+  { title: 'Jenis Pinjaman',  key: 'loanType',    icon: 'document-text-outline' },
+  { title: 'Plafon Maksimum', key: 'maxLoan',     icon: 'cash-outline',   format: (v) => v ? `Rp ${parseInt(v).toLocaleString('id-ID')}` : '-' },
+  { title: 'Tenor Maksimum',  key: 'maxTenor',    icon: 'time-outline',   format: (v) => v ? `${v} Bulan` : '-' },
+  { title: 'Tipe Pembayaran', key: 'paymentType', icon: 'card-outline' },
+];
 
 const CompareScreen = (props) => {
-  const selectedItemsid = props?.route?.params?.selectedItems || [];
-  const selectedIds = selectedItemsid.map(item => item.id);
-  console.log("INI ID", selectedIds)
-
+  const selectedItemsParam = props?.route?.params?.selectedItems || [];
+  const selectedIds = selectedItemsParam.map((i) => i.id);
+  const insets = useSafeAreaInsets();
+  const [fontsLoaded] = useFonts({ Lexend_400Regular, Lexend_700Bold });
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState([]);
-  console.log("INI DATA Detail", JSON.stringify(details, null, 2));
-
-
-  const fetchAllDetails = async () => {
-    setLoading(true);
-    console.log("JALANN");
-    try {
-      const token = await AsyncStorage.getItem('token');
-
-      const requests = selectedIds.map((id) =>
-        api.get(`/lender/detail/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      );
-
-      const responses = await Promise.all(requests);
-      const allData = responses.map((res) => res.data.data);
-
-      setDetails(allData);
-    } catch (error) {
-      console.error('Error fetching details:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    if (selectedIds.length > 0) {
-      fetchAllDetails();
-    }
+    if (selectedIds.length === 0) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const responses = await Promise.all(
+          selectedIds.map((id) => api.get(`/lender/detail/${id}`))
+        );
+        setDetails(responses.map((r) => r.data.data));
+      } catch (e) {
+        console.error('Error fetching compare:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
+  if (!fontsLoaded) return null;
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#00aaff" />
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#CC1C22" />
       </View>
     );
   }
 
-  const navDetails = () => {
-    props.navigation.navigate('Informasi Detail');
-  };
-
-
-  const selectedItems = [
-    {
-      id: '1',
-      name: 'Akulaku',
-      amount: 'Rp 50.000.000',
-      duration: '24 Bulan',
-      logo: require('../../assets/akulaku.png'),
-      provider: 'Visa',
-      annualFee: 'Rp 300.000',
-      extraCardFee: 'Rp 150.000',
-      purchaseRate: '1,75%',
-      cashbackRate: '-',
-      withdrawalFee: '6% dari jumlah penarikan atau min Rp 150.000',
-      lateFee: '1% dari total tagihan atau max Rp 100.000',
-      minimumIncome: 'Rp 3.000.000 / Bulan',
-      maxAge: '65 tahun',
-      minAge: '21 tahun',
-      minExtraAge: '17 tahun',
-    },
-    {
-      id: '2',
-      name: 'Indodana',
-      amount: 'Rp 50.000.000',
-      duration: '24 Bulan',
-      logo: require('../../assets/indodana.png'),
-      provider: 'MasterCard',
-      annualFee: 'Rp 300.000',
-      extraCardFee: 'Rp 150.000',
-      purchaseRate: '1,75%',
-      cashbackRate: '-',
-      withdrawalFee: '6% dari jumlah penarikan atau min Rp 150.000',
-      lateFee: '1% dari total tagihan atau max Rp 100.000',
-      minimumIncome: 'Rp 3.000.000 / Bulan',
-      maxAge: '65 tahun',
-      minAge: '21 tahun',
-      minExtraAge: '17 tahun',
-    },
-    {
-      id: '3',
-      name: 'Kredivo',
-      amount: 'Rp 75.000.000',
-      duration: '36 Bulan',
-      logo: require('../../assets/akulaku.png'),
-      provider: 'Visa',
-      annualFee: 'Rp 250.000',
-      extraCardFee: 'Rp 120.000',
-      purchaseRate: '1,50%',
-      cashbackRate: '2%',
-      withdrawalFee: '5% dari jumlah penarikan atau min Rp 100.000',
-      lateFee: '2% dari total tagihan atau max Rp 200.000',
-      minimumIncome: 'Rp 4.000.000 / Bulan',
-      maxAge: '60 tahun',
-      minAge: '21 tahun',
-      minExtraAge: '18 tahun',
-    },
-  ];
-
-  const tableData = [
-    { title: 'Nama Pinjaman', key: 'lenderName' },
-    { title: 'Plafond', key: 'maxLoan' },
-    { title: 'Maksimal Lama Pinjaman', key: 'maxTenor' },
-    // { title: 'Purchase Rate', key: 'purchaseRate' },
-    // { title: 'Cashback Rate', key: 'cashbackRate' },
-    // { title: 'Biaya penarikan tunai minimum', key: 'withdrawalFee' },
-    // { title: 'Denda keterlambatan pembayaran', key: 'lateFee' },
-    // { title: 'Penghasilan Minimal', key: 'minimumIncome' },
-    // { title: 'Usia maks. pemegang kartu utama', key: 'maxAge' },
-    // { title: 'Usia min. pemegang kartu utama', key: 'minAge' },
-    // { title: 'Usia min. pemegang kartu tambahan', key: 'minExtraAge' },
-  ];
+  const totalColW = details.length * COL_W;
 
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          marginBottom: 45,
-          marginTop: 10,
-          paddingHorizontal: 10,
-          width: Dimensions.get('window').width,
-        }}>
-        <FlatList
-          data={details}
-          horizontal
-          keyExtractor={(item, index) => `item-${item.id || index}`}
-          contentContainerStyle={styles.logoList}
-          renderItem={({ item }) => (
-            <View style={styles.logoContainer}>
-              <Image source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}`}} style={styles.logo} />
-              <Text style={styles.logoText}>{item.lenderName}</Text>
-              <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-                onPress={() => {
-                  if (item.directLink) {
-                    Linking.openURL(item.directLink).catch(err =>
-                      console.error("Gagal membuka link:", err)
-                    );
-                  } else {
-                    console.warn("Link tidak tersedia.");
-                  }
-                }}
-                >
-                <Text style={{ color: 'red', marginRight: 5 }}>
-                  Baca Selengkapnya
-                </Text>
-                <MaterialIcons name="open-in-new" color={'red'} />
-              </TouchableOpacity>
-            </View>
-          )}
-        />
-      </View>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      <View style={styles.floatingColumn}>
-        {tableData.map((row) => (
-          <View key={row.key} style={styles.cellFloating}>
-            <Text style={styles.cellTextFloating}>{row.title}</Text>
-          </View>
-        ))}
-      </View>
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={['#CC1C22', '#E8424A']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: Math.max(insets.top + 12, 52) }]}
+      >
+        <View style={styles.circle1} />
+        <View style={styles.circle2} />
+        <Text style={styles.headerTitle}>Bandingkan Pinjaman</Text>
+        <Text style={styles.headerSubtitle}>{details.length} pinjaman dibandingkan</Text>
+      </LinearGradient>
 
-      <ScrollView horizontal style={{ marginTop: -35 }}>
-        <View style={styles.tableContent}>
-          {details.map((item) => (
-            <View key={`column-${item.id || Math.random()}`} style={styles.tableColumn}>
-              {tableData.map((row) => (
-                <View key={`${item.id}-${row.key}`} style={styles.cell}>
-                  <Text style={styles.cellText}>{item[row.key] || '-'}</Text>
+      {details.length === 0 ? (
+        <View style={styles.center}>
+          <Ionicons name="git-compare-outline" size={52} color="#ddd" />
+          <Text style={styles.emptyText}>Tidak ada data</Text>
+        </View>
+      ) : (
+        /* ── VERTICAL SCROLL ── */
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+
+          {/* ── SATU ScrollView HORIZONTAL — logo + tabel bareng ── */}
+          <View style={styles.tableArea}>
+
+            {/* Kolom label — FIXED di kiri, di atas semua */}
+            <View style={styles.fixedLabel}>
+              {/* pojok kiri atas kosong sejajar logo row */}
+              <View style={styles.labelCorner} />
+              {tableRows.map((row, ri) => (
+                <View key={ri} style={[styles.labelCell, ri % 2 === 0 ? styles.rowEven : styles.rowOdd]}>
+                  <View style={styles.labelIconBox}>
+                    <Ionicons name={row.icon} size={12} color="#CC1C22" />
+                  </View>
+                  <Text style={styles.labelText}>{row.title}</Text>
                 </View>
               ))}
             </View>
-          ))}
-        </View>
-      </ScrollView>
+
+            {/* Semua kolom (logo + nilai) scroll horizontal BERSAMA */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginLeft: LABEL_W }}
+              contentContainerStyle={{ width: totalColW }}
+            >
+              <View style={{ flexDirection: 'row', width: totalColW }}>
+                {details.map((item, ci) => {
+                  const name = item.lenderName ?? item.lendername ?? '';
+                  const img  = item.imageLink  ?? item.imagelink  ?? '';
+                  const link = item.directLink ?? item.directlink ?? '';
+                  const color = COLORS[ci % COLORS.length];
+
+                  return (
+                    <View key={ci} style={[styles.col, { width: COL_W }]}>
+
+                      {/* Logo card */}
+                      <View style={[styles.logoCard, { borderTopColor: color, borderTopWidth: 3 }]}>
+                        <View style={styles.logoImgWrapper}>
+                          <Image
+                            source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${img}` }}
+                            style={styles.logoImg}
+                            resizeMode="contain"
+                          />
+                        </View>
+                        <Text style={styles.logoName} numberOfLines={2}>{name}</Text>
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => link && Linking.openURL(link)}
+                          style={styles.ajukanBtn}
+                        >
+                          <LinearGradient
+                            colors={['#CC1C22', '#E8424A']}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={styles.ajukanGradient}
+                          >
+                            <Ionicons name="paper-plane-outline" size={11} color="white" />
+                            <Text style={styles.ajukanText}>Ajukan</Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Nilai tiap baris */}
+                      {tableRows.map((row, ri) => {
+                        const raw = item[row.key];
+                        const val = row.format ? row.format(raw) : (raw ?? '-');
+                        return (
+                          <View key={ri} style={[styles.valueCell, ri % 2 === 0 ? styles.rowEven : styles.rowOdd]}>
+                            <Text style={[styles.valueText, { color }]} numberOfLines={3}>{val || '-'}</Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* ── LEGENDA ── */}
+          <View style={styles.legend}>
+            {details.map((item, i) => (
+              <View key={i} style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: COLORS[i % COLORS.length] }]} />
+                <Text style={styles.legendText} numberOfLines={1}>
+                  {item.lenderName ?? item.lendername}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+        </ScrollView>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: 'white' },
-  logoList: { paddingBottom: 10 },
-  logoContainer: { alignItems: 'center', marginHorizontal: 50 },
-  logo: { width: 50, height: 50, resizeMode: 'contain' },
-  logoText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 5,
-    textAlign: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#F5F6FA' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  emptyText: { fontSize: 14, color: '#999', fontFamily: 'Lexend_400Regular' },
 
-  floatingColumn: {
-    position: 'absolute',
-    left: 10,
-    top: 130,
+  /* Header */
+  header: {
+    paddingHorizontal: 20, paddingBottom: 24,
+    borderBottomLeftRadius: 32, borderBottomRightRadius: 32, overflow: 'hidden',
+  },
+  circle1: { position: 'absolute', width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(255,255,255,0.07)', top: -40, right: -20 },
+  circle2: { position: 'absolute', width: 100, height: 100, borderRadius: 50,  backgroundColor: 'rgba(255,255,255,0.05)', bottom: 10, left: -10 },
+  backBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  headerTitle: { color: 'white', fontSize: 20, fontFamily: 'Lexend_700Bold', marginBottom: 4 },
+  headerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontFamily: 'Lexend_400Regular' },
+
+  /* Table area */
+  tableArea: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
     backgroundColor: 'white',
-    width: 150,
-    zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 50, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 10,
-  },
-  cellFloating: {
-    width: 150,
-    maxHeight: 60, // Pastikan tinggi minimal sama dengan table cell
-    padding: 15,
-    borderBottomWidth: 1,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'center', // Biar teks sejajar tengah
-  },
-  tableContent: {
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 4,
     flexDirection: 'row',
-    marginLeft: 160,
+  },
 
-    alignItems: 'flex-start', // Pastikan konten rata atas
+  /* Fixed label column */
+  fixedLabel: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: LABEL_W,
+    zIndex: 10,
+    backgroundColor: 'white',
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
   },
-  tableColumn: {
-    flexDirection: 'column',
-  },
-  cell: {
-    width: 150,
-    maxHeight: 55, // Samakan tinggi dengan cellFloating
-    padding: 15,
+  labelCorner: {
+    height: 148, // sama tinggi logoCard
     borderBottomWidth: 1,
-    borderTopWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'center', // Pastikan isi rata tengah
+    borderBottomColor: '#F0F0F0',
   },
-  cellText: { textAlign: 'center' },
-  cellTextFloating: { textAlign: 'left', fontSize: 11, fontWeight: 'bold' },
+  labelCell: {
+    height: ROW_H,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  labelIconBox: { width: 24, height: 24, borderRadius: 7, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  labelText: { fontSize: 10, fontFamily: 'Lexend_700Bold', color: '#1A1A2E', flex: 1, lineHeight: 14 },
+
+  /* Columns */
+  col: { borderRightWidth: 1, borderRightColor: '#F0F0F0' },
+
+  /* Logo card */
+  logoCard: {
+    height: 148,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  logoImgWrapper: { width: 52, height: 52, borderRadius: 12, backgroundColor: '#F8F8F8', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: 1, borderColor: '#F0F0F0' },
+  logoImg: { width: '100%', height: '100%' },
+  logoName: { fontSize: 11, fontFamily: 'Lexend_700Bold', color: '#1A1A2E', textAlign: 'center', lineHeight: 15 },
+  ajukanBtn: { width: '90%', borderRadius: 8, overflow: 'hidden' },
+  ajukanGradient: { paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  ajukanText: { color: 'white', fontSize: 10, fontFamily: 'Lexend_700Bold' },
+
+  /* Value cells */
+  valueCell: { height: ROW_H, paddingHorizontal: 10, justifyContent: 'center', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  valueText: { fontSize: 12, fontFamily: 'Lexend_700Bold', textAlign: 'center', lineHeight: 18 },
+  rowEven: { backgroundColor: 'white' },
+  rowOdd:  { backgroundColor: '#FDF5F5' },
+
+  /* Legenda */
+  legend: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: 16, marginTop: 12, gap: 10, backgroundColor: 'white', borderRadius: 16, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 12, fontFamily: 'Lexend_400Regular', color: '#444' },
 });
 
 export default CompareScreen;

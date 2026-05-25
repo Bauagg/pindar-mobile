@@ -78,11 +78,11 @@ function BottomTabNavigator() {
         name="Education"
         component={Education}
         options={{
-          header: (props) => <HeaderName {...props} name="Education" />,
+          header: (props) => <HeaderName {...props} name="Edukasi" />,
           tabBarIcon: ({ color }) => (
             <Ionicons name="newspaper-outline" size={24} color={color} />
           ),
-          tabBarLabel: "Education",
+          tabBarLabel: "Edukasi",
         }}
       />
       <Tab.Screen
@@ -178,14 +178,14 @@ export default function AppStackNavigator() {
         name="EducationDetail"
         component={EducationDetail}
         options={{
-          header: (props) => <HeaderName {...props} name="Education" />,
+          header: (props) => <HeaderName {...props} name="Edukasi" />,
         }}
       />
       <Stack.Screen
         name="EducationComments"
         component={EducationComments}
         options={{
-          header: (props) => <HeaderName {...props} name="Education" />,
+          header: (props) => <HeaderName {...props} name="Edukasi" />,
         }}
       />
       <Stack.Screen
@@ -227,7 +227,7 @@ export default function AppStackNavigator() {
         name="Education All Treding"
         component={EducationAllTreding}
         options={{
-          header: (props) => <HeaderName {...props} name="Education" />,
+          header: (props) => <HeaderName {...props} name="Edukasi" />,
         }}
       />
       <Stack.Screen

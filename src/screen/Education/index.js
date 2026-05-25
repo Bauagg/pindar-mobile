@@ -314,11 +314,24 @@ const styles = StyleSheet.create({
     bottom: 10,
     left: -10,
   },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 4,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   headerTitle: {
     color: "white",
     fontSize: 22,
     fontFamily: "Lexend_700Bold",
-    marginBottom: 4,
   },
   headerSubtitle: {
     color: "rgba(255,255,255,0.8)",
