@@ -30,6 +30,7 @@ import CompareScreenKartu from "../screen/CompareScreenKartu";
 import RedirectScreenKartu from "../screen/RedirectScreenKartu";
 import EducationAllTreding from "../screen/EducationAllTreding";
 import PinjamanBank from "../screen/PinjamanBank";
+import DetailPinjamanBank from "../screen/PinjamanBank/DetailPinjamanBank";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -233,9 +234,12 @@ export default function AppStackNavigator() {
       <Stack.Screen
         name="PinjamanBank"
         component={PinjamanBank}
-        options={{
-          header: (props) => <HeaderName {...props} name="Pinjaman Bank" />,
-        }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="DetailPinjamanBank"
+        component={DetailPinjamanBank}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

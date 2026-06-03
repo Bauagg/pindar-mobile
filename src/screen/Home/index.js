@@ -25,6 +25,15 @@ import {
 } from "@expo-google-fonts/lexend";
 import api from "../../utils/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { dummyPinjamanBank } from "../PinjamanBank/data-dummy-pinjamaan-bank";
+
+const BANK_IMAGE_MAP = {
+  '/assets/images/mandiri.png': require('../../../assets/images/mandiri.png'),
+  '/assets/images/bca.png':     require('../../../assets/images/bca.png'),
+  '/assets/images/bri.png':     require('../../../assets/images/bri.png'),
+  '/assets/images/bni.png':     require('../../../assets/images/bni.png'),
+  '/assets/images/cimb.png':    require('../../../assets/images/cimb.png'),
+};
 
 const { width } = Dimensions.get("window");
 const screenWidth = Dimensions.get("window").width;
@@ -132,7 +141,7 @@ export default function Home(props) {
     const fetchEducation = async () => {
       try {
         setLoadingEdu(true);
-        const response = await api.get("/content/list?limit=3");
+        const response = await api.get("/content/list?limit=4");
         const contents = response.data.data?.contents || [];
         console.log("Education image URL contoh:", `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${contents[0]?.imageLink}`);
         setEducationList(contents);
@@ -305,7 +314,7 @@ export default function Home(props) {
           ))}
         </View>
 
-        {/* ── TRENDING EDUCATION ── */}
+        {/* ── EDUKASI PINDAR ── */}
         <TouchableOpacity
           activeOpacity={0.9}
           style={styles.trendingBanner}
@@ -320,7 +329,7 @@ export default function Home(props) {
             <View style={styles.trendingCircle1} />
             <View style={styles.trendingCircle2} />
             <View>
-              <Text style={styles.trendingTitle}>Trending Edukasi</Text>
+              <Text style={styles.trendingTitle}>Edukasi Pindar</Text>
               {/* <Text style={styles.trendingDate}>Last Date {trendingDate || "—"}</Text> */}
             </View>
             <View style={styles.trendingBtn}>
@@ -374,9 +383,9 @@ export default function Home(props) {
           </View>
         )}
 
-        {/* ── APLIKASI REKOMENDASI ── */}
+        {/* ── PINJAMAN PINDAR ── */}
         <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Rekomendasi Aplikasi</Text>
+          <Text style={styles.sectionTitle}>Pinjaman Pindar</Text>
           <TouchableOpacity onPress={() => props.navigation.navigate("Pindar")}>
             <Text style={styles.sectionViewAll}>Lihat Semua</Text>
           </TouchableOpacity>
@@ -387,10 +396,7 @@ export default function Home(props) {
               key={i}
               style={styles.rekoCard}
               activeOpacity={0.85}
-              onPress={() => {
-                if (item.directlink) Linking.openURL(item.directlink);
-                else props.navigation.navigate("Pindar");
-              }}
+              onPress={() => props.navigation.navigate("Informasi Detail", { id: item.id })}
             >
               <Image
                 source={{ uri: `${process.env.EXPO_PUBLIC_IMAGE_BASE_URL}${item.imagelink}` }}
@@ -402,9 +408,9 @@ export default function Home(props) {
           ))}
         </View>
 
-        {/* ── REKOMENDASI CREDIT CARD ── */}
+        {/* ── CREDIT CARD ── */}
         <View style={[styles.sectionRow, { marginTop: 24 }]}>
-          <Text style={styles.sectionTitle}>Rekomendasi Kartu Kredit</Text>
+          <Text style={styles.sectionTitle}> Kartu Kredit</Text>
           <TouchableOpacity onPress={() => props.navigation.navigate("Kartu Kredit")}>
             <Text style={styles.sectionViewAll}>Lihat Semua</Text>
           </TouchableOpacity>
@@ -417,7 +423,7 @@ export default function Home(props) {
           snapToInterval={(width - 44) / 2 + 12}
           snapToAlignment="start"
           decelerationRate="fast"
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingVertical: 6 }}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.ccCard}
@@ -446,6 +452,66 @@ export default function Home(props) {
           )}
         />
 
+        {/* ── PINJAMAN BANK ── */}
+        <LinearGradient
+          colors={["#CC1C22", "#E8424A", "#FF6B6B"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.bankSection}
+        >
+          {/* Dekorasi lingkaran */}
+          <View style={styles.bankCircle1} />
+          <View style={styles.bankCircle2} />
+
+          <View style={[styles.sectionRow, { marginTop: 0 }]}>
+            <View>
+              <Text style={[styles.sectionTitle, { color: "white" }]}>Pinjaman Bank</Text>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontFamily: "Lexend_400Regular" }}>
+                Solusi keuangan terpercaya
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.bankViewAllBtn}
+              onPress={() => props.navigation.navigate("PinjamanBank")}
+            >
+              <Text style={styles.bankViewAllText}>Lihat Semua</Text>
+              <Ionicons name="chevron-forward" size={12} color="#CC1C22" />
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={dummyPinjamanBank}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 20, paddingTop: 4 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                activeOpacity={0.88}
+                style={styles.bankCard}
+                onPress={() => props.navigation.navigate("DetailPinjamanBank", { item })}
+              >
+                <View style={styles.bankBody}>
+                  <View style={styles.bankLogoBox}>
+                    {BANK_IMAGE_MAP[item.imageLink] ? (
+                      <Image source={BANK_IMAGE_MAP[item.imageLink]} style={styles.bankLogo} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="business-outline" size={28} color="#CC1C22" />
+                    )}
+                  </View>
+                  <Text style={styles.bankName} numberOfLines={1}>{item.namaBank}</Text>
+                  <Text style={styles.bankPublisher} numberOfLines={1}>{item.publisher}</Text>
+                  <Text style={styles.bankDetail} numberOfLines={2}>{item.detailPinjaman}</Text>
+                  <View style={styles.bankDocRow}>
+                    <Ionicons name="document-text-outline" size={11} color="#CC1C22" />
+                    <Text style={styles.bankDocText}>{item.dokumenDibutuhkan.length} dokumen dibutuhkan</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </LinearGradient>
+
         {/* ── EDUCATION PRODUCT ── */}
         <View style={[styles.sectionRow, { marginTop: 24 }]}>
           <Text style={styles.sectionTitle}>Edukasi Produk</Text>
@@ -457,31 +523,59 @@ export default function Home(props) {
         {loadingEdu ? (
           <ActivityIndicator color="#CC1C22" style={{ marginVertical: 20 }} />
         ) : (
-          <View style={{ paddingHorizontal: 16, gap: 14 }}>
-            {educationList.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.eduCard}
-                activeOpacity={0.88}
-                onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
-              >
-                <Image
-                  source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
-                  style={styles.eduImg}
-                  resizeMode="cover"
-                />
-                <View style={styles.eduOverlay}>
-                  <View style={styles.eduBadge}>
-                    <Text style={styles.eduBadgeText}>{item.category || "Artikel"}</Text>
+          <View style={{ paddingHorizontal: 16, gap: 12 }}>
+            {educationList.map((item, index) => {
+              if (index === 0) {
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.eduHeroCard}
+                    activeOpacity={0.88}
+                    onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
+                  >
+                    <Image
+                      source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                      style={styles.eduHeroImg}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.eduHeroOverlay}>
+                      <View style={styles.eduBadge}>
+                        <Text style={styles.eduBadgeText}>{item.category || "Artikel"}</Text>
+                      </View>
+                      <Text style={styles.eduHeroTitle} numberOfLines={2}>{item.title}</Text>
+                      <View style={styles.eduMeta}>
+                        <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.8)" />
+                        <Text style={styles.eduHeroMetaText}>{"  "}{new Date(item.createdDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.eduCard}
+                  activeOpacity={0.88}
+                  onPress={() => props.navigation.navigate("EducationDetail", { id: item.id })}
+                >
+                  <Image
+                    source={{ uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}${item.imageLink}` }}
+                    style={styles.eduImg}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.eduBody}>
+                    <View style={styles.eduBadge}>
+                      <Text style={styles.eduBadgeText}>{item.category || "Artikel"}</Text>
+                    </View>
+                    <Text style={styles.eduTitle} numberOfLines={2}>{item.title}</Text>
+                    <View style={styles.eduMeta}>
+                      <Ionicons name="time-outline" size={12} color="#999" />
+                      <Text style={styles.eduMetaText}>{"  "}{new Date(item.createdDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</Text>
+                    </View>
                   </View>
-                  <Text style={styles.eduTitle} numberOfLines={2}>{item.title}</Text>
-                  <View style={styles.eduMeta}>
-                    <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.8)" />
-                    <Text style={styles.eduMetaText}>  {new Date(item.createdDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
@@ -882,7 +976,6 @@ const styles = StyleSheet.create({
     width: (width - 44) / 2,
     backgroundColor: "white",
     borderRadius: 16,
-    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
@@ -895,6 +988,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: "hidden",
   },
   ccImage: {
     width: "100%",
@@ -930,7 +1026,68 @@ const styles = StyleSheet.create({
   },
 
   /* ── EDUCATION ── */
-  eduCard: {
+  bankSection: {
+    marginTop: 24,
+    paddingTop: 20,
+    overflow: "hidden",
+  },
+  bankCircle1: {
+    position: "absolute",
+    width: 180, height: 180, borderRadius: 90,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    top: -40, right: -30,
+  },
+  bankCircle2: {
+    position: "absolute",
+    width: 120, height: 120, borderRadius: 60,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    bottom: 10, left: -20,
+  },
+  bankViewAllBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "white",
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 20,
+  },
+  bankViewAllText: {
+    fontSize: 11, fontFamily: "Lexend_700Bold", color: "#CC1C22",
+  },
+  bankCard: {
+    width: 160,
+    backgroundColor: "white",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    marginVertical: 4,
+  },
+  bankLogoBox: {
+    width: "100%",
+    height: 70,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  bankLogo: { width: "100%", height: "100%" },
+  bankBody: { padding: 12, paddingTop: 14 },
+  bankName: {
+    fontSize: 12, fontFamily: "Lexend_700Bold", color: "#1A1A2E", marginBottom: 2,
+  },
+  bankPublisher: {
+    fontSize: 10, fontFamily: "Lexend_400Regular", color: "#CC1C22", marginBottom: 6,
+  },
+  bankDetail: {
+    fontSize: 10, fontFamily: "Lexend_400Regular", color: "#777", lineHeight: 15, marginBottom: 8,
+  },
+  bankDocRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  bankDocText: { fontSize: 10, fontFamily: "Lexend_400Regular", color: "#888" },
+
+  eduHeroCard: {
     borderRadius: 18,
     overflow: "hidden",
     height: 200,
@@ -940,46 +1097,78 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    marginBottom: 14,
   },
-  eduImg: {
+  eduHeroImg: {
     width: "100%",
     height: "100%",
     position: "absolute",
   },
-  eduOverlay: {
+  eduHeroOverlay: {
     flex: 1,
     justifyContent: "flex-end",
     padding: 16,
-    backgroundColor: "rgba(0,0,0,0.38)",
+    backgroundColor: "rgba(0,0,0,0.42)",
   },
-  eduBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#CC1C22",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginBottom: 8,
-  },
-  eduBadgeText: {
-    color: "white",
-    fontSize: 11,
-    fontFamily: "Lexend_700Bold",
-  },
-  eduTitle: {
+  eduHeroTitle: {
     color: "white",
     fontSize: 15,
     fontFamily: "Lexend_700Bold",
     lineHeight: 22,
     marginBottom: 6,
   },
+  eduHeroMetaText: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 11,
+    fontFamily: "Lexend_400Regular",
+  },
+  eduCard: {
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  eduImg: {
+    width: 100,
+    height: 100,
+    backgroundColor: "#f0f0f0",
+  },
+  eduBody: {
+    flex: 1,
+    padding: 12,
+    justifyContent: "center",
+  },
+  eduBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FEE2E2",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginBottom: 6,
+  },
+  eduBadgeText: {
+    color: "#CC1C22",
+    fontSize: 10,
+    fontFamily: "Lexend_700Bold",
+  },
+  eduTitle: {
+    fontSize: 13,
+    fontFamily: "Lexend_700Bold",
+    color: "#1A1A2E",
+    lineHeight: 19,
+    marginBottom: 8,
+  },
   eduMeta: {
     flexDirection: "row",
     alignItems: "center",
   },
   eduMetaText: {
-    color: "rgba(255,255,255,0.8)",
     fontSize: 11,
+    color: "#999",
     fontFamily: "Lexend_400Regular",
   },
 });
