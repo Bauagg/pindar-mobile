@@ -111,11 +111,7 @@ const PindarScreen = (props) => {
     }).format(item.maxloan);
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.92}
-        onPress={() => props.navigation.navigate('Informasi Detail', { id: item.id })}
-      >
+      <View style={styles.card}>
         {/* Logo area */}
         <View style={styles.logoBox}>
           <Image
@@ -152,16 +148,16 @@ const PindarScreen = (props) => {
 
         <View style={styles.divider} />
 
-        {/* Ajukan button */}
+        {/* Detail button */}
         <TouchableOpacity
-          onPress={(e) => { e.stopPropagation?.(); getDetail(item.id); }}
+          onPress={() => props.navigation.navigate('Informasi Detail', { id: item.id })}
           activeOpacity={0.85}
         >
           <LinearGradient colors={['#CC1C22', '#E8424A']} style={styles.applyBtn}>
-            <Text style={styles.applyText}>Ajukan</Text>
+            <Text style={styles.applyText}>Detail</Text>
           </LinearGradient>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
     );
   };
 
