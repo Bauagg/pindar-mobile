@@ -34,50 +34,60 @@ const PindarScreen = (props) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataLenders, setDataLenders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState({ paymentType: '', loanType: '', sortBy: '', sortDirection: 'asc' });
   const debounceRef = useRef(null);
+  const LIMIT = 10;
 
-  const getDataLenders = async (searchVal = '', paymentType = '', loanType = '', sortBy = '', sortDirection = 'asc') => {
+  const fetchLenders = async ({ searchVal = '', paymentType = '', loanType = '', sortBy = '', sortDirection = 'asc', currentOffset = 0, replace = true }) => {
+    if (replace) setLoading(true);
+    else setLoadingMore(true);
     try {
-      setLoading(true);
-      let url = `/lender/list?limit=20&offset=0&search=${encodeURIComponent(searchVal)}`;
+      let url = `/lender/list?limit=${LIMIT}&offset=${currentOffset}&search=${encodeURIComponent(searchVal)}`;
       if (loanType) url += `&loanType=${loanType}`;
       if (paymentType) url += `&paymentType=${paymentType}`;
-      if (sortBy) { url += `&sortBy=${sortBy}&sortDirection=${sortDirection}`; }
-      console.log('🔍 URL:', url);
+      if (sortBy) url += `&sortBy=${sortBy}&sortDirection=${sortDirection}`;
       const response = await api.get(url);
-      console.log('📦 Lenders:', response.data.data.lenders?.length);
-      setDataLenders(response.data.data.lenders || []);
+      const newData = response.data.data.lenders || [];
+      setDataLenders((prev) => {
+        if (replace) return newData;
+        const existingIds = new Set(prev.map((i) => i.id));
+        return [...prev, ...newData.filter((i) => !existingIds.has(i.id))];
+      });
+      setHasMore(newData.length === LIMIT);
+      setOffset(currentOffset + newData.length);
     } catch (error) {
       console.error('Gagal mengambil data lenders:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    getDataLenders();
+    fetchLenders({ searchVal: search, ...activeFilters, currentOffset: 0, replace: true });
   }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      getDataLenders(search);
+      fetchLenders({ searchVal: search, ...activeFilters, currentOffset: 0, replace: true });
     }, 400);
     return () => clearTimeout(debounceRef.current);
   }, [search]);
 
-  const handleTabPress = (tab) => {
-    setActiveTab(tab);
-    let paymentType = null;
-    if (tab === 'Sekali bayar') paymentType = 'PAYMENT_TYPE_1';
-    else if (tab === 'Cicilan') paymentType = 'PAYMENT_TYPE_2';
-    getDataLenders(paymentType);
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore || loading) return;
+    fetchLenders({ searchVal: search, ...activeFilters, currentOffset: offset, replace: false });
   };
 
   const handleApplyFilter = (filters) => {
     setModalVisible(false);
-    getDataLenders(search, filters.paymentType, filters.loanType, filters.sortBy, filters.sortDirection);
+    setActiveFilters(filters);
+    fetchLenders({ searchVal: search, ...filters, currentOffset: 0, replace: true });
   };
 
   const toggleSelection = (item) => {
@@ -218,6 +228,9 @@ const PindarScreen = (props) => {
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#CC1C22" style={{ marginVertical: 16 }} /> : null}
         />
       )}
 

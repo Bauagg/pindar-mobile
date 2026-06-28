@@ -27,26 +27,27 @@ const EducationAllTreding = (props) => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [page, setPage] = useState(1);
+  const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const LIMIT = 10;
 
-  const fetchData = async (keyword = "", pageNum = 1, append = false) => {
+  const fetchData = async ({ keyword = "", currentOffset = 0, replace = true }) => {
+    if (replace) setLoading(true);
+    else setLoadingMore(true);
     try {
-      if (pageNum === 1) setLoading(true);
-      else setLoadingMore(true);
-
-      let endpoint = `/content/list?limit=10&offset=${(pageNum - 1) * 10}`;
+      let endpoint = `/content/list?requestType=trending&limit=${LIMIT}&offset=${currentOffset}`;
       if (keyword) endpoint += `&search=${encodeURIComponent(keyword)}`;
 
       const response = await api.get(endpoint);
-      const contents = response.data.data.contents || [];
-      const pagination = response.data.data.pagination;
+      const newData = response.data.data.contents || [];
 
-      if (append) setData((prev) => [...prev, ...contents]);
-      else setData(contents);
-
-      setHasMore(pageNum < (pagination?.totalPages || 1));
-      setPage(pageNum);
+      setData((prev) => {
+        if (replace) return newData;
+        const existingIds = new Set(prev.map((i) => i.id));
+        return [...prev, ...newData.filter((i) => !existingIds.has(i.id))];
+      });
+      setHasMore(newData.length === LIMIT);
+      setOffset(currentOffset + newData.length);
     } catch (error) {
       console.log("Error fetch trending:", error);
     } finally {
@@ -56,18 +57,19 @@ const EducationAllTreding = (props) => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData({ keyword: "", currentOffset: 0, replace: true });
   }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchData(searchText, 1, false);
+      fetchData({ keyword: searchText, currentOffset: 0, replace: true });
     }, 500);
     return () => clearTimeout(handler);
   }, [searchText]);
 
   const loadMore = () => {
-    if (!loadingMore && hasMore) fetchData(searchText, page + 1, true);
+    if (loadingMore || !hasMore || loading) return;
+    fetchData({ keyword: searchText, currentOffset: offset, replace: false });
   };
 
   if (!fontsLoaded) return null;

@@ -29,15 +29,21 @@ const KartuKreditScreen = (props) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [dataCC, setDataCC] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState({});
   const debounceRef = useRef(null);
+  const LIMIT = 10;
 
-  const getDataCC = async (searchVal = '', filters = {}) => {
+  const fetchCC = async ({ searchVal = '', filters = {}, currentOffset = 0, replace = true }) => {
+    if (replace) setLoading(true);
+    else setLoadingMore(true);
     try {
-      setLoading(true);
       const params = new URLSearchParams();
-      params.append('limit', '20');
-      params.append('offset', '0');
+      params.append('limit', String(LIMIT));
+      params.append('offset', String(currentOffset));
       if (searchVal) params.append('search', searchVal);
       if (filters.publisherId) params.append('publisherId', filters.publisherId);
       if (filters.featureIds) params.append('featureIds', filters.featureIds);
@@ -49,25 +55,37 @@ const KartuKreditScreen = (props) => {
         params.append('sortBy', filters.sortBy);
         params.append('sortDirection', filters.sortDirection || 'asc');
       }
-      console.log('🔍 CC URL:', `/credit-card/search?${params.toString()}`);
       const response = await api.get(`/credit-card/search?${params.toString()}`);
-      setDataCC(response.data.data.creditCards || []);
+      const newData = response.data.data.creditCards || [];
+      setDataCC((prev) => {
+        if (replace) return newData;
+        const existingIds = new Set(prev.map((i) => i.id));
+        return [...prev, ...newData.filter((i) => !existingIds.has(i.id))];
+      });
+      setHasMore(newData.length === LIMIT);
+      setOffset(currentOffset + newData.length);
     } catch (error) {
       console.error('Gagal mengambil data credit card:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  useEffect(() => { getDataCC(); }, []);
+  useEffect(() => { fetchCC({ searchVal: '', filters: {}, currentOffset: 0, replace: true }); }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      getDataCC(search);
+      fetchCC({ searchVal: search, filters: activeFilters, currentOffset: 0, replace: true });
     }, 400);
     return () => clearTimeout(debounceRef.current);
   }, [search]);
+
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore || loading) return;
+    fetchCC({ searchVal: search, filters: activeFilters, currentOffset: offset, replace: false });
+  };
 
   const toggleSelection = (item) => {
     setSelectedItems(prev => {
@@ -198,6 +216,9 @@ const KartuKreditScreen = (props) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#CC1C22" style={{ marginVertical: 16 }} /> : null}
         />
       )}
 
@@ -222,7 +243,7 @@ const KartuKreditScreen = (props) => {
       <FilterModalKartu
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
-        onApply={(filters) => { setModalVisible(false); getDataCC(search, filters); }}
+        onApply={(filters) => { setModalVisible(false); setActiveFilters(filters); fetchCC({ searchVal: search, filters, currentOffset: 0, replace: true }); }}
       />
     </View>
   );

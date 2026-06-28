@@ -28,6 +28,10 @@ export default function Education(props) {
   const [dataContent, setDataContent] = useState([]);
   const [dataTrending, setDataTrending] = useState([]);
   const [trendingIndex, setTrendingIndex] = useState(0);
+  const [trendingOffset, setTrendingOffset] = useState(0);
+  const [trendingHasMore, setTrendingHasMore] = useState(true);
+  const [trendingLoadingMore, setTrendingLoadingMore] = useState(false);
+  const TRENDING_LIMIT = 5;
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -81,19 +85,34 @@ export default function Education(props) {
     }
   };
 
-  const getTrendingEducation = async () => {
+  const getTrendingEducation = async (currentOffset = 0, append = false) => {
+    if (append) setTrendingLoadingMore(true);
     try {
-      const response = await api.get(`/content/list?requestType=trending&limit=5&offset=1`);
-      setDataTrending(response.data.data?.contents || []);
+      const response = await api.get(`/content/list?requestType=trending&limit=${TRENDING_LIMIT}&offset=${currentOffset}`);
+      const newData = response.data.data?.contents || [];
+      setDataTrending((prev) => {
+        if (!append) return newData;
+        const existingIds = new Set(prev.map((i) => i.id));
+        return [...prev, ...newData.filter((i) => !existingIds.has(i.id))];
+      });
+      setTrendingHasMore(newData.length === TRENDING_LIMIT);
+      setTrendingOffset(currentOffset + newData.length);
     } catch (error) {
       console.log("Error ambil trending:", error);
+    } finally {
+      setTrendingLoadingMore(false);
     }
+  };
+
+  const handleTrendingLoadMore = () => {
+    if (trendingLoadingMore || !trendingHasMore) return;
+    getTrendingEducation(trendingOffset, true);
   };
 
   useEffect(() => {
     getCategories();
     getDataEducation();
-    getTrendingEducation();
+    getTrendingEducation(0, false);
   }, []);
 
   if (!fontsLoaded) return null;
@@ -127,6 +146,9 @@ export default function Education(props) {
               setTrendingIndex(index);
             }}
             scrollEventThrottle={16}
+            onEndReached={handleTrendingLoadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={trendingLoadingMore ? <ActivityIndicator size="small" color="#CC1C22" style={{ alignSelf: 'center', marginHorizontal: 12 }} /> : null}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.trendingCard}
