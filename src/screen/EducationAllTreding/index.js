@@ -29,14 +29,27 @@ const EducationAllTreding = (props) => {
   const [searchText, setSearchText] = useState("");
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const LIMIT = 10;
 
-  const fetchData = async ({ keyword = "", currentOffset = 0, replace = true }) => {
+  const getCategories = async () => {
+    try {
+      const response = await api.get("/content/content-category");
+      const result = response.data.data.categories || [];
+      setCategories([{ id: null, name: "Semua" }, ...result]);
+    } catch (error) {
+      console.log("Error ambil kategori:", error);
+    }
+  };
+
+  const fetchData = async ({ keyword = "", categoryId = null, currentOffset = 0, replace = true }) => {
     if (replace) setLoading(true);
     else setLoadingMore(true);
     try {
-      let endpoint = `/content/list?requestType=trending&limit=${LIMIT}&offset=${currentOffset}`;
+      let endpoint = `/content/list?limit=${LIMIT}&offset=${currentOffset}`;
       if (keyword) endpoint += `&search=${encodeURIComponent(keyword)}`;
+      if (categoryId) endpoint += `&categoryId=${categoryId}`;
 
       const response = await api.get(endpoint);
       const newData = response.data.data.contents || [];
@@ -57,19 +70,25 @@ const EducationAllTreding = (props) => {
   };
 
   useEffect(() => {
-    fetchData({ keyword: "", currentOffset: 0, replace: true });
+    getCategories();
+    fetchData({ keyword: "", categoryId: null, currentOffset: 0, replace: true });
   }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchData({ keyword: searchText, currentOffset: 0, replace: true });
+      fetchData({ keyword: searchText, categoryId: selectedCategory, currentOffset: 0, replace: true });
     }, 500);
     return () => clearTimeout(handler);
   }, [searchText]);
 
+  const handleCategorySelect = (categoryId) => {
+    setSelectedCategory(categoryId);
+    fetchData({ keyword: searchText, categoryId, currentOffset: 0, replace: true });
+  };
+
   const loadMore = () => {
     if (loadingMore || !hasMore || loading) return;
-    fetchData({ keyword: searchText, currentOffset: offset, replace: false });
+    fetchData({ keyword: searchText, categoryId: selectedCategory, currentOffset: offset, replace: false });
   };
 
   if (!fontsLoaded) return null;
@@ -84,19 +103,40 @@ const EducationAllTreding = (props) => {
         onEndReachedThreshold={0.3}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
-          <View style={styles.searchBar}>
-            <Ionicons name="search-outline" size={18} color="#CC1C22" />
-            <TextInput
-              placeholder="Cari artikel trending..."
-              style={styles.searchInput}
-              placeholderTextColor="#aaa"
-              value={searchText}
-              onChangeText={setSearchText}
-            />
-            {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText("")}>
-                <Ionicons name="close-circle" size={16} color="#ccc" />
-              </TouchableOpacity>
+          <View>
+            <View style={styles.searchBar}>
+              <Ionicons name="search-outline" size={18} color="#CC1C22" />
+              <TextInput
+                placeholder="Cari artikel edukasi..."
+                style={styles.searchInput}
+                placeholderTextColor="#aaa"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+              {searchText.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchText("")}>
+                  <Ionicons name="close-circle" size={16} color="#ccc" />
+                </TouchableOpacity>
+              )}
+            </View>
+            {categories.length > 1 && (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={categories}
+                keyExtractor={(item) => item.id ?? "all"}
+                contentContainerStyle={{ gap: 8, paddingBottom: 12 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleCategorySelect(item.id)}
+                    style={[styles.filterChip, selectedCategory === item.id && styles.filterChipActive]}
+                  >
+                    <Text style={[styles.filterChipText, selectedCategory === item.id && styles.filterChipTextActive]}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
             )}
           </View>
         }
@@ -287,6 +327,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#999",
     fontFamily: "Lexend_400Regular",
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  filterChipActive: {
+    backgroundColor: "#CC1C22",
+    borderColor: "#CC1C22",
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontFamily: "Lexend_400Regular",
+    color: "#555",
+  },
+  filterChipTextActive: {
+    color: "white",
+    fontFamily: "Lexend_700Bold",
   },
 });
 
